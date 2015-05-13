@@ -13,7 +13,9 @@ OBJS	= $(SRCS:.c=.o)
 PRG	= xepem
 Z80EX	= z80ex/lib/libz80ex.a
 SDIMG	= sdcard.img
-SDURL	= http://xepem.lgb.hu/sdcard.img
+SDURL	= http://xep128.lgb.hu/files/sdcard.img
+ROM	= combined.rom
+ROMURL	= http://xep128.lgb.hu/files/combined.rom
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
@@ -27,13 +29,17 @@ all:
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 $(SDIMG):
-	@echo "**** Fetching SDcard image from $(SDURL) ... please wait ..."
+	@echo "**** Fetching SDcard image from $(SDURL) ..."
 	wget -O $(SDIMG) $(SDURL)
+
+$(ROM):
+	@echo "**** Fetching ROM image from $(ROMURL) ..."
+	wget -O $(ROM) $(ROMURL)
 
 $(Z80EX):
 	$(MAKE) -C z80ex
 
-$(PRG): $(OBJS) $(INCS) Makefile $(Z80EX) $(SDIMG)
+$(PRG): $(OBJS) $(INCS) Makefile $(Z80EX) $(SDIMG) $(ROM)
 	$(CC) -o $(PRG) $(OBJS) $(LDFLAGS) $(LIBS)
 
 sdl:	sdl.o
@@ -48,7 +54,7 @@ clean:
 
 distclean:
 	$(MAKE) clean
-	rm -f $(SDIMG)
+	rm -f $(SDIMG) $(ROM)
 
 .PHONY: all clean distclean
 
