@@ -15,3 +15,9 @@ traditional) hardware additions becomes (or becoming) popular among EP users
 recently: mouse support, APU ("FPU"), SD card reader and soon limited wiznet
 w5300 emulation (Ethernet connection with built-in TCP/IP support).
 
+Z80 emulation is done with the nice z80ex Z80 emulator, which is a separated
+(not my!) project also with licence of GNU/GPL (so importing it into the
+repository of my emulator can't be a problem). Some Linux distribution indeed
+contains it, but I guess it's better in this way.
+
+
