@@ -32,7 +32,7 @@
 *.dSYM/
 
 # My files
-xepem
+xep128
 *.img
 *.rom
 

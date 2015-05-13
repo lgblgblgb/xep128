@@ -46,7 +46,7 @@ install the mentioned packages, just to be sure:
 In the source, you need to issue the command "make". It will compile the
 emulator, and also fetching (with wget) the SD card image through the Net
 (about 256Mbyte in size). If everything is OK, you will get an executable
-binary named "xepem", you can execute it from the current directory (otherwise
+binary named "xep128", you can execute it from the current directory (otherwise
 it won't found the ROM and the SD card image - missing the SD card image
 will cause I/O error in EXOS if you try to use, but the ROM package is
 essential of course).

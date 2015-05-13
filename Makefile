@@ -10,7 +10,7 @@ LIBS	= $(Z80EX) z80ex/lib/libz80ex_dasm.a
 INCS	= xepem.h
 SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c
 OBJS	= $(SRCS:.c=.o)
-PRG	= xepem
+PRG	= xep128
 Z80EX	= z80ex/lib/libz80ex.a
 SDIMG	= sdcard.img
 SDURL	= http://xep128.lgb.hu/files/sdcard.img
@@ -30,11 +30,11 @@ all:
 
 $(SDIMG):
 	@echo "**** Fetching SDcard image from $(SDURL) ..."
-	wget -O $(SDIMG) $(SDURL)
+	wget -O $(SDIMG) $(SDURL) || { rm -f $(SDIMG) ; false; }
 
 $(ROM):
 	@echo "**** Fetching ROM image from $(ROMURL) ..."
-	wget -O $(ROM) $(ROMURL)
+	wget -O $(ROM) $(ROMURL) || { rm -f $(ROM) ; false; }
 
 $(Z80EX):
 	$(MAKE) -C z80ex
