@@ -31,9 +31,10 @@ static void shutdown_sdl(void)
         printf("Shutdown callback, return.\n");
 }
 
-
-#define EXOS_ROM "/home/lgb/vega/prog/xepem/roms/combined.rom"
-#define ZT_ROM   "/home/lgb/vega/prog/xepem/roms/ZT18UK-emuhoz.ROM"
+#define EXOS_ROM "roms/combined.rom"
+//#define ZT_ROM   "roms/zt18uk-for-emu.rom"
+//#define EXOS_ROM "/home/lgb/vega/prog/xepem/roms/combined.rom"
+//#define ZT_ROM   "/home/lgb/vega/prog/xepem/roms/ZT18UK-emuhoz.ROM"
 //#define EXOS "/home/lgb/vega/prog/xepem/roms/EXOS24UK-NOILLOPS.ROM"
 //#define EXOS "/home/lgb/.ep128emu/roms/EXOS24UK.ROM"
 //#define EXOS "/home/lgb/.ep128emu/roms/exos21.rom"

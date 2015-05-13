@@ -1,7 +1,7 @@
 CC	= gcc
 DEBUG	=
-CFLAGS	= -Wall -O3 -ffast-math $(shell sdl2-config --cflags) $(DEBUG) -Iz80ex/include
-CPPFLAGS= 
+CFLAGS	= -Wall -O3 -ffast-math $(shell sdl2-config --cflags) $(DEBUG)
+CPPFLAGS= -Iz80ex/include 
 LDFLAGS	= $(shell sdl2-config --libs) $(DEBUG)
 #LIBS	= -lz80ex -lz80ex_dasm
 LIBS	= $(Z80EX) z80ex/lib/libz80ex_dasm.a
@@ -13,7 +13,10 @@ OBJS	= $(SRCS:.c=.o)
 PRG	= xepem
 Z80EX	= z80ex/lib/libz80ex.a
 
-all: $(PRG)
+all:
+	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
+	@echo "Linker:   $(CC) $(LDFLAGS) $(LIBS)"
+	$(MAKE) $(PRG)
 
 %.o: %.c $(INCS) Makefile
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
