@@ -1,8 +1,9 @@
 #ifndef __XEPEM_H
 #define __XEPEM_H
 #include <stdio.h>
-#include <z80ex/z80ex.h>
-#include <z80ex/z80ex_dasm.h>
+#include <stdlib.h>
+#include "z80ex.h"
+#include "z80ex/z80ex_dasm.h"
 #include "SDL.h"
 #include <time.h>
 #include <unistd.h>

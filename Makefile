@@ -1,7 +1,8 @@
 CC	= gcc
-CFLAGS	= -Wall -O3 -ffast-math $(shell sdl2-config --cflags) -g
+DEBUG	=
+CFLAGS	= -Wall -O3 -ffast-math $(shell sdl2-config --cflags) $(DEBUG) -Iz80ex/include
 CPPFLAGS= 
-LDFLAGS	= $(shell sdl2-config --libs) -g
+LDFLAGS	= $(shell sdl2-config --libs) $(DEBUG)
 #LIBS	= -lz80ex -lz80ex_dasm
 LIBS	= $(Z80EX) z80ex/lib/libz80ex_dasm.a
 #LIBS	= -Wl,-Bstatic -lz80ex -lz80ex_dasm -Wl,-Bdynamic

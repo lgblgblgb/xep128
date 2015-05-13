@@ -1,14 +1,6 @@
 /* CP/M for UNIX & CBIOS (C)2014 LGB
  * This is my _own_ CBIOS and BDOS implementation! */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <time.h>
 #include "xepem.h"
 
 Z80EX_CONTEXT *z80 = NULL;

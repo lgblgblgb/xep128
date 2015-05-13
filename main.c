@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "xepem.h"
 
 static SDL_Window *sdl_win = NULL;
