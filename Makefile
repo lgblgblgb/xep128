@@ -12,6 +12,8 @@ SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c
 OBJS	= $(SRCS:.c=.o)
 PRG	= xepem
 Z80EX	= z80ex/lib/libz80ex.a
+SDIMG	= sdcard.img
+SDURL	= http://xepem.lgb.hu/sdcard.img
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
@@ -24,10 +26,14 @@ all:
 %.s: %.c $(INCS) Makefile
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
+$(SDIMG):
+	@echo "**** Fetching SDcard image from $(SDURL) ... please wait ..."
+	wget -O $(SDIMG) $(SDURL)
+
 $(Z80EX):
 	$(MAKE) -C z80ex
 
-$(PRG): $(OBJS) $(INCS) Makefile $(Z80EX)
+$(PRG): $(OBJS) $(INCS) Makefile $(Z80EX) $(SDIMG)
 	$(CC) -o $(PRG) $(OBJS) $(LDFLAGS) $(LIBS)
 
 sdl:	sdl.o
@@ -40,5 +46,9 @@ clean:
 	rm -f $(OBJS) $(PRG)
 	$(MAKE) -C z80ex clean
 
-.PHONY: all clean
+distclean:
+	$(MAKE) clean
+	rm -f $(SDIMG)
+
+.PHONY: all clean distclean
 

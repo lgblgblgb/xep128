@@ -31,19 +31,12 @@ static void shutdown_sdl(void)
         printf("Shutdown callback, return.\n");
 }
 
-#define EXOS_ROM "roms/combined.rom"
-//#define ZT_ROM   "roms/zt18uk-for-emu.rom"
-//#define EXOS_ROM "/home/lgb/vega/prog/xepem/roms/combined.rom"
-//#define ZT_ROM   "/home/lgb/vega/prog/xepem/roms/ZT18UK-emuhoz.ROM"
-//#define EXOS "/home/lgb/vega/prog/xepem/roms/EXOS24UK-NOILLOPS.ROM"
-//#define EXOS "/home/lgb/.ep128emu/roms/EXOS24UK.ROM"
-//#define EXOS "/home/lgb/.ep128emu/roms/exos21.rom"
 
 static int load_roms ( void )
 {
 	FILE *f;
-	printf("ROM: loading %s\n", EXOS_ROM);
-	f = fopen(EXOS_ROM, "rb");
+	printf("ROM: loading %s\n", COMBINED_ROM_PATH);
+	f = fopen(COMBINED_ROM_PATH, "rb");
 	if (f == NULL) {
 		perror("Cannot load ROM");
 		return 1;

@@ -94,7 +94,7 @@ void sdext_clear_ram(void)
  * sized SDEXT flash image */
 void sdext_init ( void )
 {
-	sdf = fopen("/home/lgb/vega/prog/xepem/roms/sdcard.img", "rb");
+	sdf = fopen(SDCARD_IMG_PATH, "rb");
 	memset(sd_rom_ext, 0xFF, 0x10000);
 	memcpy(sd_rom_ext, memory + 7 * 0x4000, 0x4000); // copy ROM image 16K to the extended area (the FLASH.ROM I have 8K is used only though)
 	sdext_clear_ram();

@@ -19,6 +19,9 @@
 
 #define CONFIG_SDEXT_SUPPORT
 
+#define COMBINED_ROM_PATH "roms/combined.rom"
+#define SDCARD_IMG_PATH "sdcard.img"
+
 int set_ep_ramsize(int kbytes);
 int z80_reset ( void );
 
