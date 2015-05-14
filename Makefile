@@ -1,7 +1,7 @@
 CC	= gcc
 DEBUG	=
-CFLAGS	= -Wall -O3 -ffast-math $(shell sdl2-config --cflags) $(DEBUG)
-CPPFLAGS= -Iz80ex/include 
+CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG)
+CPPFLAGS= -Iz80ex/include -I.
 LDFLAGS	= $(shell sdl2-config --libs) $(DEBUG)
 #LIBS	= -lz80ex -lz80ex_dasm
 LIBS	= $(Z80EX) z80ex/lib/libz80ex_dasm.a
@@ -37,10 +37,13 @@ $(ROM):
 	wget -O $(ROM) $(ROMURL) || { rm -f $(ROM) ; false; }
 
 $(Z80EX):
-	$(MAKE) -C z80ex
+	$(MAKE) -C z80ex static
 
 $(PRG): $(OBJS) $(INCS) Makefile $(Z80EX) $(SDIMG) $(ROM)
 	$(CC) -o $(PRG) $(OBJS) $(LDFLAGS) $(LIBS)
+
+strip:	$(PRG)
+	strip $(PRG)
 
 sdl:	sdl.o
 	$(CC) -o sdl sdl.o $(LDFLAGS) $(LIBS)
@@ -56,5 +59,11 @@ distclean:
 	$(MAKE) clean
 	rm -f $(SDIMG) $(ROM)
 
-.PHONY: all clean distclean
+commit:
+	git diff
+	git status
+	EDITOR="vim -c 'startinsert'" git commit -a
+	git push
+
+.PHONY: all clean distclean strip commit
 

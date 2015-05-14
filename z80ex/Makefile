@@ -12,7 +12,7 @@ CC := $(TOOLS_PREFIX)gcc
 LINKER := $(TOOLS_PREFIX)gcc
 AR := $(TOOLS_PREFIX)ar
 
-ALL_CFLAGS := -fPIC -fno-common -ansi -pedantic -Wall -pipe -O2 -I. -I./include 
+ALL_CFLAGS := -fno-common -ansi -pedantic -Wall -pipe -O3 -I. -I./include
 
 #endianness (one of: WORDS_LITTLE_ENDIAN, WORDS_BIG_ENDIAN)
 ENDIANNESS := WORDS_LITTLE_ENDIAN
