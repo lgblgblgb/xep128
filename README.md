@@ -12,7 +12,9 @@ Xep128 is licensed under the terms of GNU/GPL v2, for more information please
 read file LICENSE
 
 Currently it's for Linux and/or UNIX-like systems, but since it's an SDL based
-project, it would be not that hard to port to Windows, I guess.
+project, it would be not that hard to port to Windows, I guess. There is some
+on-going tries (from me) to build for Windows on Linux, see later in this
+document for details, if you want to try Xep128 on Windows.
 
 LibZ80ex (great Z80 emulator, http://z80ex.sourceforge.net/) is included just
 in case, if your OS distribution does not contain it (or older version, etc).
