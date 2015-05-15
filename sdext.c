@@ -16,7 +16,7 @@ static Uint8 status;
 static Uint8 sd_ram_ext[0x1C00]; // 7K of useful SRAM
 static Uint8 sd_rom_ext[0x10000]; // 64K (second 64K flash, can only be accessed within a 8K window)
 
-static Uint8 cmd[6], cmd_index, _read, _write, _write_specified;
+static Uint8 cmd[6], cmd_index, _read_b, _write_b, _write_specified;
 static const Uint8 *ans_p;
 static int ans_index, ans_size;
 static void (*ans_callback)(void);
@@ -106,8 +106,8 @@ void sdext_init ( void )
 	ans_index = 0;
 	ans_callback = NULL;
 	status = 0;
-	_read = 0;
-	_write = 0xFF;
+	_read_b = 0;
+	_write_b = 0xFF;
 	_spi_last_w = 0xFF;
 	printf("SDEXT: init\n");
 }
@@ -131,37 +131,37 @@ static void _block_read ( void )
 
 
 /* SPI is a read/write in once stuff. We have only a single function ... 
- * _write is the data value to put on MOSI
- * _read is the data read from MISO without spending _ANY_ SPI time to do shifting!
+ * _write_b is the data value to put on MOSI
+ * _read_b is the data read from MISO without spending _ANY_ SPI time to do shifting!
  * This is not a real thing, but easier to code this way.
  * The implementation of the real behaviour is up to the caller of this function.
  */
 static void _spi_shifting_with_sd_card ()
 {
 	if (!cs0) { // Currently, we only emulate one SD card, and it must be selected for any answer
-		_read = 0xFF;
+		_read_b = 0xFF;
 		return;
 	}
-	if (cmd_index == 0 && (_write & 0xC0) != 0x40) {
+	if (cmd_index == 0 && (_write_b & 0xC0) != 0x40) {
 		if (ans_index < ans_size) {
 			printf("SDEXT: REGIO: streaming answer byte %d of %d-1 value %02X\n", ans_index, ans_size, ans_p[ans_index]);
-			_read = ans_p[ans_index++];
+			_read_b = ans_p[ans_index++];
 		} else {
 			if (ans_callback)
 				ans_callback();
 			else {
-				//_read = 0xFF;
+				//_read_b = 0xFF;
 				ans_index = 0;
 				ans_size = 0;
 				printf("SDEXT: REGIO: dummy answer 0xFF\n");
 			}
-			_read = 0xFF;
+			_read_b = 0xFF;
 		}
 		return;
 	}
 	if (cmd_index < 6) {
-		cmd[cmd_index++] = _write;
-		_read = 0xFF;
+		cmd[cmd_index++] = _write_b;
+		_read_b = 0xFF;
 		return;
 	}
 	printf("SDEXT: REGIO: command (CMD%d) received: %02X %02X %02X %02X %02X %02X\n", cmd[0] & 63, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]);
@@ -170,30 +170,30 @@ static void _spi_shifting_with_sd_card ()
 	ans_callback = NULL;
 	switch (cmd[0]) {
 		case 0:	// CMD 0
-			_read = 1; // IDLE state R1 answer
+			_read_b = 1; // IDLE state R1 answer
 			break;
 		case 1:	// CMD 1 - init
-			_read = 0; // non-IDLE now (?) R1 answer
+			_read_b = 0; // non-IDLE now (?) R1 answer
 			break;
 		case 16:	// CMD16 - set blocklen (?!) : we only handles that as dummy command oh-oh ...
-			_read = 0; // R1 answer
+			_read_b = 0; // R1 answer
 			break;
 		case 9:  // CMD9: read CSD register
 			printf("SDEXT: REGIO: command is read CSD register\n");
 			ADD_ANS(_read_csd_answer);
-			_read = 0; // R1
+			_read_b = 0; // R1
 			break;
 		case 10: // CMD10: read CID register
 			ADD_ANS(_read_cid_answer);
-			_read = 0; // R1
+			_read_b = 0; // R1
 			break;
 		case 58: // CMD58: read OCR
 			ADD_ANS(_read_ocr_answer);
-			_read = 0; // R1 (R3 is sent as data in the emulation without the data token)
+			_read_b = 0; // R1 (R3 is sent as data in the emulation without the data token)
 			break;
 		case 12: // CMD12: stop transmission (reading multiple)
 			ADD_ANS(_stop_transmission_answer);
-			_read = 0;
+			_read_b = 0;
 			// actually we don't do too much, as on receiving a new command callback will be deleted before this switch-case block
 			printf("SDEXT: REGIO: block counter before CMD12: %d\n", blocks);
 			blocks = 0;
@@ -202,7 +202,7 @@ static void _spi_shifting_with_sd_card ()
 		case 18: // CMD18: read multiple blocks
 			blocks = 0;
 			if (sdf == NULL)
-				_read = 32; // address error, if no SD card image ... [this is bad TODO, better error handling]
+				_read_b = 32; // address error, if no SD card image ... [this is bad TODO, better error handling]
 			else {
 				int _offset = (cmd[1] << 24) | (cmd[2] << 16) | (cmd[3] << 8) | cmd[4];
 				printf("SDEXT: REGIO: seek to %d in the image file.\n", _offset);
@@ -220,12 +220,12 @@ static void _spi_shifting_with_sd_card ()
 				ans_size = 512 + 4;
 				*/
 				if (cmd[0] == 18) ans_callback = _block_read; // in case of CMD18, continue multiple sectors, register callback for that!
-				_read = 0; // R1
+				_read_b = 0; // R1
 			}
 			break;
 		default: // unimplemented command, heh!
 			printf("SDEXT: REGIO: unimplemented command %d = %02Xh\n", cmd[0], cmd[0]);
-			_read = 4; // illegal command :-/
+			_read_b = 4; // illegal command :-/
 			break;
 	}
 }
@@ -259,16 +259,16 @@ Uint8 sdext_read_cart_p3 ( Uint16 addr )
 	} if (is_hs_read) {
 		// in HS-read (high speed read) mode, all the 0x3C00-0x3FFF acts as data _read_ register (but not for _write_!!!)
 		// also, there is a fundamental difference compared to "normal" read: each reads triggers SPI shifting in HS mode, but not in regular mode, there only write does that!
-		Uint8 old = _read; // HS-read initiates an SPI shift, but the result (AFAIK) is the previous state, as shifting needs time!
+		Uint8 old = _read_b; // HS-read initiates an SPI shift, but the result (AFAIK) is the previous state, as shifting needs time!
 		_spi_shifting_with_sd_card();
-		printf("SDEXT: REGIO: R: DATA: SPI data register HIGH SPEED read %02X [future byte %02X] [shited out was: %02X]\n", old, _read, _write);
+		printf("SDEXT: REGIO: R: DATA: SPI data register HIGH SPEED read %02X [future byte %02X] [shited out was: %02X]\n", old, _read_b, _write_b);
 		return old;
 	} else
 		switch (addr & 3) {
 			case 0: 
 				// regular read (not HS) only gives the last shifted-in data, that's all!
-				printf("SDEXT: REGIO: R: DATA: SPI data register regular read %02X\n", _read);
-				return _read;
+				printf("SDEXT: REGIO: R: DATA: SPI data register regular read %02X\n", _read_b);
+				return _read_b;
 				//printf("SDEXT: REGIO: R: SPI, result = %02X\n", a);
 			case 1: // status reg: bit7=wp1, bit6=insert, bit5=changed (insert/changed=1: some of the cards not inserted or changed)
 				printf("SDEXT: REGIO: R: status\n");
@@ -308,7 +308,7 @@ void sdext_write_cart_p3 ( Uint16 addr, Uint8 data )
 	switch (addr & 3) {
 		case 0:	// data register
 			printf("SDEXT: REGIO: W: DATA: SPI data register to %02X\n", data);
-			if (!is_hs_read) _write = data;
+			if (!is_hs_read) _write_b = data;
 			_write_specified = data;
 			_spi_shifting_with_sd_card();
 			break;
@@ -325,7 +325,7 @@ void sdext_write_cart_p3 ( Uint16 addr, Uint8 data )
 			break;
 		case 3: // HS (high speed) read mode to set: bit7=1
 			is_hs_read = data & 128;
-			_write = is_hs_read ? 0xFF : _write_specified;
+			_write_b = is_hs_read ? 0xFF : _write_specified;
 			printf("SDEXT: REGIO: W: HS read mode is %s\n", is_hs_read ? "set" : "reset");
 			break;
 		default:
