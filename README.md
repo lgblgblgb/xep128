@@ -8,6 +8,9 @@ than 1Hz and VINT from Nick, etc etc), and it's not comfortable to use, there
 is no configuration but a single built-in config. It will change later,
 hopefully.
 
+Xep128 is licensed under the terms of GNU/GPL v2, for more information please
+read file LICENSE
+
 Currently it's for Linux and/or UNIX-like systems, but since it's an SDL based
 project, it would be not that hard to port to Windows, I guess.
 
@@ -27,7 +30,7 @@ Z80 emulation is done with the nice z80ex Z80 emulator, which is a separated
 repository of my emulator can't be a problem). Some Linux distribution indeed
 contains it, but I guess it's better in this way.
 
-# Installation
+# Installation on Linux / UNIX like OS (from source)
 
 You can download the ZIP'ed repository from https://github.com/lgblgblgb/xep128
 or you can clone the repository, whatever. You need the SDL2 development
@@ -50,6 +53,30 @@ binary named "xep128", you can execute it from the current directory (otherwise
 it won't found the ROM and the SD card image - missing the SD card image
 will cause I/O error in EXOS if you try to use, but the ROM package is
 essential of course).
+
+# Installation on Windows (binary, .exe)
+
+I've never used Windows, nor I have Windows installed. So the best I will
+be able to do is trying to cross-compile for Windows on Linux. This would
+also require some modification and architecture dependent parts, maybe.
+You can try to compile Xep128 yourself using Linux with cross compiling
+target for win32.
+
+Or you can try my build (WARNING! Not tested, I have no windows!)
+
+http://xep128.lgb.hu/files/xep128.zip
+
+Download and unzip this archive somewhere. It contains xep128.exe, the
+ROM file, and the SDL2 DLL.
+
+You also need the SD card image (warning, 256Mbyte!), from here:
+
+http://xep128.lgb.hu/files/sdcard.img
+
+Put the file into the same directory where you put the content for the
+xep128.zip.
+
+Now, you can try to execute xep128.exe ...
 
 # Usage
 
