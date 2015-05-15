@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "z80ex.h"
-#include "z80ex/z80ex_dasm.h"
+#include "z80ex_dasm.h"
 #include "SDL.h"
 #include <time.h>
 #include <unistd.h>
