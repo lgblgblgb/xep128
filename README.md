@@ -9,11 +9,11 @@ is no configuration but a single built-in config. It will change later,
 hopefully.
 
 Xep128 is licensed under the terms of GNU/GPL v2, for more information please
-read file LICENSE
+read file LICENSE.
 
-Currently it's for Linux and/or UNIX-like systems, but since it's an SDL based
-project, it would be not that hard to port to Windows, I guess. There is some
-on-going tries (from me) to build for Windows on Linux, see later in this
+Currently it's mainly for Linux and/or UNIX-like systems, but since it's an SDL
+based project, it would be not that hard to port to Windows, I guess. There is
+some on-going tries (from me) to build for Windows on Linux, see later in this
 document for details, if you want to try Xep128 on Windows.
 
 LibZ80ex (great Z80 emulator, http://z80ex.sourceforge.net/) is included just
@@ -44,7 +44,8 @@ like this:
 You also need GNU variant of make (BSD make probably won't work). And of
 course a C compiler, gcc (it should be OK with LLVM's clang as well, however
 I haven't tried that, and also you need to modify Makefile). You may want to
-install the mentioned packages, just to be sure:
+install the mentioned packages, just to be sure (remember, if you are not
+the root user, you may need to do it with command 'sudo'):
 
  apt-get install libsdl2-dev make gcc wget
 

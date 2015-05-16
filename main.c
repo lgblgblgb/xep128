@@ -212,7 +212,7 @@ static double SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK; // 0.2224
 
 //emu_define_keyboard(10, 8, kbd_press, kbd_release, []);
 
-int main (void) {
+int main (int argc, char *argv[]) {
 	atexit(shutdown_sdl);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) exit_on_SDL_problem("initialization problem");
 	sdl_win = SDL_CreateWindow(
