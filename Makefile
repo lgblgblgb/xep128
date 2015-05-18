@@ -17,6 +17,8 @@ SDIMG	= sdcard.img
 SDURL	= http://xep128.lgb.hu/files/sdcard.img
 ROM	= combined.rom
 ROMURL	= http://xep128.lgb.hu/files/combined.rom
+DLL	= SDL2.dll
+DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
@@ -28,6 +30,10 @@ all:
 
 %.s: %.c $(INCS) Makefile
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
+
+$(DLL):
+	@echo "**** Fetching Win32 SDL2 DLL from $(DLLURL) ..."
+	wget -O $(DLL) $(DLLURL) || { rm -f $(DLL) ; false; }
 
 $(SDIMG):
 	@echo "**** Fetching SDcard image from $(SDURL) ..."
@@ -43,7 +49,7 @@ $(Z80EX):
 $(PRG): $(OBJS) $(INCS) Makefile $(Z80EX) $(SDIMG) $(ROM)
 	$(CC) -o $(PRG) $(OBJS) $(LDFLAGS) $(LIBS)
 
-win32:
+win32:	$(DLL) $(SDIMG) $(ROM)
 	@echo "*** BUILDING FOR WINDOWS ***"
 	$(MAKE) -f Makefile.win32
 	@ls -l $(PRG_EXE)
@@ -64,7 +70,7 @@ clean:
 
 distclean:
 	$(MAKE) clean
-	rm -f $(SDIMG) $(ROM)
+	rm -f $(SDIMG) $(ROM) $(DLL)
 
 commit:
 	git diff
