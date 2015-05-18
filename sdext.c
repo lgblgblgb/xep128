@@ -139,7 +139,9 @@ static void _block_read ( void )
 	blocks++;
 	_buffer[0] = 0xFF; // wait a bit
 	_buffer[1] = 0xFE; // data token
+#ifdef DEBUG_SDEXT
 	printf("SDEXT: REGIO: fread retval = %d\n", fread(_buffer + 2, 1, 512, sdf));
+#endif
 	_buffer[512 + 2] = 0; // CRC
 	_buffer[512 + 3] = 0; // CRC
 	ans_p = _buffer;
@@ -163,7 +165,9 @@ static void _spi_shifting_with_sd_card ()
 	}
 	if (cmd_index == 0 && (_write_b & 0xC0) != 0x40) {
 		if (ans_index < ans_size) {
+#ifdef DEBUG_SDEXT
 			printf("SDEXT: REGIO: streaming answer byte %d of %d-1 value %02X\n", ans_index, ans_size, ans_p[ans_index]);
+#endif
 			_read_b = ans_p[ans_index++];
 		} else {
 			if (ans_callback)
@@ -172,7 +176,9 @@ static void _spi_shifting_with_sd_card ()
 				//_read_b = 0xFF;
 				ans_index = 0;
 				ans_size = 0;
+#ifdef DEBUG_SDEXT
 				printf("SDEXT: REGIO: dummy answer 0xFF\n");
+#endif
 			}
 			_read_b = 0xFF;
 		}
@@ -183,7 +189,9 @@ static void _spi_shifting_with_sd_card ()
 		_read_b = 0xFF;
 		return;
 	}
+#ifdef DEBUG_SDEXT
 	printf("SDEXT: REGIO: command (CMD%d) received: %02X %02X %02X %02X %02X %02X\n", cmd[0] & 63, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]);
+#endif
 	cmd[0] &= 63;
 	cmd_index = 0;
 	ans_callback = NULL;
@@ -198,7 +206,9 @@ static void _spi_shifting_with_sd_card ()
 			_read_b = 0; // R1 answer
 			break;
 		case 9:  // CMD9: read CSD register
+#ifdef DEBUG_SDEXT
 			printf("SDEXT: REGIO: command is read CSD register\n");
+#endif
 			ADD_ANS(_read_csd_answer);
 			_read_b = 0; // R1
 			break;
@@ -214,7 +224,9 @@ static void _spi_shifting_with_sd_card ()
 			ADD_ANS(_stop_transmission_answer);
 			_read_b = 0;
 			// actually we don't do too much, as on receiving a new command callback will be deleted before this switch-case block
+#ifdef DEBUG_SDEXT
 			printf("SDEXT: REGIO: block counter before CMD12: %d\n", blocks);
+#endif
 			blocks = 0;
 			break;
 		case 17: // CMD17: read a single block, babe
@@ -224,7 +236,9 @@ static void _spi_shifting_with_sd_card ()
 				_read_b = 32; // address error, if no SD card image ... [this is bad TODO, better error handling]
 			else {
 				int _offset = (cmd[1] << 24) | (cmd[2] << 16) | (cmd[3] << 8) | cmd[4];
+#ifdef DEBUG_SDEXT
 				printf("SDEXT: REGIO: seek to %d in the image file.\n", _offset);
+#endif
 				fseek(sdf, _offset, SEEK_SET);
 				_block_read();
 				/*
@@ -264,42 +278,58 @@ static void _spi_shifting_with_sd_card ()
 Uint8 sdext_read_cart_p3 ( Uint16 addr )
 {
 	//return 0xFF;
+#ifdef DEBUG_SDEXT
 	int pc = z80ex_get_reg(z80, regPC);
 	printf("SDEXT: read P3 @ %04X [CPU: seg=%02X, pc=%04X]\n", addr, ports[0xB0 | (pc >> 14)], pc);
+#endif
 	if (addr < 0x2000) {
 		Uint8 byte = sd_rom_ext[(rom_page_ofs + addr) & 0xFFFF];
+#ifdef DEBUG_SDEXT
 		printf("SDEXT: reading paged ROM, ROM offset = %04X, result = %02X\n", (addr + rom_page_ofs) & 0xFFFF, byte);
+#endif
 		//byte = 0xFF; // FUCK!
 		return byte;
 	}
 	if (addr < 0x3C00) {
+#ifdef DEBUG_SDEXT
 		printf("SDEXT: reading RAM at offset %04X\n", addr - 0x2000);
+#endif
 		return sd_ram_ext[addr - 0x2000];
 	} if (is_hs_read) {
 		// in HS-read (high speed read) mode, all the 0x3C00-0x3FFF acts as data _read_ register (but not for _write_!!!)
 		// also, there is a fundamental difference compared to "normal" read: each reads triggers SPI shifting in HS mode, but not in regular mode, there only write does that!
 		Uint8 old = _read_b; // HS-read initiates an SPI shift, but the result (AFAIK) is the previous state, as shifting needs time!
 		_spi_shifting_with_sd_card();
+#ifdef DEBUG_SDEXT
 		printf("SDEXT: REGIO: R: DATA: SPI data register HIGH SPEED read %02X [future byte %02X] [shited out was: %02X]\n", old, _read_b, _write_b);
+#endif
 		return old;
 	} else
 		switch (addr & 3) {
 			case 0: 
 				// regular read (not HS) only gives the last shifted-in data, that's all!
+#ifdef DEBUG_SDEXT
 				printf("SDEXT: REGIO: R: DATA: SPI data register regular read %02X\n", _read_b);
+#endif
 				return _read_b;
 				//printf("SDEXT: REGIO: R: SPI, result = %02X\n", a);
 			case 1: // status reg: bit7=wp1, bit6=insert, bit5=changed (insert/changed=1: some of the cards not inserted or changed)
+#ifdef DEBUG_SDEXT
 				printf("SDEXT: REGIO: R: status\n");
+#endif
 				return status;
 				//return 0xFF - 32 + changed;
 				//return changed | 64;
 			case 2: // ROM pager [hmm not readble?!]
+#ifdef DEBUG_SDEXT
 				printf("SDEXT: REGIO: R: rom pager\n");
+#endif
 				return 0xFF;
 				return rom_page_ofs >> 8;
 			case 3: // HS read config is not readable?!]
+#ifdef DEBUG_SDEXT
 				printf("SDEXT: REGIO: R: HS config\n");
+#endif
 				return 0xFF;
 				return is_hs_read;
 			default:
@@ -315,24 +345,32 @@ Uint8 sdext_read_cart_p3 ( Uint16 addr )
 void sdext_write_cart_p3 ( Uint16 addr, Uint8 data )
 {
 	//return;
+#ifdef DEBUG_SDEXT
 	int pc = z80ex_get_reg(z80, regPC);
 	printf("SDEXT: write P3 @ %04X with %02X [CPU: seg=%02X, pc=%04X]\n", addr, data, ports[0xB0 | (pc >> 14)], pc);
+#endif
 	if (addr < 0x2000) return;	// pageable ROM (8K), do not overwrite [reflash is currently not supported]
 	if (addr < 0x3C00) {		// SDEXT's RAM (7K), writable
+#ifdef DEBUG_SDEXT
 		printf("SDEXT: writing RAM at offset %04X\n", addr - 0x2000);
+#endif
 		sd_ram_ext[addr - 0x2000] = data;
 		return;
 	}
 	// rest 1K is the (memory mapped) I/O area
 	switch (addr & 3) {
 		case 0:	// data register
+#ifdef DEBUG_SDEXT
 			printf("SDEXT: REGIO: W: DATA: SPI data register to %02X\n", data);
+#endif
 			if (!is_hs_read) _write_b = data;
 			_write_specified = data;
 			_spi_shifting_with_sd_card();
 			break;
 		case 1: // control register (bit7=CS0, bit6=CS1, bit5=clear change card signal
+#ifdef DEBUG_SDEXT
 			printf("SDEXT: REGIO: W: control register to %02X\n", data);
+#endif
 			if (data & 32) // clear change signal
 				status &= 255 - 32;
 			cs0 = data & 128;
@@ -340,12 +378,16 @@ void sdext_write_cart_p3 ( Uint16 addr, Uint8 data )
 			break;
 		case 2: // ROM pager register
 			rom_page_ofs = data << 8;
+#ifdef DEBUG_SDEXT
 			printf("SDEXT: REGIO: W: paging ROM to %02X\n", data);
+#endif
 			break;
 		case 3: // HS (high speed) read mode to set: bit7=1
 			is_hs_read = data & 128;
 			_write_b = is_hs_read ? 0xFF : _write_specified;
+#ifdef DEBUG_SDEXT
 			printf("SDEXT: REGIO: W: HS read mode is %s\n", is_hs_read ? "set" : "reset");
+#endif
 			break;
 		default:
 			fprintf(stderr, "SDEXT: FATAL, unhandled (WR) case\n");
