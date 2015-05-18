@@ -1,11 +1,14 @@
 # Xep128
-Xep128 is an Enterprise-128 (a Z80 based 8 bit system) emulator (uses SDL2 and
-z80ex) with the main focus on emulating somewhat "exotic" hardware additions.
+Xep128 is an Enterprise-128 (a Z80 based, 8 bit computer) emulator (uses SDL2
+and z80ex) with the main focus on emulating somewhat "exotic" hardware
+additions.
 
 Written by (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+
+Xep128 main site: http://xep128.lgb.hu/
+Source repository: http://github.com/lgblgblgb/xep128
+
 Xep128 uses Z80 emulator "Z80ex": https://sourceforge.net/projects/z80ex/
-http://xep128.lgb.hu/
-http://github.com/lgblgblgb/xep128
 
 Xep128 is licensed under the terms of GNU/GPL v2, for more information please
 read file LICENSE. You can find the source on github, see above.
@@ -20,10 +23,6 @@ Currently it's mainly for Linux and/or UNIX-like systems, but since it's an SDL
 based project, it would be not that hard to port to Windows. There is some
 on-going try (by me) to build for Windows on Linux, see later in this document
 for details, if you want to try Xep128 on Windows.
-
-LibZ80ex (great Z80 emulator, http://z80ex.sourceforge.net/) is included just
-in case, if your OS distribution does not contain it (or older version, etc),
-or if you want to use Xep128 on Windows.
 
 Please note, that it's not the "best" Enterprise-128 emulator on the planet,
 for that, you should use ep128emu project instead. Also, my emulator is not so
