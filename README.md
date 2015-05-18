@@ -60,12 +60,12 @@ essential of course).
 # Installation on Windows (binary, .exe)
 
 I've never used Windows, nor I have Windows installed. So the best I will
-be able to do is trying to cross-compile for Windows on Linux. This would
-also require some modification and architecture dependent parts, maybe.
+be able to do is trying to cross-compile for Windows on Linux.
+
 You can try to compile Xep128 yourself using Linux with cross compiling
 target for win32.
 
-Or you can try my build (WARNING! Not tested, I have no windows!)
+*Or you can try my build (WARNING! Not tested, I have no windows!)*
 
 http://xep128.lgb.hu/files/xep128.zip
 
@@ -76,8 +76,7 @@ You also need the SD card image (warning, 256Mbyte!), from here:
 
 http://xep128.lgb.hu/files/sdcard.img
 
-Put the file into the same directory where you put the content for the
-xep128.zip.
+Put the file into the same directory where you put the content of xep128.zip.
 
 Now, you can try to execute xep128.exe ...
 

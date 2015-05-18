@@ -10,56 +10,25 @@ LIBS	= $(Z80EX) z80ex/lib/libz80ex_dasm.a
 INCS	= xepem.h
 SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c
 OBJS	= $(SRCS:.c=.o)
-PRG	= xep128
 PRG_EXE	= xep128.exe
 Z80EX	= z80ex/lib/libz80ex.a
-SDIMG	= sdcard.img
-SDURL	= http://xep128.lgb.hu/files/sdcard.img
-ROM	= combined.rom
-ROMURL	= http://xep128.lgb.hu/files/combined.rom
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
 	@echo "Linker:   $(CC) $(LDFLAGS) $(LIBS)"
 	$(MAKE) -f Makefile.win32 $(PRG_EXE)
 
-%.o: %.c $(INCS) Makefile
+%.o: %.c $(INCS) Makefile.win32
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-%.s: %.c $(INCS) Makefile
+%.s: %.c $(INCS) Makefile.win32
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-$(SDIMG):
-	@echo "**** Fetching SDcard image from $(SDURL) ..."
-	wget -O $(SDIMG) $(SDURL) || { rm -f $(SDIMG) ; false; }
-
-$(ROM):
-	@echo "**** Fetching ROM image from $(ROMURL) ..."
-	wget -O $(ROM) $(ROMURL) || { rm -f $(ROM) ; false; }
-
 $(Z80EX):
-	$(MAKE) -f z80ex/Makefile.win32 -C z80ex static
+	$(MAKE) -f Makefile.win32 -C z80ex static
 
-$(PRG_EXE): $(OBJS) $(INCS) Makefile $(Z80EX) $(SDIMG) $(ROM)
+$(PRG_EXE): $(OBJS) $(INCS) Makefile.win32 $(Z80EX)
 	$(CC) -o $(PRG_EXE) $(OBJS) $(LDFLAGS) $(LIBS)
 
-strip:	$(PRG)
-	strip $(PRG)
-
-
-clean:
-	rm -f $(OBJS) $(PRG) $(PRG_EXE)
-	$(MAKE) -C z80ex clean
-
-distclean:
-	$(MAKE) clean
-	rm -f $(SDIMG) $(ROM)
-
-commit:
-	git diff
-	git status
-	EDITOR="vim -c 'startinsert'" git commit -a
-	git push
-
-.PHONY: all clean distclean strip commit
+.PHONY: all
 

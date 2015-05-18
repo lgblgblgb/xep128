@@ -43,8 +43,11 @@ $(Z80EX):
 $(PRG): $(OBJS) $(INCS) Makefile $(Z80EX) $(SDIMG) $(ROM)
 	$(CC) -o $(PRG) $(OBJS) $(LDFLAGS) $(LIBS)
 
-$(PRG_EXE):
+win32:
+	@echo "*** BUILDING FOR WINDOWS ***"
 	$(MAKE) -f Makefile.win32
+	@ls -l $(PRG_EXE)
+	@file $(PRG_EXE)
 
 strip:	$(PRG)
 	strip $(PRG)
@@ -69,5 +72,5 @@ commit:
 	EDITOR="vim -c 'startinsert'" git commit -a
 	git push
 
-.PHONY: all clean distclean strip commit
+.PHONY: all clean distclean strip commit win32
 
