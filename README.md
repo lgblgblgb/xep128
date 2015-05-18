@@ -1,6 +1,14 @@
 # Xep128
-Enterprise-128 emulator (uses sdl2 and libz80ex) with the main focus on
-emulating somewhat "exotic" hardware additions.
+Xep128 is an Enterprise-128 (a Z80 based 8 bit system) emulator (uses SDL2 and
+z80ex) with the main focus on emulating somewhat "exotic" hardware additions.
+
+Written by (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+Xep128 uses Z80 emulator "Z80ex": https://sourceforge.net/projects/z80ex/
+http://xep128.lgb.hu/
+http://github.com/lgblgblgb/xep128
+
+Xep128 is licensed under the terms of GNU/GPL v2, for more information please
+read file LICENSE. You can find the source on github, see above.
 
 WARNING! Xep128 is in early alpha stage currently! It lacks many important
 features (no sound, not so precise nick emulation, no dave interrupts other
@@ -8,29 +16,22 @@ than 1Hz and VINT from Nick, etc etc), and it's not comfortable to use, there
 is no configuration but a single built-in config. It will change later,
 hopefully.
 
-Xep128 is licensed under the terms of GNU/GPL v2, for more information please
-read file LICENSE.
-
 Currently it's mainly for Linux and/or UNIX-like systems, but since it's an SDL
-based project, it would be not that hard to port to Windows, I guess. There is
-some on-going tries (from me) to build for Windows on Linux, see later in this
-document for details, if you want to try Xep128 on Windows.
+based project, it would be not that hard to port to Windows. There is some
+on-going try (by me) to build for Windows on Linux, see later in this document
+for details, if you want to try Xep128 on Windows.
 
 LibZ80ex (great Z80 emulator, http://z80ex.sourceforge.net/) is included just
-in case, if your OS distribution does not contain it (or older version, etc).
+in case, if your OS distribution does not contain it (or older version, etc),
+or if you want to use Xep128 on Windows.
 
 Please note, that it's not the "best" Enterprise-128 emulator on the planet,
 for that, you should use ep128emu project instead. Also, my emulator is not so
-cycle exact correctly, it does not emulate sound (currently), it also lacks
+cycle exact for now, it does not emulate sound (currently), it also lacks
 debugger what ep128emu has. However it emulates some "more exotic" (not so much
 traditional) hardware additions becomes (or becoming) popular among EP users
 recently: mouse support, APU ("FPU"), SD card reader and soon limited wiznet
 w5300 emulation (Ethernet connection with built-in TCP/IP support).
-
-Z80 emulation is done with the nice z80ex Z80 emulator, which is a separated
-(not my!) project also with licence of GNU/GPL (so importing it into the
-repository of my emulator can't be a problem). Some Linux distribution indeed
-contains it, but I guess it's better in this way.
 
 # Installation on Linux / UNIX like OS (from source)
 
@@ -63,11 +64,13 @@ I've never used Windows, nor I have Windows installed. So the best I will
 be able to do is trying to cross-compile for Windows on Linux.
 
 You can try to compile Xep128 yourself using Linux with cross compiling
-target for win32.
+target for win32 (*make win32*).
 
 *Or you can try my build (WARNING! Not tested, I have no windows!)*
 
-http://xep128.lgb.hu/files/xep128.zip
+This is how:
+
+http://xep128.lgb.hu/files/xep128-win32.zip
 
 Download and unzip this archive somewhere. It contains xep128.exe, the
 ROM file, and the SDL2 DLL.
