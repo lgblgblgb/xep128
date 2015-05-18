@@ -9,8 +9,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#define WINDOW_TITLE "XEPem"
-#define VERSION "v1.0"
+#define WINDOW_TITLE "Xep128"
+#define VERSION "v0.1"
 #define COPYRIGHT "(C)2015 Gabor Lenart"
 
 // more accurate :) from IstvanV
