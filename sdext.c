@@ -136,11 +136,13 @@ static int blocks;
 
 static void _block_read ( void )
 {
+	int ret;
 	blocks++;
 	_buffer[0] = 0xFF; // wait a bit
 	_buffer[1] = 0xFE; // data token
+	ret = fread(_buffer + 2, 1, 512, sdf);
 #ifdef DEBUG_SDEXT
-	printf("SDEXT: REGIO: fread retval = %d\n", fread(_buffer + 2, 1, 512, sdf));
+	printf("SDEXT: REGIO: fread retval = %d\n", ret);
 #endif
 	_buffer[512 + 2] = 0; // CRC
 	_buffer[512 + 3] = 0; // CRC
