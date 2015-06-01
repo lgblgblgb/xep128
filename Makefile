@@ -19,6 +19,7 @@ ROM	= combined.rom
 ROMURL	= http://xep128.lgb.hu/files/combined.rom
 DLL	= SDL2.dll
 DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
+ZIP32	= xep128-win32.zip
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
@@ -54,7 +55,10 @@ win32:	$(DLL) $(SDIMG) $(ROM)
 	$(MAKE) -f Makefile.win32
 	@ls -l $(PRG_EXE)
 	@file $(PRG_EXE)
-	zip xep128-win32.zip $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE
+
+$(ZIP32): $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE
+	$(MAKE) win32
+	zip $(ZIP32) $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE
 
 strip:	$(PRG)
 	strip $(PRG)
@@ -66,7 +70,7 @@ sdl2:	sdl2.o
 	$(CC) -o sdl2 sdl2.o $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -f $(OBJS) $(PRG) $(PRG_EXE) xep128-win32.zip
+	rm -f $(OBJS) $(PRG) $(PRG_EXE) $(ZIP32)
 	$(MAKE) -C z80ex clean
 
 distclean:

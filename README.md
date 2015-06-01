@@ -88,7 +88,8 @@ Currently, the emulator outputs tons of information to the console/terminal
 you started from, which can slow down the whole X server. You may want to
 redirect the stdout to /dev/null or into a file (if you need it later) so
 the terminal won't make your X server busy to render that amount of text
-emited by the emulator :)
+emited by the emulator :) Note: *this is not the case for Windows port,
+you can ignore this warning then*.
 
 Mouse emulation more or less works: it emulates the "boxsoft mouse interface".
 If you click into the emulation window, it enters into "mouse grab" mode,
