@@ -114,3 +114,18 @@ clock with typing this at the IS-BASIC prompt:
 
  :CLOCK
 
+# More information
+
+The SD card image is a normal VHD file, you can try to replace it with your own.
+
+Quirky "printer emulation" can be used: in case of "printing" emulator tries to
+create a file named "print.out" in the current directory. It's simply the content
+of bytes sent to the printer port, including all escape sequences!
+
+# Credits
+
+JSep (a JavaScript based Enterprise-128 emulator, also written by myself) was great
+source for Xep128. Enteprise-128 forever forum is an essential site, people there
+helped a lot (especially with JSep), I would mention IstvanV and Zozosoft.
+LibZ80ex is the Z80 emulator used in Xep128 (not written by me).
+
