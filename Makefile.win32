@@ -8,7 +8,7 @@ LIBS	= $(Z80EX) z80ex/lib/libz80ex_dasm.a
 #LIBS	= -Wl,-Bstatic -lz80ex -lz80ex_dasm -Wl,-Bdynamic
 
 INCS	= xepem.h
-SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c
+SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c printer.c
 OBJS	= $(SRCS:.c=.o)
 PRG_EXE	= xep128.exe
 Z80EX	= z80ex/lib/libz80ex.a

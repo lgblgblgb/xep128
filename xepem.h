@@ -106,6 +106,9 @@ void rtc_write_reg(Uint8 val);
 Uint8 rtc_read_reg(void);
 extern int rtc_update_trigger;
 
+void printer_send_data(Uint8 data);
+void printer_close(void);
+
 extern Uint8 memory[0x400000];
 extern Z80EX_CONTEXT *z80;
 extern Uint8 ports[0x100];

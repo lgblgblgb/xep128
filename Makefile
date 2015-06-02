@@ -8,7 +8,7 @@ LIBS	= $(Z80EX) z80ex/lib/libz80ex_dasm.a
 #LIBS	= -Wl,-Bstatic -lz80ex -lz80ex_dasm -Wl,-Bdynamic
 
 INCS	= xepem.h
-SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c
+SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c printer.c
 OBJS	= $(SRCS:.c=.o)
 PRG	= xep128
 PRG_EXE	= xep128.exe
@@ -70,7 +70,7 @@ sdl2:	sdl2.o
 	$(CC) -o sdl2 sdl2.o $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -f $(OBJS) $(PRG) $(PRG_EXE) $(ZIP32)
+	rm -f $(OBJS) $(PRG) $(PRG_EXE) $(ZIP32) print.out
 	$(MAKE) -C z80ex clean
 
 distclean:

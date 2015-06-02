@@ -151,7 +151,9 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, void *unused_
 
 
 static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, Z80EX_BYTE value, void *unused_2) {
+	Z80EX_BYTE old_value;
 	port &= 0xFF;
+	old_value = ports[port];
 	ports[port] = value;
 	//printf("IO: WRITE: OUT (%02Xh),%02Xh\n", port, value);
 	//if ((port & 0xF0) == 0x80) printf("NICK WRITE!\n");
@@ -209,6 +211,13 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, Z80EX_BYTE value, 
 			break;
 		case 0xB5:
 			kbd_selector = ((value & 15) < 10) ? (value & 15) : -1;
+			if ((old_value & 16) != (value & 16))
+				fprintf(stderr, "PRINTER STROBE: %d -> %d\n", old_value & 16, value & 16);
+			if ((old_value & 16) && (!(value & 16)))
+				printer_send_data(ports[0xB6]);
+			break;
+		case 0xB6:
+			fprintf(stderr, "PRINTER DATA: %d\n", value);
 			break;
 		case 0xB7:
 			mouse_check_data_shift(value);
@@ -304,6 +313,7 @@ int z80_reset ( void )
 		}
 		printf("Z80: emulation has been created.\n");
 		memset(ports, 0xFF, 0x100);
+		ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
 	}
 	z80ex_reset(z80);
 	srand((unsigned int)time(NULL));

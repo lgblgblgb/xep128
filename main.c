@@ -47,6 +47,7 @@ static void shutdown_sdl(void)
                 //SDL_Quit();
      //   }
 	//SQL_Quit();
+	printer_close();
         printf("Shutdown callback, return.\n");
 }
 
