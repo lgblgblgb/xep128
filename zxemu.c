@@ -72,5 +72,6 @@ void zxemu_attribute_memory_write ( Uint16 address, Uint8 data )
 	zxemu_ports[2] = data;
 	zxemu_ports[3] = 0x80;
 	zxemu_nmi();
+	fprintf(stderr, "ZXEMU: attrib-mem trap at %04Xh\n", address);
 }
 

@@ -89,13 +89,12 @@ static void      _mwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, Z80EX_BYTE va
 	register int phys = memsegs[addr >> 14] + addr;
 	if (phys >= 0x3F0000) { // VRAM access, no "$BF port" wait states ever, BUT TODO: Nick CPU clock strechting ...
 		memory[phys] = value;
+		if (zxemu_on && phys >= 0x3f9800 && phys <= 0x3f9aff)
+			zxemu_attribute_memory_write(phys & 0xFFFF, value);
 		return;
 	}
 	if (mem_ws_all) 
 		z80ex_w_states(z80, 1);
-	if (zxemu_on && phys >= 0x3f9800 && phys <= 0x3f9aff) {
-		zxemu_attribute_memory_write(phys & 0xFFFF, value);
-	}
 	if (phys >= ram_start)
 		memory[phys] = value;
 #ifdef CONFIG_SDEXT_SUPPORT
