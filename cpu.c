@@ -131,7 +131,7 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unuse
 		/* ZX Spectrum emulator */
 		case 0x40: case 0x41: case 0x42: case 0x43: case 0x44:
 			fprintf(stderr, "ZXEMU: reading port %02Xh\n", port);
-			return zxemu_ports[port - 0x40];
+			return ports[port];
 
 		/* RTC registers */
 		case 0x7F:
@@ -192,7 +192,6 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 			break;
 
 		case 0x44:
-			zxemu_ports[4] = value;
 			if (zxemu_on != (value & 128)) {
 				zxemu_on = value & 128;
 				fprintf(stderr, "ZXEMU: emulation is turned %s.\n", zxemu_on ? "ON" : "OFF");

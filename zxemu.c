@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 
 int zxemu_on = 0;
-Uint8 zxemu_ports[5];
 int nmi_pending = 0;
 
 /*
@@ -41,10 +40,10 @@ static int zxemu_nmi ( void )
 
 void zxemu_write_ula ( Uint8 hiaddr, Uint8 data )
 {
-	zxemu_ports[0] = hiaddr;	// high I/O address
-	zxemu_ports[1] = 0xFE;		// low I/O address, the ULA port
-	zxemu_ports[2] = data;		// data on the bus
-	zxemu_ports[3] = 0;		// ?? 9 = I/O kind of op
+	ports[0x40] = hiaddr;	// high I/O address
+	ports[0x41] = 0xFE;		// low I/O address, the ULA port
+	ports[0x42] = data;		// data on the bus
+	ports[0x43] = 0;		// ?? 9 = I/O kind of op
 	if (!zxemu_nmi())
 		fprintf(stderr, "ZXEMU: ULA write: no NMI (switched off)\n");
 	fprintf(stderr, "ZXEMU: writing ULA at %04Xh (data: %02Xh)\n", z80ex_get_reg(z80, regPC), data);
@@ -53,10 +52,10 @@ void zxemu_write_ula ( Uint8 hiaddr, Uint8 data )
 
 Uint8 zxemu_read_ula ( Uint8 hiaddr )
 {
-	zxemu_ports[0] = hiaddr;
-	zxemu_ports[1] = 0xFE;
-	zxemu_ports[2] = 0xFF; // ???????
-	zxemu_ports[3] = 0;
+	ports[0x40] = hiaddr;
+	ports[0x41] = 0xFE;
+	ports[0x42] = 0xFF; // ???????
+	ports[0x43] = 0;
 	if (!zxemu_nmi())
 		fprintf(stderr, "ZXEMU: ULA read: no NMI (switched off)\n");
 	fprintf(stderr, "ZXEMU: reading ULA at %04Xh\n", z80ex_get_reg(z80, regPC));
@@ -67,10 +66,10 @@ Uint8 zxemu_read_ula ( Uint8 hiaddr )
 /* This function is only allowed to be called, if zxemu_on is non-zero, and attribute area is written! */
 void zxemu_attribute_memory_write ( Uint16 address, Uint8 data )
 {
-	zxemu_ports[0] = address >> 8;
-	zxemu_ports[1] = address & 0xFF;
-	zxemu_ports[2] = data;
-	zxemu_ports[3] = 0x80;
+	ports[0x40] = address >> 8;
+	ports[0x41] = address & 0xFF;
+	ports[0x42] = data;
+	ports[0x43] = 0x80;
 	zxemu_nmi();
 	fprintf(stderr, "ZXEMU: attrib-mem trap at %04Xh\n", address);
 }
