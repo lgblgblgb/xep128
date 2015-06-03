@@ -34,11 +34,8 @@ and emulates it.
 
 static int zxemu_nmi ( void )
 {
-	if (zxemu_on) {
-		nmi_pending = 1;
-		return 1;
-	} else
-		return 0;
+	nmi_pending = zxemu_on;
+	return nmi_pending;
 }
 
 
@@ -50,6 +47,7 @@ void zxemu_write_ula ( Uint8 hiaddr, Uint8 data )
 	zxemu_ports[3] = 0;		// ?? 9 = I/O kind of op
 	if (!zxemu_nmi())
 		fprintf(stderr, "ZXEMU: ULA write: no NMI (switched off)\n");
+	fprintf(stderr, "ZXEMU: writing ULA at %04Xh (data: %02Xh)\n", z80ex_get_reg(z80, regPC), data);
 }
 
 
@@ -61,7 +59,8 @@ Uint8 zxemu_read_ula ( Uint8 hiaddr )
 	zxemu_ports[3] = 0;
 	if (!zxemu_nmi())
 		fprintf(stderr, "ZXEMU: ULA read: no NMI (switched off)\n");
-	return 0xFF;
+	fprintf(stderr, "ZXEMU: reading ULA at %04Xh\n", z80ex_get_reg(z80, regPC));
+	return zxemu_on ? 0xBF : 0xFF;
 }
 
 
