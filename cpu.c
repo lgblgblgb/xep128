@@ -211,14 +211,14 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, Z80EX_BYTE value, 
 			break;
 		case 0xB5:
 			kbd_selector = ((value & 15) < 10) ? (value & 15) : -1;
-			if ((old_value & 16) != (value & 16))
-				fprintf(stderr, "PRINTER STROBE: %d -> %d\n", old_value & 16, value & 16);
+			/*if ((old_value & 16) != (value & 16))
+				fprintf(stderr, "PRINTER STROBE: %d -> %d\n", old_value & 16, value & 16);*/
 			if ((old_value & 16) && (!(value & 16)))
 				printer_send_data(ports[0xB6]);
 			break;
-		case 0xB6:
+		/*case 0xB6:
 			fprintf(stderr, "PRINTER DATA: %d\n", value);
-			break;
+			break;*/
 		case 0xB7:
 			mouse_check_data_shift(value);
 			break;
