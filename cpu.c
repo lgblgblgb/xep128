@@ -93,6 +93,9 @@ static void      _mwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, Z80EX_BYTE va
 	}
 	if (mem_ws_all) 
 		z80ex_w_states(z80, 1);
+	if (zxemu_on && phys >= 0x3f9800 && phys <= 0x3f9aff) {
+		zxemu_attribute_memory_write(phys & 0xFFFF, value);
+	}
 	if (phys >= ram_start)
 		memory[phys] = value;
 #ifdef CONFIG_SDEXT_SUPPORT
@@ -128,6 +131,7 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unuse
 #endif
 		/* ZX Spectrum emulator */
 		case 0x40: case 0x41: case 0x42: case 0x43: case 0x44:
+			fprintf(stderr, "ZXEMU: reading port %02Xh\n", port);
 			return zxemu_ports[port - 0x40];
 
 		/* RTC registers */
@@ -189,7 +193,11 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 			break;
 
 		case 0x44:
-			zxemu_on = value & 128;
+			zxemu_ports[4] = value;
+			if (zxemu_on != (value & 128)) {
+				zxemu_on = value & 128;
+				fprintf(stderr, "ZXEMU: emulation is turned %s.\n", zxemu_on ? "ON" : "OFF");
+			}
 			break;
 
 		/* RTC registers */

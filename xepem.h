@@ -111,7 +111,8 @@ void printer_close(void);
 
 void zxemu_write_ula ( Uint8 hiaddr, Uint8 data );
 Uint8 zxemu_read_ula ( Uint8 hiaddr );
-extern int zxemu_on;
+void zxemu_attribute_memory_write ( Uint16 address, Uint8 data );
+extern int zxemu_on, nmi_pending;
 extern Uint8 zxemu_ports[5];
 #define IO16_HI_BYTE(port16) (((ports[(((port16) >> 14) & 3) | 0xB0] & 3) << 6) | (((port16) >> 8) & 0x3F))
 

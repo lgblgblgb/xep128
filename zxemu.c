@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 int zxemu_on = 0;
 Uint8 zxemu_ports[5];
+int nmi_pending = 0;
 
 /*
 Not working at the moment.
@@ -31,11 +32,10 @@ and emulates it.
 */
 
 
-int zxemu_nmi ( void )
+static int zxemu_nmi ( void )
 {
 	if (zxemu_on) {
-		z80ex_nmi(z80);
-		fprintf(stderr, "ZXEMU: NMI!\n");
+		nmi_pending = 1;
 		return 1;
 	} else
 		return 0;
@@ -62,5 +62,16 @@ Uint8 zxemu_read_ula ( Uint8 hiaddr )
 	if (!zxemu_nmi())
 		fprintf(stderr, "ZXEMU: ULA read: no NMI (switched off)\n");
 	return 0xFF;
+}
+
+
+/* This function is only allowed to be called, if zxemu_on is non-zero, and attribute area is written! */
+void zxemu_attribute_memory_write ( Uint16 address, Uint8 data )
+{
+	zxemu_ports[0] = address >> 8;
+	zxemu_ports[1] = address & 0xFF;
+	zxemu_ports[2] = data;
+	zxemu_ports[3] = 0x80;
+	zxemu_nmi();
 }
 

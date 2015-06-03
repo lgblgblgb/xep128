@@ -277,7 +277,14 @@ int main (int argc, char *argv[]) {
 		//printf("%04X %s\n", pc, buffer);
 		z80_dasm(buffer, pc, -1);
 #endif
-		if (dave_int_read & 0xAA) {
+		if (nmi_pending) {
+			t = z80ex_nmi(z80);
+			fprintf(stderr, "NMI: %d\n", t);
+			if (t)
+				nmi_pending = 0;
+		} else
+			t = 0;
+		if ((t == 0) && (dave_int_read & 0xAA)) {
 			t = z80ex_int(z80);
 			if (t)
 				printf("CPU: int and accepted = %d\n", t);
