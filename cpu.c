@@ -105,8 +105,8 @@ static void      _mwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, Z80EX_BYTE va
 
 
 
-static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, void *unused_2) {
-	port &= 0xFF;
+static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unused_2) {
+	Uint8 port = port16 & 0xFF;
 	//printf("IO: READ: IN (%02Xh)\n", port);
 	switch (port) {
 		/* EXDOS/WD registers */
@@ -142,7 +142,10 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, void *unused_
 			return (kbd_selector == -1) ? 0xFF : kbd_matrix[kbd_selector];
 		case 0xB6:
 			return mouse_read();
+		case 0xFE:
+			return zxemu_read_ula(IO16_HI_BYTE(port16));
 	}
+	fprintf(stderr, "IO: READ: unhandled port %02Xh read\n", port);
 	return 0xFF;
 	//return ports[port];
 }
@@ -150,9 +153,9 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, void *unused_
 
 
 
-static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, Z80EX_BYTE value, void *unused_2) {
+static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value, void *unused_2) {
 	Z80EX_BYTE old_value;
-	port &= 0xFF;
+	Uint8 port = port16 & 0xFF;
 	old_value = ports[port];
 	ports[port] = value;
 	//printf("IO: WRITE: OUT (%02Xh),%02Xh\n", port, value);
@@ -187,6 +190,11 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, Z80EX_BYTE value, 
 		case 0x7F:
 			rtc_write_reg(value);
 			break;
+
+		case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
+		case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
+			break;
+
 		/* DAVE registers */
 		case 0xB0:
 			memsegs[0] =  value << 14;
@@ -216,9 +224,9 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, Z80EX_BYTE value, 
 			if ((old_value & 16) && (!(value & 16)))
 				printer_send_data(ports[0xB6]);
 			break;
-		/*case 0xB6:
-			fprintf(stderr, "PRINTER DATA: %d\n", value);
-			break;*/
+		case 0xB6:
+			// fprintf(stderr, "PRINTER DATA: %d\n", value);
+			break;
 		case 0xB7:
 			mouse_check_data_shift(value);
 			break;
@@ -251,6 +259,12 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port, Z80EX_BYTE value, 
 			break;
 		case 0x83: case 0x87: case 0x8B: case 0x8F:
 			nick_set_lpth(value);
+			break;
+		case 0xFE:
+			zxemu_write_ula(IO16_HI_BYTE(port16), value);
+			break;
+		default:
+			fprintf(stderr, "IO: WRITE: unhandled port %02Xh write with data %02Xh\n", port, value);
 			break;
 	}
 }

@@ -109,6 +109,11 @@ extern int rtc_update_trigger;
 void printer_send_data(Uint8 data);
 void printer_close(void);
 
+void zxemu_write_ula ( Uint8 hiaddr, Uint8 data );
+Uint8 zxemu_read_ula ( Uint8 hiaddr );
+extern int zxemu_on;
+#define IO16_HI_BYTE(port16) (((ports[(((port16) >> 14) & 3) | 0xB0] & 3) << 6) | (((port16) >> 8) & 0x3F))
+
 extern Uint8 memory[0x400000];
 extern Z80EX_CONTEXT *z80;
 extern Uint8 ports[0x100];
