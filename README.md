@@ -108,19 +108,25 @@ Note, that keyboard mapping is more-or-less "positional", eg, for quotation mark
 you need to press shift+2 because quotation mark on the Enterprise keyboard
 can be accessed with shifted key 2. And so on, you may get the idea.
 
+# More information on emulated hardware add-ons
+
+The SD card image is a normal VHD file, you can try to replace it with your own.
+SD card emulation is read-only currently. Card info is not correct, but it seems
+the SDext ROM software does not mind it too much.
+
 RTC is emulated enough for time keeping (query only, you can't set the time).
 ZT (ZozoTools) ROM is included in the combined ROM package, you can see the
 clock with typing this at the IS-BASIC prompt:
 
  :CLOCK
 
-# More information
-
-The SD card image is a normal VHD file, you can try to replace it with your own.
-
 Quirky "printer emulation" can be used: in case of "printing" emulator tries to
-create a file named "print.out" in the current directory. It's simply the content
-of bytes sent to the printer port, including all escape sequences!
+create/append a file named "print.out" in the current directory. It's simply the
+content of bytes sent to the printer port, including all escape sequences!
+
+ZX Spectrum emulator card emulation :) does not work currently. The provided
+combined ROM pack file contains the ROM code (version 4.0). You can try that
+with :ZX command from IS-BASIC prompt, but almost surely it won't work anyway.
 
 # Credits
 
