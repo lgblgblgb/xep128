@@ -126,6 +126,10 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unuse
 		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
 			return wd_read_exdos_status();
 #endif
+		/* ZX Spectrum emulator */
+		case 0x40: case 0x41: case 0x42: case 0x43: case 0x44:
+			return zxemu_ports[port - 0x40];
+
 		/* RTC registers */
 		case 0x7F:
 			return rtc_read_reg();
@@ -183,6 +187,11 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 		case 0x3F:
 			printf("Z180: would be Z180 config port, ignored <no Z180 emulation>\n");
 			break;
+
+		case 0x44:
+			zxemu_on = value & 128;
+			break;
+
 		/* RTC registers */
 		case 0x7E:
 			rtc_set_reg(value);

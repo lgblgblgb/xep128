@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 
 int zxemu_on = 0;
-
+Uint8 zxemu_ports[5];
 
 /*
 Not working at the moment.
@@ -30,14 +30,37 @@ ports 0x40 - 0x43 so the ZX emu ROM NMI handler can query the "trapped" ZX op
 and emulates it. 
 */
 
+
+int zxemu_nmi ( void )
+{
+	if (zxemu_on) {
+		z80ex_nmi(z80);
+		fprintf(stderr, "ZXEMU: NMI!\n");
+		return 1;
+	} else
+		return 0;
+}
+
+
 void zxemu_write_ula ( Uint8 hiaddr, Uint8 data )
 {
+	zxemu_ports[0] = hiaddr;	// high I/O address
+	zxemu_ports[1] = 0xFE;		// low I/O address, the ULA port
+	zxemu_ports[2] = data;		// data on the bus
+	zxemu_ports[3] = 0;		// ?? 9 = I/O kind of op
+	if (!zxemu_nmi())
+		fprintf(stderr, "ZXEMU: ULA write: no NMI (switched off)\n");
 }
+
 
 Uint8 zxemu_read_ula ( Uint8 hiaddr )
 {
+	zxemu_ports[0] = hiaddr;
+	zxemu_ports[1] = 0xFE;
+	zxemu_ports[2] = 0xFF; // ???????
+	zxemu_ports[3] = 0;
+	if (!zxemu_nmi())
+		fprintf(stderr, "ZXEMU: ULA read: no NMI (switched off)\n");
 	return 0xFF;
 }
-
-
 
