@@ -41,6 +41,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define COMBINED_ROM_PATH "combined.rom"
 #define SDCARD_IMG_PATH "sdcard.img"
 
+extern int z180;
+
 int set_ep_ramsize(int kbytes);
 int z80_reset ( void );
 
@@ -121,6 +123,10 @@ extern Uint8 ports[0x100];
 extern Uint8 dave_int_read;
 extern Uint8 kbd_matrix[16];
 extern int kbd_selector;
+
+void emurom_send ( Uint8 data );
+Uint8 emurom_receive ( void );
+
 
 
 #endif
