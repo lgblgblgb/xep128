@@ -12,6 +12,7 @@ LIBS	=
 INCS	= xepem.h
 SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c
 OBJS	= $(SRCS:.c=.o)
+Z80EX	= z80ex.o z80ex_dasm.o
 PRG	= xep128
 PRG_EXE	= xep128.exe
 SDIMG	= sdcard.img
@@ -20,6 +21,7 @@ ROM	= combined.rom
 DLL	= SDL2.dll
 DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
 ZIP32	= xep128-win32.zip
+ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
@@ -32,9 +34,9 @@ all:
 %.s: %.c $(INCS) Makefile
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-z80ex.o: z80ex/z80ex.c
+z80ex.o: z80ex/z80ex.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o z80ex.o z80ex/z80ex.c
-z80ex_dasm.o: z80ex/z80ex_dasm.c
+z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o z80ex_dasm.o z80ex/z80ex_dasm.c
 
 $(DLL):
@@ -49,32 +51,22 @@ $(ROM):
 	$(MAKE) -C rom
 	cp rom/$(ROM) .
 
-
-$(PRG): $(OBJS) z80ex.o z80ex_dasm.o $(INCS) Makefile $(SDIMG) $(ROM)
-	$(CC) -o $(PRG) $(OBJS) z80ex.o z80ex_dasm.o $(LDFLAGS) $(LIBS)
+$(PRG): $(OBJS) $(Z80EX) $(INCS) Makefile $(SDIMG) $(ROM)
+	$(CC) -o $(PRG) $(OBJS) $(Z80EX) $(LDFLAGS) $(LIBS)
 
 win32:	$(DLL) $(SDIMG) $(ROM)
 	@echo "*** BUILDING FOR WINDOWS ***"
 	$(MAKE) -f Makefile.win32
 	@ls -l $(PRG_EXE)
 	@file $(PRG_EXE)
-
-$(ZIP32): $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE
-	$(MAKE) win32
 	zip $(ZIP32) $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE
+	@ls -l $(ZIP32)
 
 strip:	$(PRG)
 	strip $(PRG)
 
-sdl:	sdl.o
-	$(CC) -o sdl sdl.o $(LDFLAGS) $(LIBS)
-
-sdl2:	sdl2.o
-	$(CC) -o sdl2 sdl2.o $(LDFLAGS) $(LIBS)
-
 clean:
-	rm -f $(OBJS) $(PRG) $(PRG_EXE) $(ZIP32) $(ROM) print.out z80ex.o z80ex_dasm.o
-	$(MAKE) -C z80ex clean
+	rm -f $(OBJS) $(Z80EX) $(PRG) $(PRG_EXE) $(ZIP32) $(ROM) print.out
 	$(MAKE) -C rom clean
 
 distclean:

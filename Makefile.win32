@@ -2,16 +2,18 @@ CC	= i686-w64-mingw32-gcc
 DEBUG	=
 CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --cflags) $(DEBUG)
 CPPFLAGS= -Iz80ex/include -I.
+ZCFLAGS	= -fno-common -ansi -pedantic -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_VERSION_STR=1.1.21 -DZ80EX_API_REVISION=1 -DZ80EX_VERSION_MAJOR=1 -DZ80EX_VERSION_MINOR=21 $(DEBUG) -DZ80EX_RELEASE_TYPE=
 LDFLAGS	= $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --libs) $(DEBUG)
 #LIBS	= -lz80ex -lz80ex_dasm
-LIBS	= $(Z80EX) z80ex/lib/libz80ex_dasm.a
+LIBS	= 
 #LIBS	= -Wl,-Bstatic -lz80ex -lz80ex_dasm -Wl,-Bdynamic
 
 INCS	= xepem.h
 SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c
 OBJS	= $(SRCS:.c=.o)
 PRG_EXE	= xep128.exe
-Z80EX	= z80ex/lib/libz80ex.a
+Z80EX	= z80ex.o z80ex_dasm.o
+ZDEPS	= Makefile.win32 Makefile z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
@@ -24,11 +26,13 @@ all:
 %.s: %.c $(INCS) Makefile.win32
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-$(Z80EX):
-	$(MAKE) -f Makefile.win32 -C z80ex static
+z80ex.o: z80ex/z80ex.c $(ZDEPS)
+	$(CC) $(ZCFLAGS) -c -o z80ex.o z80ex/z80ex.c
+z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
+	$(CC) $(ZCFLAGS) -c -o z80ex_dasm.o z80ex/z80ex_dasm.c
 
-$(PRG_EXE): $(OBJS) $(INCS) Makefile.win32 $(Z80EX)
-	$(CC) -o $(PRG_EXE) $(OBJS) $(LDFLAGS) $(LIBS)
+$(PRG_EXE): $(OBJS) $(Z80EX) $(INCS) Makefile.win32 $(Z80EX)
+	$(CC) -o $(PRG_EXE) $(OBJS) $(Z80EX) $(LDFLAGS) $(LIBS)
 
 .PHONY: all
 
