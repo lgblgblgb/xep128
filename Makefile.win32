@@ -31,7 +31,7 @@ z80ex.o: z80ex/z80ex.c $(ZDEPS)
 z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o z80ex_dasm.o z80ex/z80ex_dasm.c
 
-$(PRG_EXE): $(OBJS) $(Z80EX) $(INCS) Makefile.win32 $(Z80EX)
+$(PRG_EXE): $(OBJS) buildinfo.o $(Z80EX) $(INCS) Makefile.win32 $(Z80EX)
 	$(CC) -o $(PRG_EXE) $(OBJS) buildinfo.o $(Z80EX) $(LDFLAGS) $(LIBS)
 
 .PHONY: all

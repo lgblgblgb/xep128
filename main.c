@@ -178,7 +178,10 @@ void emu_one_frame(int rasters, int frameksip)
 				if (e.key.repeat == 0 && (e.key.windowID == winid || e.key.windowID == 0)) {
 					if (e.key.keysym.scancode == SDL_SCANCODE_F11 && e.key.state == SDL_PRESSED)
 						fprintf(stderr,"TODO: TOOGLE FULLSCREEN!\n");
-					else
+					else if (e.key.keysym.scancode == SDL_SCANCODE_PAUSE && e.key.state == SDL_PRESSED) {
+						if (shift_pressed) ep_clear_ram();
+						ep_reset();
+					} else
 						emu_kbd(e.key.keysym, e.key.state == SDL_PRESSED);
 				} else
 					fprintf(stderr, "NOT HANDLED KEY EVENT: repeat = %d windowid = %d [our win = %d]\n", e.key.repeat, e.key.windowID, winid);
@@ -252,12 +255,7 @@ int main (int argc, char *argv[]) {
 	//if (z80_reset()) return 1;
 	set_ep_ramsize(1024);
 	if (load_roms()) return 1;
-	dave_reset();
-	rtc_reset();
-	mouse_reset();
-#ifdef CONFIG_EXDOS_SUPPORT
-	wd_exdos_reset();
-#endif
+	ep_reset();
 #ifdef CONFIG_SDEXT_SUPPORT
 	sdext_init();
 #endif
@@ -311,3 +309,4 @@ int main (int argc, char *argv[]) {
 	nick_dump_lpt();
 	return 0;
 }
+

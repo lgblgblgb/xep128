@@ -64,7 +64,7 @@ $(PRG): $(OBJS) $(Z80EX) $(INCS) Makefile $(SDIMG) $(ROM)
 win32:	$(DLL) $(SDIMG) $(ROM)
 	@echo "*** BUILDING FOR WINDOWS ***"
 	rm -f buildinfo.c
-	$(MAKE) buildinfo.o
+	$(MAKE) buildinfo.c
 	$(MAKE) -f Makefile.win32
 	@ls -l $(PRG_EXE)
 	@file $(PRG_EXE)

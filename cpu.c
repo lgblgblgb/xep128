@@ -370,3 +370,15 @@ int z80_reset ( void )
 	return 0;
 }
 
+
+void ep_reset ( void )
+{
+	z80_reset();
+	dave_reset();
+	rtc_reset();
+	mouse_reset();
+#ifdef CONFIG_EXDOS_SUPPORT
+	wd_exdos_reset();
+#endif
+}
+

@@ -45,6 +45,8 @@ extern int z180;
 
 int set_ep_ramsize(int kbytes);
 int z80_reset ( void );
+void ep_reset ( void );
+void ep_clear_ram ( void );
 
 void dave_reset ( void );
 void dave_int1(int active);
@@ -74,6 +76,7 @@ void emu_mouse_motion(int dx, int dy);
 Uint8 mouse_read(void);
 void mouse_check_data_shift(Uint8 val);
 void mouse_reset(void);
+extern int shift_pressed;
 
 time_t emu_getunixtime(void);
 
