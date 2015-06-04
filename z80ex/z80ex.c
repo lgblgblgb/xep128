@@ -18,6 +18,8 @@
 #include "z80ex.h"
 #include "macros.h"
 
+extern int z180;
+
 #define temp_byte cpu->tmpbyte
 #define temp_byte_s cpu->tmpbyte_s
 #define temp_addr cpu->tmpaddr

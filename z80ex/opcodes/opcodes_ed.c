@@ -107,6 +107,10 @@ static void op_ED_0x4b(Z80EX_CONTEXT *cpu)
 /*NEG*/
 static void op_ED_0x4c(Z80EX_CONTEXT *cpu)
 {
+	if (z180) {
+		BC = B * C;
+		return;
+	}
 	NEG();
 	T_WAIT_UNTIL(4);
 	return;
