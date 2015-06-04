@@ -38,4 +38,5 @@ xep128.exe
 *.rom
 www
 xep128-win32.zip
+buildinfo.c
 

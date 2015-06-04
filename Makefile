@@ -39,6 +39,11 @@ z80ex.o: z80ex/z80ex.c $(ZDEPS)
 z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o z80ex_dasm.o z80ex/z80ex_dasm.c
 
+buildinfo.c:
+	echo "const char *BUILDINFO_ON  = \"`whoami`@`uname -n` on `uname -s` `uname -r`\";" > buildinfo.c
+	echo "const char *BUILDINFO_AT  = \"`date -R`\";" >> buildinfo.c
+	echo "const char *BUILDINFO_GIT = \"`git show | head -n 1 | cut -f2 -d' '`\";" >> buildinfo.c
+
 $(DLL):
 	@echo "**** Fetching Win32 SDL2 DLL from $(DLLURL) ..."
 	wget -O $(DLL) $(DLLURL) || { rm -f $(DLL) ; false; }
@@ -52,10 +57,14 @@ $(ROM):
 	cp rom/$(ROM) .
 
 $(PRG): $(OBJS) $(Z80EX) $(INCS) Makefile $(SDIMG) $(ROM)
-	$(CC) -o $(PRG) $(OBJS) $(Z80EX) $(LDFLAGS) $(LIBS)
+	rm -f buildinfo.c
+	$(MAKE) buildinfo.o
+	$(CC) -o $(PRG) $(OBJS) buildinfo.o $(Z80EX) $(LDFLAGS) $(LIBS)
 
 win32:	$(DLL) $(SDIMG) $(ROM)
 	@echo "*** BUILDING FOR WINDOWS ***"
+	rm -f buildinfo.c
+	$(MAKE) buildinfo.o
 	$(MAKE) -f Makefile.win32
 	@ls -l $(PRG_EXE)
 	@file $(PRG_EXE)
@@ -66,7 +75,7 @@ strip:	$(PRG)
 	strip $(PRG)
 
 clean:
-	rm -f $(OBJS) $(Z80EX) $(PRG) $(PRG_EXE) $(ZIP32) $(ROM) print.out
+	rm -f $(OBJS) $(Z80EX) $(PRG) $(PRG_EXE) $(ZIP32) $(ROM) buildinfo.c buildinfo.o print.out
 	$(MAKE) -C rom clean
 
 distclean:

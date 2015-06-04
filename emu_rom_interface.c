@@ -76,11 +76,17 @@ static const struct commands_st commands[] = {
 	{ NULL,		NULL, NULL }
 };
 
+extern const char *BUILDINFO_ON; //  = "lgb@vega on Linux 3.19.0-15-generic";
+extern const char *BUILDINFO_AT; //  = "Thu, 04 Jun 2015 22:56:28 +0200";
+extern const char *BUILDINFO_GIT; // = "62ecfa47df1223524a0600db68d79c4e60832b9f";
 
 
 static void cmd_help ( void ) {
         const struct commands_st *cmds = commands;
-        char *p = sprintf(buffer_out, "Helper ROM: %s%s %s %s\r\n\r\n", SHORT_HELP, WINDOW_TITLE, VERSION, COPYRIGHT) + buffer_out;
+        char *p = sprintf(buffer_out, "Helper ROM: %s%s %s %s\r\nBuilt on: %s\r\n%s\r\nGIT: %s\r\n\r\n", 
+		SHORT_HELP, WINDOW_TITLE, VERSION, COPYRIGHT,
+		BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT
+	) + buffer_out;
         while (cmds->cmd) {
                 p += sprintf(p, "%s\t%s\r\n", cmds->cmd, cmds->help);
                 cmds++;
