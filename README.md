@@ -49,6 +49,8 @@ the root user, you may need to do it with command 'sudo'):
 
  apt-get install libsdl2-dev make gcc wget
 
+You will also need the sjasm Z80 assembler somewhere in your PATH.
+
 In the source, you need to issue the command "make". It will compile the
 emulator, and also fetching (with wget) the SD card image through the Net
 (about 256Mbyte in size). If everything is OK, you will get an executable
@@ -108,6 +110,9 @@ Note, that keyboard mapping is more-or-less "positional", eg, for quotation mark
 you need to press shift+2 because quotation mark on the Enterprise keyboard
 can be accessed with shifted key 2. And so on, you may get the idea.
 
+Pause/break on your keyboard works as "soft reset". Press with shift key for
+hard reset.
+
 # More information on emulated hardware add-ons
 
 The SD card image is a normal VHD file, you can try to replace it with your own.
@@ -124,9 +129,9 @@ Quirky "printer emulation" can be used: in case of "printing" emulator tries to
 create/append a file named "print.out" in the current directory. It's simply the
 content of bytes sent to the printer port, including all escape sequences!
 
-ZX Spectrum emulator card emulation :) does not work currently. The provided
+ZX Spectrum emulator card emulation :) does not work correctly. The provided
 combined ROM pack file contains the ROM code (version 4.0). You can try that
-with :ZX command from IS-BASIC prompt, but almost surely it won't work anyway.
+with :ZX command from IS-BASIC prompt, but it's quite ugly.
 
 # Credits
 
