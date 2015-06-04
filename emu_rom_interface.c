@@ -31,7 +31,7 @@ static int buffer_pos = 0;
 static char buffer_out[BUFFER_SIZE + 2];
 static int buffer_out_pos = 0;
 
-static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 emulator)\r\n";
+static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 ROM)\r\n";
 
 
 static void todo ( void )
