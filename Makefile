@@ -71,6 +71,11 @@ win32:	$(DLL) $(SDIMG) $(ROM)
 	zip $(ZIP32) $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE
 	@ls -l $(ZIP32)
 
+publish:
+	test -f rom/$(ROM) && cp rom/$(ROM) www/files/ || true
+	test -f $(ZIP32) && cp $(ZIP32) www/files/ || true
+	@ls -l www/files/
+
 strip:	$(PRG)
 	strip $(PRG)
 
@@ -89,5 +94,5 @@ commit:
 	EDITOR="vim -c 'startinsert'" git commit -a
 	git push
 
-.PHONY: all clean distclean strip commit win32
+.PHONY: all clean distclean strip commit win32 publish
 
