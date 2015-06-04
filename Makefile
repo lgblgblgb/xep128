@@ -16,7 +16,6 @@ Z80EX	= z80ex/lib/libz80ex.a
 SDIMG	= sdcard.img
 SDURL	= http://xep128.lgb.hu/files/sdcard.img
 ROM	= combined.rom
-ROMURL	= http://xep128.lgb.hu/files/combined.rom
 DLL	= SDL2.dll
 DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
 ZIP32	= xep128-win32.zip
@@ -41,8 +40,8 @@ $(SDIMG):
 	wget -O $(SDIMG) $(SDURL) || { rm -f $(SDIMG) ; false; }
 
 $(ROM):
-	@echo "**** Fetching ROM image from $(ROMURL) ..."
-	wget -O $(ROM) $(ROMURL) || { rm -f $(ROM) ; false; }
+	$(MAKE) -C rom
+	cp rom/$(ROM) .
 
 $(Z80EX):
 	$(MAKE) -C z80ex static
@@ -70,12 +69,14 @@ sdl2:	sdl2.o
 	$(CC) -o sdl2 sdl2.o $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -f $(OBJS) $(PRG) $(PRG_EXE) $(ZIP32) print.out
+	rm -f $(OBJS) $(PRG) $(PRG_EXE) $(ZIP32) $(ROM) print.out
 	$(MAKE) -C z80ex clean
+	$(MAKE) -C rom clean
 
 distclean:
 	$(MAKE) clean
-	rm -f $(SDIMG) $(ROM) $(DLL)
+	$(MAKE) -C rom distclean
+	rm -f $(SDIMG) $(DLL)
 
 commit:
 	git diff
