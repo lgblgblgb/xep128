@@ -27,6 +27,8 @@ Uint8 ports[0x100];
 static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
 
+int z180 = 0;
+
 
 #if 0
 void set_ep_memseg(int seg, int val)
@@ -128,6 +130,10 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unuse
 		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
 			return wd_read_exdos_status();
 #endif
+
+		case 0x30:
+			return emurom_receive();
+
 		/* ZX Spectrum emulator */
 		case 0x40: case 0x41: case 0x42: case 0x43: case 0x44:
 			fprintf(stderr, "ZXEMU: reading port %02Xh\n", port);
@@ -186,9 +192,12 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 			wd_set_exdos_control(value);
 #endif
 		/* DOH! */
+		case 0x30:
+			emurom_send(value);
+			break;
 		case 0x32:
 		case 0x3F:
-			printf("Z180: would be Z180 config port, ignored <no Z180 emulation>\n");
+			fprintf(stderr, "Z180: would be Z180 config port, ignored <no Z180 emulation> for writing port %02Xh with value of %02Xh.\n", port, value);
 			break;
 
 		case 0x44:
