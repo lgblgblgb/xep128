@@ -42,7 +42,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define SDCARD_IMG_PATH "sdcard.img"
 
 extern int z80ex_z180;
-extern int z80ex_invalid_for_z180;
 
 int set_ep_ramsize(int kbytes);
 int z80_reset ( void );

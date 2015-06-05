@@ -13,7 +13,7 @@ SRCS	= main.c cpu.c nick.c dave.c input.c exdos-wd.c sdext.c rtc.c printer.c zxe
 OBJS	= $(SRCS:.c=.o)
 PRG_EXE	= xep128.exe
 Z80EX	= z80ex.o z80ex_dasm.o
-ZDEPS	= Makefile.win32 Makefile z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h
+ZDEPS	= Makefile.win32 Makefile z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h z80ex/z180.c
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"

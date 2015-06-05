@@ -21,7 +21,7 @@ ROM	= combined.rom
 DLL	= SDL2.dll
 DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
 ZIP32	= xep128-win32.zip
-ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h
+ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h z80ex/z180.c
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"

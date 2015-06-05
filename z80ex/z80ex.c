@@ -18,19 +18,13 @@
 #include "z80ex.h"
 #include "macros.h"
 
-#ifdef Z80EX_Z180_SUPPORT
-int z80ex_z180 = 0;
-#else
-#define z80ex_z180 0
-#endif
-int z80ex_invalid_for_z180 = 0;
-
 #define temp_byte cpu->tmpbyte
 #define temp_byte_s cpu->tmpbyte_s
 #define temp_addr cpu->tmpaddr
 #define temp_word cpu->tmpword
 
 #include "ptables.c"
+#include "z180.c"
 #include "opcodes/opcodes_base.c"
 #include "opcodes/opcodes_dd.c"
 #include "opcodes/opcodes_fd.c"
@@ -95,8 +89,13 @@ LIB_EXPORT int z80ex_step(Z80EX_CONTEXT *cpu)
 					}
 					else
 					{
-						ofn = (cpu->prefix == 0xDD)? opcodes_dd[opcode]: opcodes_fd[opcode];
-						if(ofn == NULL) ofn=opcodes_base[opcode]; /*'mirrored' instructions*/
+						if(z80ex_z180 && opcodes_ddfd_bad_for_z180[opcode]) {
+							ofn = opcodes_base[opcode];
+							z80ex_invalid_for_z180();
+						} else {
+							ofn = (cpu->prefix == 0xDD)? opcodes_dd[opcode]: opcodes_fd[opcode];
+							if(ofn == NULL) ofn=opcodes_base[opcode]; /*'mirrored' instructions*/
+						}
 					}
 					break;
 								

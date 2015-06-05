@@ -1,10 +1,25 @@
 !!IMPORTANT!!
 
+!!THIS IS NOT THE ORIGINAL Z80EX!! PLEASE READ FURTHER ...
+
 This is a somewhat modified and stripped down version of Z80Ex
 used for CPU emulation in my GNU/GPL project. Thus, if you want
 Z80Ex for your project, you should use the original version.
 Z80Ex in this form within this project may be not useful for you
 in your oen project.
+
+Modifications compared to the original source distribution:
+
+* no Makefile, etc: my project uses it directly
+
+* no perl code, and data tables to generate the C code,
+  I use and modified the generated code only (I know, ugly solution)
+
+* Z180 emulation: only a rough emulation: timing is still Z80,
+  no on-chip features, no MMU, only about the opcodes which are
+  invalid on Z180 (like IXL/IXH/IYL/IYH related), and some of the
+  new Z180 opcodes, z80/z180 mode can be switched at run-time
+
 
 Now back to the original README, thanks for your patience:
 
