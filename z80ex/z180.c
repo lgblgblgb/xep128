@@ -2,6 +2,9 @@
    Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
+   Additional quirky Z180 emulation for Z80Ex. You should read
+   file README about the (lack of ...) features.
+
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -20,13 +23,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #warning "LGB: Z180 support is _very_ limited, please read file z80ex/README."
 int z80ex_z180 = 0;
-extern void z80ex_invalid_for_z180(void);
+extern void z80ex_invalid_for_z180( int prefix, int series, int opcode );
 #define MULT_OP_T_STATES 13
 
 #else
 
 #define z80ex_z180 0
-static void z80ex_invalid_for_z180 ( void ) {}
+static void z80ex_invalid_for_z180 ( int prefix, int series, int opcode ) {}
 
 #endif
 

@@ -85,13 +85,19 @@ LIB_EXPORT int z80ex_step(Z80EX_CONTEXT *cpu)
 						d=READ_OP(); /*displacement*/
 						temp_byte_s=(d & 0x80)? -(((~d) & 0x7f)+1): d;
 						opcode=READ_OP();
-						ofn = (cpu->prefix == 0xDD)? opcodes_ddcb[opcode]: opcodes_fdcb[opcode];						
+						if (z80ex_z180) {
+							Z80EX_BYTE rop = (opcode & 0xF8) | 6;
+							ofn = (cpu->prefix == 0xDD)? opcodes_ddcb[rop]: opcodes_fdcb[rop];
+							if (opcode != rop || rop == 0x36)
+								z80ex_invalid_for_z180(cpu->prefix, 0xCB, opcode);
+						} else
+							ofn = (cpu->prefix == 0xDD)? opcodes_ddcb[opcode]: opcodes_fdcb[opcode];
 					}
 					else
 					{
 						if(z80ex_z180 && opcodes_ddfd_bad_for_z180[opcode]) {
 							ofn = opcodes_base[opcode];
-							z80ex_invalid_for_z180();
+							z80ex_invalid_for_z180(cpu->prefix, 0, opcode);
 						} else {
 							ofn = (cpu->prefix == 0xDD)? opcodes_dd[opcode]: opcodes_fd[opcode];
 							if(ofn == NULL) ofn=opcodes_base[opcode]; /*'mirrored' instructions*/
@@ -106,6 +112,8 @@ LIB_EXPORT int z80ex_step(Z80EX_CONTEXT *cpu)
 				
 				case 0xCB:
 					ofn = opcodes_cb[opcode];
+					if (z80ex_z180 && opcode >= 0x30 && opcode <= 0x37)
+						z80ex_invalid_for_z180(0, 0xCB, opcode); /* TODO: we still allow to execute ... */
 					break;
 					
 				default:

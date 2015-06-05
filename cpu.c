@@ -28,10 +28,11 @@ static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
 
 
-void z80ex_invalid_for_z180 ( void )
+void z80ex_invalid_for_z180 ( int prefix, int series, int opcode )
 {
 	int pc = z80ex_get_reg(z80, regPC);
-	fprintf(stderr, "Z180: Invalid Z180 opcode (Z80 undocumented)!! at PC=%04Xh [%02Xh:%04Xh]\n",
+	fprintf(stderr, "Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\n",
+		prefix, series, opcode,
 		pc,
 		ports[0xB0 | (pc >> 14)],
 		pc & 0x3FFF
