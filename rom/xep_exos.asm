@@ -40,6 +40,19 @@ exos_help:
 	LD	A, B
 	CP	0
 	JR	Z, rom_list_help
+	CP	3
+	RET	NZ
+	PUSH	DE
+	POP	IX
+	LD	A, (IX+1)
+	CP	'X'
+	RET	NZ
+	LD	A, (IX+2)
+	CP	'E'
+	RET	NZ
+	LD	A, (IX+3)
+	CP	'P'
+	RET	NZ
 	LD	A, "H"
 	OUT	(0x30), A
 	LD	A, "E"

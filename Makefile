@@ -52,8 +52,10 @@ $(SDIMG):
 	@echo "**** Fetching SDcard image from $(SDURL) ..."
 	wget -O $(SDIMG) $(SDURL) || { rm -f $(SDIMG) ; false; }
 
-$(ROM):
+rom/$(ROM):
 	$(MAKE) -C rom
+
+$(ROM): rom/$(ROM)
 	cp rom/$(ROM) .
 
 $(PRG): $(OBJS) $(Z80EX) $(INCS) Makefile $(SDIMG) $(ROM)
