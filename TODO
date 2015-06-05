@@ -1,0 +1,66 @@
+Z180 emulation:
+
+	* clean up the mess, use Z80Ex style context not fixed global stuff
+	* implement all Z180 extra ops
+	* double check non-functional Z80 undocumented ops on Z180
+
+SD card cartridge emulation:
+
+	* SD card id is invalid, though software seems to ignore it
+	* read-only access, write is currently not supported
+
+EXDOS/WD:
+
+	* Not implemented at all (though SD card is a better solution
+	  for me)
+
+Dave:
+
+	* missing TG interrupt source
+	* no audio at all
+
+APU:
+
+	* port JSep code from JavaScript
+	* check correctness
+	* maybe rewrite a closer level emulation, bit precesion with the real APU
+
+Nick:
+
+	* should be re-written
+	* support all mode/colour combos, even if it's not "official"
+	* more cycle exact emulation
+	* Nick2 stuffs, just for fun?
+
+Memory:
+
+	* ability to configure RAM
+	* VRAM "slowness" emulation (Nick/CPU shared access)
+
+Emulator:
+
+	* at least load Ep128emu's snapshot format
+	* Command/log window maybe? With another SDL window, thus platform independent
+	* ... OR native dialogs on specific host OS, at least file browser when needed (?)
+	* network installer for ROM images, maybe SD card image as well?
+	* system directory on host OS, to read ROMs, config, whatever
+	* ability to configure emulator, save/load configuration?
+	* ep128emu "fileio" like stuff to load/save single files
+
+Network emulation:
+
+	* Wiznet W5300 emulation, partial stuff with host TCP/IP, not raw level!
+
+Other hardware emulation:
+
+	* TAPE: [WONTFIX] I don't want to use tape ever :)
+	* External DAC emulation
+	* SIO emulation for "Super EP" [?]
+	* Joystick emulation
+	* Wild idea: network joy/kbd emulation? :)
+
+SDL:
+
+	* fullscreen mode
+	* check possible hardware acceleration, better performance, etc (?)
+
