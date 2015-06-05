@@ -1,0 +1,6 @@
+This will fetch a zip containing various ROM images, and building a single
+combined.rom file, which is used by Xep128 then.
+
+It also contains our own ROM used to control the emulator from the 
+emulated EP-128 directly, with EXOS commands.
+

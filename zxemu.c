@@ -21,15 +21,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 int zxemu_on = 0;
 int nmi_pending = 0;
 
-/*
-Not working at the moment.
-
-TODO: if emulator is turned on (zxemu_on is not zero) reading or writing port 0xFE
-(zxemu_read_ula and zxemu_write_ula functions) should generate an NMI and filling
-ports 0x40 - 0x43 so the ZX emu ROM NMI handler can query the "trapped" ZX op
-and emulates it. 
-*/
-
 
 static int zxemu_nmi ( void )
 {

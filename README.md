@@ -128,15 +128,44 @@ clock with typing this at the IS-BASIC prompt:
 Quirky "printer emulation" can be used: in case of "printing" emulator tries to
 create/append a file named "print.out" in the current directory. It's simply the
 content of bytes sent to the printer port, including all escape sequences!
+Some would be able to write an utility which renders the file as an EP80
+printer like printout (including graphical mode, etc). Since print.out contains
+every bytes sent to the printer, it's not a problem.
 
 ZX Spectrum emulator card emulation :) does not work correctly. The provided
 combined ROM pack file contains the ROM code (version 4.0). You can try that
 with :ZX command from IS-BASIC prompt, but it's quite ugly.
 
+There is an on-going work to emulate Z180 CPU. At least on EP exists with
+Z180 hacked in :) The problem: Z180 does not support some of the undocumented
+(but widely used) Z80 features, like separating IX and IY as two 8 bit
+registers. The goal of the planned Z180 emulation is not about the correctness
+of Z180 timing, not the on-chip features (like DMA) currently, but _only_
+to be able to test softwares if it works with Z180 too (not using Z80
+undocumented features).
+
+# Known problems
+
+There are many! I repeat myself: Xep128 is not a generic, or good emulator for
+an average EP user. It's more about emulation of some unusal add-ons.
+
+Just to mention some problems with Xep128:
+
+* no configuration of the emulator too much
+* no write disk access (with SD card)
+* no EXDOS/WD emulation
+* no menu/UI whatever
+* no debugger
+* no precise Nick emulation
+* no slowdown of VRAM access, would be on a real machine
+* no sound
+* missing many features of Dave, including any interrupts than VINT and 1Hz
+* no joystick emulation yet
+
 # Credits
 
-JSep (a JavaScript based Enterprise-128 emulator, also written by myself) was great
-source for Xep128. Enteprise-128 forever forum is an essential site, people there
-helped a lot (especially with JSep), I would mention IstvanV and Zozosoft.
-LibZ80ex is the Z80 emulator used in Xep128 (not written by me).
+JSep (a JavaScript based Enterprise-128 emulator, also written by myself) was
+great source for Xep128. Enteprise-128 forever forum is an essential site,
+people there helped a lot (especially with JSep), I would mention IstvanV and
+Zozosoft. LibZ80ex is the Z80 emulator used in Xep128 (not written by me!).
 

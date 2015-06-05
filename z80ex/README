@@ -1,3 +1,13 @@
+!!IMPORTANT!!
+
+This is a somewhat modified and stripped down version of Z80Ex
+used for CPU emulation in my GNU/GPL project. Thus, if you want
+Z80Ex for your project, you should use the original version.
+Z80Ex in this form within this project may be not useful for you
+in your oen project.
+
+Now back to the original README, thanks for your patience:
+
 Z80Ex
 
 ZiLOG Z80 CPU emulator
