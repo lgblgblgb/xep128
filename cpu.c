@@ -27,8 +27,6 @@ Uint8 ports[0x100];
 static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
 
-int z180 = 0;
-
 
 #if 0
 void set_ep_memseg(int seg, int val)

@@ -2,7 +2,7 @@ CC	= i686-w64-mingw32-gcc
 DEBUG	=
 CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --cflags) $(DEBUG)
 CPPFLAGS= -Iz80ex/include -I.
-ZCFLAGS	= -fno-common -ansi -pedantic -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_VERSION_STR=1.1.21 -DZ80EX_API_REVISION=1 -DZ80EX_VERSION_MAJOR=1 -DZ80EX_VERSION_MINOR=21 $(DEBUG) -DZ80EX_RELEASE_TYPE=
+ZCFLAGS	= -fno-common -ansi -pedantic -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_VERSION_STR=1.1.21 -DZ80EX_API_REVISION=1 -DZ80EX_VERSION_MAJOR=1 -DZ80EX_VERSION_MINOR=21 $(DEBUG) -DZ80EX_Z180_SUPPORT -DZ80EX_RELEASE_TYPE=
 LDFLAGS	= $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --libs) $(DEBUG)
 #LIBS	= -lz80ex -lz80ex_dasm
 LIBS	= 

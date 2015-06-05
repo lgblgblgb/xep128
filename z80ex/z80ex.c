@@ -18,7 +18,12 @@
 #include "z80ex.h"
 #include "macros.h"
 
-extern int z180;
+#ifdef Z80EX_Z180_SUPPORT
+int z80ex_z180 = 0;
+#else
+#define z80ex_z180 0
+#endif
+int z80ex_invalid_for_z180 = 0;
 
 #define temp_byte cpu->tmpbyte
 #define temp_byte_s cpu->tmpbyte_s
