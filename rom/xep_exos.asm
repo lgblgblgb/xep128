@@ -20,7 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 	ORG 0xC000
 	DB "EXOS_ROM"
 	DW 0		; device chain (0 = no)
-	JP	main
+	JP	rom_main_entry_point
+	DB "[XepROM]"  ; Xep128 (will?) searches this signature and enables extra "interface" CPU ops for this seg only
+	ALIGN 16
 
 MACRO	EXOS n
 	RST	0x30
@@ -28,18 +30,16 @@ MACRO	EXOS n
 ENDMACRO
 
 
-main:
+rom_main_entry_point:
 	LD	A, C
 	CP	2
 	JR	Z, exos_command
 	CP	3
-	JR	Z, exos_help
-	RET
-
-exos_help:
+	RET	NZ
+	; exos help (code = 3)
 	LD	A, B
 	CP	0
-	JR	Z, rom_list_help
+	JR	Z, .rom_list_help
 	CP	3
 	RET	NZ
 	PUSH	DE
@@ -62,8 +62,7 @@ exos_help:
 	LD	A, "P"
 	OUT	(0x30), A
 	JR	exos_command.answer
-
-rom_list_help:
+.rom_list_help:
 	PUSH	BC
 	PUSH	DE
 	LD	A, "V"
@@ -79,7 +78,6 @@ rom_list_help:
 
 
 exos_command:
-
 	LD	A, B
 	CP	3
 	RET	NZ
@@ -95,7 +93,6 @@ exos_command:
 	CP	'P'
 	RET	NZ
 	; Seems to be our XEP command!
-
 	LD	A, (DE)
 	SUB	3
 	LD	B, A
