@@ -56,6 +56,17 @@ typedef Z80EX_BYTE (*z80ex_intread_cb)(Z80EX_CONTEXT *cpu, void *user_data);
 /*called when the RETI instruction is executed (useful for emulating Z80 PIO/CTC and such)*/
 typedef void (*z80ex_reti_cb)(Z80EX_CONTEXT *cpu, void *user_data);
 
+/*ED function callback, to use unused ED opcodes for your own purpose - LGB*/
+typedef void (*z80ex_ed_cb)(Z80EX_CONTEXT *cpu, Z80EX_BYTE opcode, void *user_data);
+
+#ifdef Z80EX_Z180_SUPPORT
+/* z180 callback, called when Z180 would execute known Z80 "undocumented" opcode where Z180 does otherwise, ie IXH ops etc - LGB*/
+typedef void (*z80ex_z180_cb)(Z80EX_CONTEXT *cpu, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, void *user_data);
+#endif
+
+
+
+
 #ifndef __Z80EX_SELF_INCLUDE
 	
 #ifdef __cplusplus
@@ -102,6 +113,13 @@ extern void z80ex_set_portwrite_callback(Z80EX_CONTEXT *cpu, z80ex_pwrite_cb pwc
 
 /*set INT read callback*/
 extern void z80ex_set_intread_callback(Z80EX_CONTEXT *cpu, z80ex_intread_cb ircb_fn, void *ircb_data);
+
+extern void z80ex_set_ed_callback(Z80EX_CONTEXT *cpu, z80ex_ed_cb cb_fn, void *user_data);
+#ifdef Z80EX_Z180_SUPPORT
+extern void z80ex_set_z180_callback(Z80EX_CONTEXT *cpu, z80ex_z180_cb cb_fn, void *user_data);
+extern int  z80ex_get_z180(Z80EX_CONTEXT *cpu);
+extern void z80ex_set_z180(Z80EX_CONTEXT *cpu, int z180);
+#endif
 
 /*maskable interrupt*/
 /*returns number of T-states if interrupt was accepted, otherwise 0*/

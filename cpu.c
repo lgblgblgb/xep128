@@ -28,7 +28,7 @@ static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
 
 
-void z80ex_invalid_for_z180 ( int prefix, int series, int opcode )
+static void z80ex_invalid_for_z180 (Z80EX_CONTEXT *cpu, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, void *user_data)
 {
 	int pc = z80ex_get_reg(z80, regPC);
 	fprintf(stderr, "Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\n",
@@ -362,6 +362,7 @@ int z80_reset ( void )
 		printf("Z80: emulation has been created.\n");
 		memset(ports, 0xFF, 0x100);
 		ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
+		z80ex_set_z180_callback(z80, z80ex_invalid_for_z180, NULL);
 	}
 	z80ex_reset(z80);
 	srand((unsigned int)time(NULL));

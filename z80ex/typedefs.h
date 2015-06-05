@@ -73,6 +73,16 @@ struct _z80_cpu_context {
 	regpair tmpaddr;
 	Z80EX_BYTE tmpbyte;
 	Z80EX_SIGNED_BYTE tmpbyte_s;
+
+	/* ED callback support - LGB */
+	z80ex_ed_cb ed_cb;
+	void *ed_cb_user_data;
+	/* Z180 related - LGB */
+#ifdef Z80EX_Z180_SUPPORT
+	int z180;
+	z80ex_z180_cb z180_cb;
+	void *z180_cb_user_data;
+#endif
 };
 
 typedef void (*z80ex_opcode_fn) (Z80EX_CONTEXT *cpu);

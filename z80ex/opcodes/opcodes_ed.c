@@ -109,7 +109,7 @@ static void op_ED_0x4b(Z80EX_CONTEXT *cpu)
 /*NEG*/
 static void op_ED_0x4c(Z80EX_CONTEXT *cpu)
 {
-	if (z80ex_z180) {
+	if (cpu->z180) {
 		BC = B * C;
 		T_WAIT_UNTIL(MULT_OP_T_STATES);
 		return;
@@ -250,7 +250,7 @@ static void op_ED_0x5b(Z80EX_CONTEXT *cpu)
 /*NEG*/
 static void op_ED_0x5c(Z80EX_CONTEXT *cpu)
 {
-	if (z80ex_z180) {
+	if (cpu->z180) {
 		DE = D * E;
 		T_WAIT_UNTIL(MULT_OP_T_STATES);
 		return;
@@ -391,7 +391,7 @@ static void op_ED_0x6b(Z80EX_CONTEXT *cpu)
 /*NEG*/
 static void op_ED_0x6c(Z80EX_CONTEXT *cpu)
 {
-	if (z80ex_z180) {
+	if (cpu->z180) {
 		HL = H * L;
 		T_WAIT_UNTIL(MULT_OP_T_STATES);
 		return;
@@ -524,7 +524,7 @@ static void op_ED_0x7b(Z80EX_CONTEXT *cpu)
 /*NEG*/
 static void op_ED_0x7c(Z80EX_CONTEXT *cpu)
 {
-	if (z80ex_z180) {
+	if (cpu->z180) {
 		SP = SPH * SPL;
 		T_WAIT_UNTIL(MULT_OP_T_STATES);
 		return;

@@ -44,21 +44,21 @@ static void cmd_ver ( void ) {
 }
 
 static void cmd_z180 ( void ) {
-	z80ex_z180 = 1;
+	z80ex_set_z180(z80, 1);
 	sprintf(buffer_out, "CPU: set to Z180\r\n");
 }
 
 static void cmd_z80 ( void ) {
-	z80ex_z180 = 0;
+	z80ex_set_z180(z80, 0);
 	sprintf(buffer_out, "CPU: set to Z80\r\n");
 }
 
 static void cmd_info ( void ) {
-	sprintf(buffer_out, "CPU: %s %fMHz\r\n", z80ex_z180 ? "Z180" : "Z80", CPU_CLOCK / 1000000.0);
+	sprintf(buffer_out, "CPU: %s %fMHz\r\n", z80ex_get_z180(z80) ? "Z180" : "Z80", CPU_CLOCK / 1000000.0);
 }
 
 static void cmd_cpu ( void ) {
-	sprintf(buffer_out, "CPU: %s %fMHz\r\n", z80ex_z180 ? "Z180" : "Z80", CPU_CLOCK / 1000000.0);
+	sprintf(buffer_out, "CPU: %s %fMHz\r\n", z80ex_get_z180(z80) ? "Z180" : "Z80", CPU_CLOCK / 1000000.0);
 }
 
 

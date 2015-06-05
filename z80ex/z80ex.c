@@ -2,6 +2,7 @@
  * Z80Ex, ZILoG Z80 CPU emulator.
  *
  * by Pigmaker57 aka boo_boo [pigmaker57@kahoh57.info]
+ * modified by Gabor Lenart aka LGB: partial quirky z180 and ED callback support
  *
  * contains some code from the FUSE project (http://fuse-emulator.sourceforge.net)
  * Released under GNU GPL v2
@@ -85,23 +86,27 @@ LIB_EXPORT int z80ex_step(Z80EX_CONTEXT *cpu)
 						d=READ_OP(); /*displacement*/
 						temp_byte_s=(d & 0x80)? -(((~d) & 0x7f)+1): d;
 						opcode=READ_OP();
-						if (z80ex_z180) {
+#ifdef Z80EX_Z180_SUPPORT
+						if (cpu->z180) {
 							Z80EX_BYTE rop = (opcode & 0xF8) | 6;
 							ofn = (cpu->prefix == 0xDD)? opcodes_ddcb[rop]: opcodes_fdcb[rop];
 							if (opcode != rop || rop == 0x36)
-								z80ex_invalid_for_z180(cpu->prefix, 0xCB, opcode);
+								cpu->z180_cb(cpu, cpu->prefix, 0xCB, opcode, cpu->z180_cb_user_data);
 						} else
+#endif
 							ofn = (cpu->prefix == 0xDD)? opcodes_ddcb[opcode]: opcodes_fdcb[opcode];
-					}
-					else
-					{
-						if(z80ex_z180 && opcodes_ddfd_bad_for_z180[opcode]) {
+					} else {
+#ifdef Z80EX_Z180_SUPPORT
+						if(cpu->z180 && opcodes_ddfd_bad_for_z180[opcode]) {
 							ofn = opcodes_base[opcode];
-							z80ex_invalid_for_z180(cpu->prefix, 0, opcode);
+							cpu->z180_cb(cpu, cpu->prefix, 0, opcode, cpu->z180_cb_user_data);
 						} else {
+#endif
 							ofn = (cpu->prefix == 0xDD)? opcodes_dd[opcode]: opcodes_fd[opcode];
 							if(ofn == NULL) ofn=opcodes_base[opcode]; /*'mirrored' instructions*/
+#ifdef Z80EX_Z180_SUPPORT
 						}
+#endif
 					}
 					break;
 								
@@ -112,8 +117,10 @@ LIB_EXPORT int z80ex_step(Z80EX_CONTEXT *cpu)
 				
 				case 0xCB:
 					ofn = opcodes_cb[opcode];
-					if (z80ex_z180 && opcode >= 0x30 && opcode <= 0x37)
-						z80ex_invalid_for_z180(0, 0xCB, opcode); /* TODO: we still allow to execute ... */
+#ifdef Z80EX_Z180_SUPPORT
+					if (cpu->z180 && opcode >= 0x30 && opcode <= 0x37)
+						cpu->z180_cb(cpu, 0, 0xCB, opcode, cpu->z180_cb_user_data); /* TODO: we still allow to execute ... */
+#endif
 					break;
 					
 				default:
@@ -149,6 +156,13 @@ LIB_EXPORT void z80ex_reset(Z80EX_CONTEXT *cpu)
 	cpu->prefix=0;
 }
 
+
+static void z80ex_dummy_ed_cb (Z80EX_CONTEXT *cpu, Z80EX_BYTE opcode, void *user_data) {}
+#ifdef Z80EX_Z180_SUPPORT
+static void z80ex_dummy_z180_cb (Z80EX_CONTEXT *cpu, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, void *user_data) {}
+#endif
+
+
 /**/
 LIB_EXPORT Z80EX_CONTEXT *z80ex_create(
 	z80ex_mread_cb mrcb_fn, void *mrcb_data,
@@ -174,14 +188,40 @@ LIB_EXPORT Z80EX_CONTEXT *z80ex_create(
 	cpu->pwrite_cb=pwcb_fn;
 	cpu->pwrite_cb_user_data=pwcb_data;
 	cpu->intread_cb=ircb_fn;
-	cpu->intread_cb_user_data=ircb_data;	
-	
+	cpu->intread_cb_user_data=ircb_data;
+#ifdef Z80EX_Z180_SUPPORT
+	cpu->z180 = 0;
+	cpu->z180_cb = z80ex_dummy_z180_cb;
+#endif
+	cpu->ed_cb = z80ex_dummy_ed_cb;
 	return(cpu);
 }
 
 LIB_EXPORT void z80ex_destroy(Z80EX_CONTEXT *cpu)
 {
 	free(cpu);
+}
+
+#ifdef Z80EX_Z180_SUPPORT
+LIB_EXPORT void z80ex_set_z180_callback(Z80EX_CONTEXT *cpu, z80ex_z180_cb cb_fn, void *user_data)
+{
+	cpu->z180_cb=cb_fn;
+	cpu->z180_cb_user_data=user_data;
+}
+LIB_EXPORT int  z80ex_get_z180(Z80EX_CONTEXT *cpu)
+{
+	return cpu->z180;
+}
+LIB_EXPORT void z80ex_set_z180(Z80EX_CONTEXT *cpu, int z180)
+{
+	cpu->z180 = z180;
+}
+#endif
+
+LIB_EXPORT void z80ex_set_ed_callback(Z80EX_CONTEXT *cpu, z80ex_ed_cb cb_fn, void *user_data)
+{
+	cpu->ed_cb=cb_fn;
+	cpu->ed_cb_user_data=user_data;
 }
 
 LIB_EXPORT void z80ex_set_tstate_callback(Z80EX_CONTEXT *cpu, z80ex_tstate_cb cb_fn, void *user_data)

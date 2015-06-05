@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #ifndef __XEPEM_H
 #define __XEPEM_H
+
+#define Z80EX_Z180_SUPPORT
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "z80ex.h"
@@ -40,8 +43,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define COMBINED_ROM_PATH "combined.rom"
 #define SDCARD_IMG_PATH "sdcard.img"
-
-extern int z80ex_z180;
 
 int set_ep_ramsize(int kbytes);
 int z80_reset ( void );

@@ -22,16 +22,26 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #ifdef Z80EX_Z180_SUPPORT
 
 #warning "LGB: Z180 support is _very_ limited, please read file z80ex/README."
-int z80ex_z180 = 0;
-extern void z80ex_invalid_for_z180( int prefix, int series, int opcode );
+
 #define MULT_OP_T_STATES 13
 
-#else
 
-#define z80ex_z180 0
-static void z80ex_invalid_for_z180 ( int prefix, int series, int opcode ) {}
 
-#endif
+
+#define TST(value)\
+{\
+        F = FLAG_H | sz53p_table[A & (value)];\
+}
+
+
+
+/*static void z180_op_ED_0x04(Z80EX_CONTEXT *cpu) {
+	TST(B);
+	WAIT_UNTIL(ezermilliard);
+}*/
+
+
+
 
 
 
@@ -56,4 +66,6 @@ static const int opcodes_ddfd_bad_for_z180[0x100] = {
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,	/* E. */
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0		/* F. */
 };
+
+#endif
 
