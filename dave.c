@@ -36,10 +36,16 @@ void _set_timing ( int mhz )
 }
 
 
+void kbd_matrix_reset ( void )
+{
+	memset(kbd_matrix, 0xFF, sizeof(kbd_matrix));
+}
+
+
 void dave_reset ( void )
 {
 	int a;
-	memset(kbd_matrix, 0xFF, sizeof(kbd_matrix));
+	kbd_matrix_reset();
 	for (a = 0xA0; a <= 0xBF; a++)
 		port_write(a, 0);
 	dave_int_read = 0;

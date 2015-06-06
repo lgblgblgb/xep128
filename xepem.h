@@ -50,6 +50,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 	char buf[4096]; \
 	sprintf(buf, __VA_ARGS__); \
 	fprintf(stderr, "ERROR: %s\n", buf); \
+	kbd_matrix_reset(); \
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Xep128 Report", buf, sdl_win); \
 }
 //#define ERRSTR() sys_errlist[errno]
@@ -68,6 +69,7 @@ void dave_reset ( void );
 void dave_int1(int active);
 void dave_configure_interrupts ( Uint8 n );
 void dave_ticks ( int slots );
+void kbd_matrix_reset ( void );
 //extern int mem_ws_all, mem_ws_m1;
 
 
