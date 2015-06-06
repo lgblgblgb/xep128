@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <errno.h>
 
 #define WINDOW_TITLE "Xep128"
 #define VERSION "v0.1"
@@ -43,11 +44,25 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define COMBINED_ROM_PATH "combined.rom"
 #define SDCARD_IMG_PATH "sdcard.img"
+#define PRINT_OUT_PATH "print.out"
+
+#define ERROR_WINDOW(...) { \
+	char buf[4096]; \
+	sprintf(buf, __VA_ARGS__); \
+	fprintf(stderr, "ERROR: %s\n", buf); \
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Xep128 Report", buf, sdl_win); \
+}
+//#define ERRSTR() sys_errlist[errno]
+#define ERRSTR() strerror(errno)
+
+extern SDL_Window *sdl_win;
 
 int set_ep_ramsize(int kbytes);
+int search_xep_rom ( void );
 int z80_reset ( void );
 void ep_reset ( void );
 void ep_clear_ram ( void );
+extern int rom_size;
 
 void dave_reset ( void );
 void dave_int1(int active);

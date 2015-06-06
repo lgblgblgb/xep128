@@ -36,7 +36,8 @@ void printer_send_data ( Uint8 data )
 {
 	//fprintf(stderr, "PRINTER GOT DATA: %d\n", data);
 	if (fp_to_open) {
-		fp = fopen("print.out", "a");
+		fp = fopen(PRINT_OUT_PATH, "a");
+		if (fp == NULL) ERROR_WINDOW("Cannot create/append printer output file \"%s\": %s.\nYou can use Xep128 but printer output will not be logged!", PRINT_OUT_PATH, ERRSTR());
 		fp_to_open = 0;
 	}
 	if (fp)

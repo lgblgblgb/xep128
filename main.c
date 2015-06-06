@@ -19,9 +19,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
 
-static SDL_Window *sdl_win = NULL;
+SDL_Window *sdl_win = NULL;
 static SDL_Surface *sdl_surf;
 static Uint32 winid;
+
+int rom_size;
 
 
 void emu_win_grab ( SDL_bool state )
@@ -33,12 +35,12 @@ void emu_win_grab ( SDL_bool state )
 }
 
 
-
 static void exit_on_SDL_problem(const char *msg)
 {
-        fprintf(stderr, "SDL: PROBLEM: %s: %s\n", msg, SDL_GetError());
+        ERROR_WINDOW("SDL: PROBLEM: %s: %s\n", msg, SDL_GetError());
         exit(1);
 }
+
 
 static void shutdown_sdl(void)
 {
@@ -55,24 +57,35 @@ static void shutdown_sdl(void)
 static int load_roms ( void )
 {
 	FILE *f;
+	int ret;
 	printf("ROM: loading %s\n", COMBINED_ROM_PATH);
 	f = fopen(COMBINED_ROM_PATH, "rb");
 	if (f == NULL) {
-		perror("Cannot load ROM");
-		return 1;
+		ERROR_WINDOW("Cannot open ROM image \"%s\": %s", COMBINED_ROM_PATH, ERRSTR());
+		return -1;
 	}
-	printf("Read = %d\n", fread(memory, 1, 0x40000, f));
+	ret = fread(memory, 1, 0x100001, f);
+	printf("Read = %d\n", ret);
 	fclose(f);
-	/*printf("ROM: loading %s\n", ZT_ROM);
-	f = fopen(ZT_ROM, "rb");
-	if (f == NULL) {
-		perror("Cannot load ROM");
-		return 1;
+	if (ret < 0) {
+		ERROR_WINDOW("Cannot read ROM image \"%s\": %s", COMBINED_ROM_PATH, ERRSTR());
 	}
-	printf("Read = %d\n", fread(memory + 0x20000, 1, 0x20000, f));
-	fclose(f);*/
-	return 0;
+	if (ret < 0x8000) {
+		ERROR_WINDOW("ROM image \"%s\" is too short.", COMBINED_ROM_PATH);
+		return -1;
+	}
+	if (ret == 0x100001) {
+		ERROR_WINDOW("ROM image \"%s\" is too large.", COMBINED_ROM_PATH);
+		return -1;
+	}
+	if (ret & 0x3FFF) {
+		ERROR_WINDOW("ROM image \"%s\" size is not multiple of 0x4000 bytes.", COMBINED_ROM_PATH);
+		return -1;
+	}
+	return ret;
 }
+
+
 
 static unsigned int ticks;
 static int running;
@@ -242,7 +255,7 @@ int main (int argc, char *argv[]) {
                 WINDOW_TITLE " " VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                 736, 288*2,
-                SDL_WINDOW_SHOWN
+                SDL_WINDOW_SHOWN // | SDL_WINDOW_FULLSCREEN_DESKTOP
         );
         if (!sdl_win) exit_on_SDL_problem("cannot open window");
         winid = SDL_GetWindowID(sdl_win);
@@ -252,9 +265,13 @@ int main (int argc, char *argv[]) {
 	if (!nick_init(sdl_surf)) return 1;
 	SDL_FillRect(sdl_surf, NULL, 0);
 	SDL_UpdateWindowSurface(sdl_win);
+	//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Xep Window", "This is only a test dialog window for Xep128. Click on OK to continue :)", sdl_win);
+	//ERROR_WINDOW("Ez itt a %s a valasz %d\nHolla!","szep",42);
 	//if (z80_reset()) return 1;
+	rom_size = load_roms();
+	if (rom_size <= 0) return 1;
+	if (search_xep_rom() == -1) ERROR_WINDOW("Cannot find XEP EXOS ROM signature inside ROM image \"%s\". You can use Xep128 but internal :XEP access won't work!", COMBINED_ROM_PATH);
 	set_ep_ramsize(1024);
-	if (load_roms()) return 1;
 	ep_reset();
 #ifdef CONFIG_SDEXT_SUPPORT
 	sdext_init();

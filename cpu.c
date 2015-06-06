@@ -26,12 +26,22 @@ Uint8 memory[0x400000];
 Uint8 ports[0x100];
 static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
+static int xep_rom_seg = -1;
 
+static int z180_incompatibility_reported = 0;
 
-static void z80ex_invalid_for_z180 (Z80EX_CONTEXT *cpu, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, void *user_data)
+static void invalid_for_z180 (Z80EX_CONTEXT *unused_1, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, void *unused_2)
 {
 	int pc = z80ex_get_reg(z80, regPC);
 	fprintf(stderr, "Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\n",
+                prefix, series, opcode,
+                pc,
+                ports[0xB0 | (pc >> 14)],
+                pc & 0x3FFF
+        );
+	if (z180_incompatibility_reported) return;
+	z180_incompatibility_reported = 1;
+	ERROR_WINDOW("Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\nThere will be NO further error reports about this kind of problem to avoid window flooding :)",
 		prefix, series, opcode,
 		pc,
 		ports[0xB0 | (pc >> 14)],
@@ -52,15 +62,32 @@ void set_ep_memseg(int seg, int val)
 #endif
 
 
+int search_xep_rom ( void )
+{
+	int a;
+	for (a = 0; a < rom_size; a += 0x4000) {
+		if (!memcmp(memory + a, "EXOS_ROM", 8) && !memcmp(memory + a + 13, "[XepROM]", 8)) {
+			xep_rom_seg = a >> 14;
+			fprintf(stderr, "Found XEP ROM at %06Xh (seg %02Xh)\n", a, xep_rom_seg);
+			return xep_rom_seg;
+		}
+	}
+	fprintf(stderr, "XEP ROM cannot be found :(\n");
+	return -1;
+}
+
+
 int set_ep_ramsize(int kbytes)
 {
 	int a;
-	memset(memory, 0xFF, 0x400000);
-	if (kbytes < 64)
-		kbytes = 64;
-	else if (kbytes > 0xF80)
-		kbytes = 0xF80;
-	kbytes &= 0xFFF0;
+	if (kbytes < 64) kbytes = 64;
+	if (kbytes >= 4096) kbytes = 4095;
+	kbytes &= 0xFF0;
+	if (rom_size + (kbytes << 10) > 0x400000) {
+		kbytes = (0x400000 - rom_size) >> 10;
+		fprintf(stderr, "ERROR: too large memory, colliding with ROM image, maximazing RAM size to %dKbytes.\n", kbytes);
+	}
+	memset(memory + rom_size, 0xFF, 0x400000 - rom_size);
 	ram_start = 0x400000 - (kbytes << 10);
 	for (a = 0; a < 0x100; a++)
 		used_mem_segments[a] = a >= (0x100 - (kbytes >> 4));
@@ -315,6 +342,14 @@ static Z80EX_BYTE _iread(Z80EX_CONTEXT *unused_1, void *unused_2) {
 
 
 
+static void ed_unknown_opc(Z80EX_CONTEXT *unused_1, Z80EX_BYTE opcode, void *unused_2)
+{
+	int pc = z80ex_get_reg(z80, regPC);
+	if (pc < 0xC000 || ports[0xB3] != xep_rom_seg)
+		return;
+	fprintf(stderr, "XEP: ED trap in XEP ROM segment PC=%04Xh OPC=%02Xh\n", pc, opcode);
+}
+
 
 static Z80EX_BYTE _rdcb_for_disasm(Z80EX_WORD addr, void *seg) {
 	return memory[(*(int*)seg < 0) ? (memsegs[addr >> 14] + addr) : (((*(int*)seg << 14) + addr) & 0x3FFFFF)];
@@ -362,7 +397,8 @@ int z80_reset ( void )
 		printf("Z80: emulation has been created.\n");
 		memset(ports, 0xFF, 0x100);
 		ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
-		z80ex_set_z180_callback(z80, z80ex_invalid_for_z180, NULL);
+		z80ex_set_z180_callback(z80, invalid_for_z180, NULL);
+		z80ex_set_ed_callback(z80, ed_unknown_opc, NULL);
 	}
 	z80ex_reset(z80);
 	srand((unsigned int)time(NULL));

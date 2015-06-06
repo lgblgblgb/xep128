@@ -46,6 +46,7 @@ static void cmd_ver ( void ) {
 static void cmd_z180 ( void ) {
 	z80ex_set_z180(z80, 1);
 	sprintf(buffer_out, "CPU: set to Z180\r\n");
+	ERROR_WINDOW("Z180 emulation is activated. Good luck! :-)");
 }
 
 static void cmd_z80 ( void ) {
