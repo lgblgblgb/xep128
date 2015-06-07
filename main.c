@@ -54,12 +54,28 @@ static void shutdown_sdl(void)
 }
 
 
+FILE *open_emu_file ( const char *name, const char *mode )
+{
+#ifdef WIN32
+	return fopen(name, mode);
+#else
+	char buf[PATH_MAX];
+	FILE *f = fopen(name, mode);
+	if (f != NULL) return f;
+	sprintf(buf, "%s/%s", DATADIR, name);
+	fprintf(stderr, "LOAD: cannot found %s in base dir, trying: %s\n", name, buf);
+	f = fopen(buf, mode);
+	return f;
+#endif
+}
+
+
 static int load_roms ( void )
 {
 	FILE *f;
 	int ret;
 	printf("ROM: loading %s\n", COMBINED_ROM_PATH);
-	f = fopen(COMBINED_ROM_PATH, "rb");
+	f = open_emu_file(COMBINED_ROM_PATH, "rb");
 	if (f == NULL) {
 		ERROR_WINDOW("Cannot open ROM image \"%s\": %s", COMBINED_ROM_PATH, ERRSTR());
 		return -1;
@@ -245,10 +261,15 @@ static double balancer;
 static double SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK; // 0.222462 for 4MHz Z80 [?]
 
 
+static void get_exec_dir ( const char *path )
+{
+	fprintf(stderr, "Program path: %s\n", path);
+	
+}
 
-//emu_define_keyboard(10, 8, kbd_press, kbd_release, []);
 
 int main (int argc, char *argv[]) {
+	get_exec_dir(argv[0]);
 	atexit(shutdown_sdl);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) exit_on_SDL_problem("initialization problem");
 	sdl_win = SDL_CreateWindow(

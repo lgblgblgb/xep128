@@ -1,6 +1,9 @@
+PREFIX	= /usr/local
+BINDIR	= $(PREFIX)/bin
+DATDIR	= $(PREFIX)/lib/xep128
 CC	= gcc
 DEBUG	=
-CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG)
+CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATDIR)\"
 ZCFLAGS	= -fno-common -ansi -pedantic -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_VERSION_STR=1.1.21 -DZ80EX_API_REVISION=1 -DZ80EX_VERSION_MAJOR=1 -DZ80EX_VERSION_MINOR=21 $(DEBUG) -DZ80EX_Z180_SUPPORT -DZ80EX_RELEASE_TYPE=
 CPPFLAGS= -Iz80ex/include -I.
 LDFLAGS	= $(shell sdl2-config --libs) $(DEBUG)
@@ -38,6 +41,11 @@ z80ex.o: z80ex/z80ex.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o z80ex.o z80ex/z80ex.c
 z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o z80ex_dasm.o z80ex/z80ex_dasm.c
+
+install: $(PRG) $(ROM) $(SDIMG)
+	mkdir -p $(BINDIR) $(DATDIR)
+	cp $(PRG) $(BINDIR)/
+	cp $(ROM) $(SDIMG) $(DATDIR)/
 
 buildinfo.c:
 	echo "const char *BUILDINFO_ON  = \"`whoami`@`uname -n` on `uname -s` `uname -r`\";" > buildinfo.c
@@ -99,5 +107,5 @@ commit:
 	EDITOR="vim -c 'startinsert'" git commit -a
 	git push
 
-.PHONY: all clean distclean strip commit win32 publish data
+.PHONY: all clean distclean strip commit win32 publish data install
 

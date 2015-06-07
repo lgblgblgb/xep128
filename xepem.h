@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <unistd.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <limits.h>
 
 #define WINDOW_TITLE "Xep128"
 #define VERSION "v0.1"
@@ -64,6 +65,7 @@ int z80_reset ( void );
 void ep_reset ( void );
 void ep_clear_ram ( void );
 extern int rom_size;
+FILE *open_emu_file ( const char *name, const char *mode );
 
 void dave_reset ( void );
 void dave_int1(int active);
