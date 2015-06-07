@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 	DB "EXOS_ROM"
 	DW 0		; device chain (0 = no)
 	JP	rom_main_entry_point
-	DB "[XepROM]"  ; Xep128 (will?) searches this signature and enables extra "interface" CPU ops for this seg only
-	ALIGN 16
-
 
 MACRO	EXOS n
 	RST	0x30
