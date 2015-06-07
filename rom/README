@@ -1,6 +1,9 @@
 This will fetch a zip containing various ROM images, and building a single
-combined.rom file, which is used by Xep128 then.
+combined.rom file, which is used by Xep128 then. It's loaded as-is into
+EP memory linearly, it should contain ROM images appended to each other.
 
-It also contains our own ROM used to control the emulator from the 
-emulated EP-128 directly, with EXOS commands.
+Emulator also uses its own ROM (XEP). It's not copied by the emulator
+after the combined.rom, so there is no need here for combined.rom to
+contain it. It also helps to solve the problem that combined.rom is
+not so much Xep128 version dependent anymore caused by the XEP ROM.
 
