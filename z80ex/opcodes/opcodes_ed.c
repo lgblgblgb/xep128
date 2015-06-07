@@ -436,7 +436,7 @@ static void op_ED_0x70(Z80EX_CONTEXT *cpu)
 /*OUT (C),0*/
 static void op_ED_0x71(Z80EX_CONTEXT *cpu)
 {
-	OUT(BC,0, /*wr*/5);
+	OUT(BC,cpu->nmos ? 0: 0xFF, /*wr*/5); /* LGB: CMOS CPU uses 0xFF here! I guess ... */
 	T_WAIT_UNTIL(8);
 	return;
 }

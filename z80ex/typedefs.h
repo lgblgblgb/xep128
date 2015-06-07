@@ -77,6 +77,7 @@ struct _z80_cpu_context {
 	/* ED callback support - LGB */
 	z80ex_ed_cb ed_cb;
 	void *ed_cb_user_data;
+	int nmos; /* NMOS Z80 mode if '1', CMOS if '0' */
 	/* Z180 related - LGB */
 #ifdef Z80EX_Z180_SUPPORT
 	int z180;

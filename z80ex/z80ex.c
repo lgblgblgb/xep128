@@ -112,7 +112,11 @@ LIB_EXPORT int z80ex_step(Z80EX_CONTEXT *cpu)
 								
 				case 0xED:
 					ofn = opcodes_ed[opcode];
-					if(ofn == NULL) ofn=opcodes_base[0x00];
+					if(ofn == NULL) {
+						if (opcode > 0xBB)
+							cpu->ed_cb(cpu, opcode, cpu->ed_cb_user_data);
+						ofn=opcodes_base[0x00];
+					}
 					break;
 				
 				case 0xCB:
@@ -189,6 +193,7 @@ LIB_EXPORT Z80EX_CONTEXT *z80ex_create(
 	cpu->pwrite_cb_user_data=pwcb_data;
 	cpu->intread_cb=ircb_fn;
 	cpu->intread_cb_user_data=ircb_data;
+	cpu->nmos = 1;
 #ifdef Z80EX_Z180_SUPPORT
 	cpu->z180 = 0;
 	cpu->z180_cb = z80ex_dummy_z180_cb;
@@ -217,6 +222,17 @@ LIB_EXPORT void z80ex_set_z180(Z80EX_CONTEXT *cpu, int z180)
 	cpu->z180 = z180;
 }
 #endif
+
+LIB_EXPORT void z80ex_set_nmos(Z80EX_CONTEXT *cpu, int nmos)
+{
+	cpu->nmos = nmos;
+}
+
+LIB_EXPORT int z80ex_get_nmos(Z80EX_CONTEXT *cpu)
+{
+	return cpu->nmos;
+}
+
 
 LIB_EXPORT void z80ex_set_ed_callback(Z80EX_CONTEXT *cpu, z80ex_ed_cb cb_fn, void *user_data)
 {

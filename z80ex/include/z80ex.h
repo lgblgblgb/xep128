@@ -115,6 +115,10 @@ extern void z80ex_set_portwrite_callback(Z80EX_CONTEXT *cpu, z80ex_pwrite_cb pwc
 extern void z80ex_set_intread_callback(Z80EX_CONTEXT *cpu, z80ex_intread_cb ircb_fn, void *ircb_data);
 
 extern void z80ex_set_ed_callback(Z80EX_CONTEXT *cpu, z80ex_ed_cb cb_fn, void *user_data);
+
+extern void z80ex_set_nmos(Z80EX_CONTEXT *cpu, int nmos);
+extern int  z80ex_get_nmos(Z80EX_CONTEXT *cpu);
+
 #ifdef Z80EX_Z180_SUPPORT
 extern void z80ex_set_z180_callback(Z80EX_CONTEXT *cpu, z80ex_z180_cb cb_fn, void *user_data);
 extern int  z80ex_get_z180(Z80EX_CONTEXT *cpu);

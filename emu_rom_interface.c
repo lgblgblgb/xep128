@@ -55,11 +55,19 @@ static void cmd_z80 ( void ) {
 }
 
 static void cmd_info ( void ) {
-	sprintf(buffer_out, "CPU: %s %fMHz\r\n", z80ex_get_z180(z80) ? "Z180" : "Z80", CPU_CLOCK / 1000000.0);
+	sprintf(buffer_out, "CPU: %s %s %fMHz\r\n",
+		z80ex_get_z180(z80) ? "Z180" : "Z80",
+		z80ex_get_nmos(z80) ? "NMOS" : "CMOS",
+		CPU_CLOCK / 1000000.0
+	);
 }
 
 static void cmd_cpu ( void ) {
-	sprintf(buffer_out, "CPU: %s %fMHz\r\n", z80ex_get_z180(z80) ? "Z180" : "Z80", CPU_CLOCK / 1000000.0);
+	sprintf(buffer_out, "CPU: %s %s %fMHz\r\n",
+		z80ex_get_z180(z80) ? "Z180" : "Z80",
+		z80ex_get_nmos(z80) ? "NMOS" : "CMOS",
+		CPU_CLOCK / 1000000.0
+	);
 }
 
 
