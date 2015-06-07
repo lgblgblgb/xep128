@@ -98,7 +98,7 @@ strip:	$(PRG)
 	strip $(PRG)
 
 clean:
-	rm -f $(OBJS) $(Z80EX) $(PRG) $(PRG_EXE) $(ZIP32) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.rom xep_rom.lst
+	rm -f $(OBJS) $(Z80EX) $(PRG) $(PRG_EXE) $(ZIP32) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst
 	$(MAKE) -C rom clean
 
 distclean:
