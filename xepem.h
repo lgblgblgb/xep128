@@ -48,11 +48,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define PRINT_OUT_PATH "print.out"
 
 #define ERROR_WINDOW(...) { \
-	char buf[4096]; \
-	sprintf(buf, __VA_ARGS__); \
-	fprintf(stderr, "ERROR: %s\n", buf); \
+	char _buf_for_win_msg[4096]; \
+	sprintf(_buf_for_win_msg, __VA_ARGS__); \
+	fprintf(stderr, "ERROR: %s\n", _buf_for_win_msg); \
 	kbd_matrix_reset(); \
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Xep128 Report", buf, sdl_win); \
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Xep128 Report", _buf_for_win_msg, sdl_win); \
 }
 //#define ERRSTR() sys_errlist[errno]
 #define ERRSTR() strerror(errno)

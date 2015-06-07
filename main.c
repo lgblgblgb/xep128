@@ -65,6 +65,7 @@ FILE *open_emu_file ( const char *name, const char *mode )
 	sprintf(buf, "%s/%s", DATADIR, name);
 	fprintf(stderr, "LOAD: cannot found %s in base dir, trying: %s\n", name, buf);
 	f = fopen(buf, mode);
+	if (f != NULL) ERROR_WINDOW("NOTE: File open from DATADIR instead of current directory: %s\nThat is OK, and it's only a DEBUG message for now ... :)", buf);
 	return f;
 #endif
 }
