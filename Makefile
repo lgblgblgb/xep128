@@ -1,9 +1,9 @@
 PREFIX	= /usr/local
 BINDIR	= $(PREFIX)/bin
-DATDIR	= $(PREFIX)/lib/xep128
+DATADIR	= $(PREFIX)/lib/xep128
 CC	= gcc
 DEBUG	=
-CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATDIR)\"
+CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\"
 ZCFLAGS	= -fno-common -ansi -pedantic -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_VERSION_STR=1.1.21 -DZ80EX_API_REVISION=1 -DZ80EX_VERSION_MAJOR=1 -DZ80EX_VERSION_MINOR=21 $(DEBUG) -DZ80EX_Z180_SUPPORT -DZ80EX_RELEASE_TYPE=
 CPPFLAGS= -Iz80ex/include -I.
 LDFLAGS	= $(shell sdl2-config --libs) $(DEBUG)
@@ -43,9 +43,9 @@ z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o z80ex_dasm.o z80ex/z80ex_dasm.c
 
 install: $(PRG) $(ROM) $(SDIMG)
-	mkdir -p $(BINDIR) $(DATDIR)
+	mkdir -p $(BINDIR) $(DATADIR)
 	cp $(PRG) $(BINDIR)/
-	cp $(ROM) $(SDIMG) $(DATDIR)/
+	cp $(ROM) $(SDIMG) $(DATADIR)/
 
 buildinfo.c:
 	echo "const char *BUILDINFO_ON  = \"`whoami`@`uname -n` on `uname -s` `uname -r`\";" > buildinfo.c
