@@ -49,7 +49,8 @@ the root user, you may need to do it with command 'sudo'):
 
  apt-get install libsdl2-dev make gcc wget
 
-You will also need the sjasm Z80 assembler somewhere in your PATH.
+You will also need the sjasm Z80 assembler somewhere in your PATH, if you
+modified xep_rom.asm at least (otherwise sjasm is not needed).
 
 In the source, you need to issue the command "make". It will compile the
 emulator, and also fetching (with wget) the SD card image through the Net
@@ -136,7 +137,7 @@ ZX Spectrum emulator card emulation :) does not work correctly. The provided
 combined ROM pack file contains the ROM code (version 4.0). You can try that
 with :ZX command from IS-BASIC prompt, but it's quite ugly.
 
-There is an on-going work to emulate Z180 CPU. At least on EP exists with
+There is an on-going work to emulate Z180 CPU. At least one EP exists with
 Z180 hacked in :) The problem: Z180 does not support some of the undocumented
 (but widely used) Z80 features, like separating IX and IY as two 8 bit
 registers. The goal of the planned Z180 emulation is not about the correctness

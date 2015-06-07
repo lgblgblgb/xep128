@@ -69,7 +69,7 @@ Host OS / target:
 
 Network emulation:
 
-	* Wiznet W5300 emulation, partial stuff with host TCP/IP, not raw level!
+	* Wiznet W5300 emulation, partial stuff with host TCP/IP, not raw level! emulate DHCP etc answer though
 
 ZX Spectrum emulator card:
 
