@@ -42,6 +42,14 @@ z80ex.o: z80ex/z80ex.c $(ZDEPS)
 z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o z80ex_dasm.o z80ex/z80ex_dasm.c
 
+main.c: xep_rom.hex
+
+xep_rom.rom: xep_rom.asm
+	sjasm xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom ; false; }
+
+xep_rom.hex: xep_rom.rom
+	od -A n -t x1 -v xep_rom.rom | sed 's/ /,0x/g;s/^,/ /;s/$$/,/' > xep_rom.hex
+
 install: $(PRG) $(ROM) $(SDIMG)
 	mkdir -p $(BINDIR) $(DATADIR)
 	cp $(PRG) $(BINDIR)/
@@ -60,21 +68,18 @@ $(SDIMG):
 	@echo "**** Fetching SDcard image from $(SDURL) ..."
 	wget -O $(SDIMG) $(SDURL) || { rm -f $(SDIMG) ; false; }
 
-rom/$(ROM):
+$(ROM):
 	$(MAKE) -C rom
-
-$(ROM): rom/$(ROM)
-	cp rom/$(ROM) .
 
 data:	$(SDIMG) $(ROM)
 	rm -f buildinfo.c
 
-$(PRG): $(OBJS) $(Z80EX) $(INCS) Makefile $(SDIMG) $(ROM)
+$(PRG): $(OBJS) $(Z80EX) $(INCS) Makefile
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.o
 	$(CC) -o $(PRG) $(OBJS) buildinfo.o $(Z80EX) $(LDFLAGS) $(LIBS)
 
-win32:	$(DLL) $(SDIMG) $(ROM)
+win32:	$(DLL) xep_rom.hex
 	@echo "*** BUILDING FOR WINDOWS ***"
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.c
@@ -93,13 +98,13 @@ strip:	$(PRG)
 	strip $(PRG)
 
 clean:
-	rm -f $(OBJS) $(Z80EX) $(PRG) $(PRG_EXE) $(ZIP32) $(ROM) buildinfo.c buildinfo.o print.out
+	rm -f $(OBJS) $(Z80EX) $(PRG) $(PRG_EXE) $(ZIP32) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.rom xep_rom.lst
 	$(MAKE) -C rom clean
 
 distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
-	rm -f $(SDIMG) $(DLL)
+	rm -f $(SDIMG) $(DLL) $(ROM)
 
 commit:
 	git diff

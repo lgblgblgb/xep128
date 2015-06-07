@@ -25,6 +25,10 @@ static Uint32 winid;
 
 int rom_size;
 
+static const Uint8 _xep_rom[] = {
+#include "xep_rom.hex"
+};
+
 
 void emu_win_grab ( SDL_bool state )
 {
@@ -265,6 +269,7 @@ static double SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK; // 0.2224
 static void get_exec_dir ( const char *path )
 {
 	fprintf(stderr, "Program path: %s\n", path);
+	fprintf(stderr, "XEP ROM size: %d\n", sizeof _xep_rom);
 	
 }
 
@@ -292,7 +297,11 @@ int main (int argc, char *argv[]) {
 	//if (z80_reset()) return 1;
 	rom_size = load_roms();
 	if (rom_size <= 0) return 1;
-	if (search_xep_rom() == -1) ERROR_WINDOW("Cannot find XEP EXOS ROM signature inside ROM image \"%s\". You can use Xep128 but internal :XEP access won't work!", COMBINED_ROM_PATH);
+	memset(memory + rom_size, 0, 0x4000);
+	memcpy(memory + rom_size, _xep_rom, sizeof _xep_rom);
+	xep_rom_seg = rom_size >> 14;
+	fprintf(stderr, "XEP ROM segment will be %02Xh\n", xep_rom_seg);
+	rom_size += 0x4000;
 	set_ep_ramsize(1024);
 	ep_reset();
 #ifdef CONFIG_SDEXT_SUPPORT

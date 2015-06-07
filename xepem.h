@@ -64,7 +64,7 @@ int search_xep_rom ( void );
 int z80_reset ( void );
 void ep_reset ( void );
 void ep_clear_ram ( void );
-extern int rom_size;
+extern int rom_size, xep_rom_seg;
 FILE *open_emu_file ( const char *name, const char *mode );
 
 void dave_reset ( void );

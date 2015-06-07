@@ -1,7 +1,7 @@
 Z180 emulation:
 
-	* clean up the mess, use Z80Ex style context not fixed global stuff
-	* implement all Z180 extra ops
+	* [PENDING] clean up the mess, use Z80Ex style context not fixed global stuff
+	* [PENDING] implement all Z180 extra ops
 	* double check non-functional Z80 undocumented ops on Z180
 
 SD card cartridge emulation:

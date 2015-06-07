@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 	DB "[XepROM]"  ; Xep128 (will?) searches this signature and enables extra "interface" CPU ops for this seg only
 	ALIGN 16
 
+
 MACRO	EXOS n
 	RST	0x30
 	DB	n
@@ -121,9 +122,4 @@ exos_command:
 	XOR	A ; no error code
 	LD	C, A
 	RET
-
-
-
-[0x10000 - $] DB 0xFF
-
 

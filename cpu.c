@@ -26,7 +26,7 @@ Uint8 memory[0x400000];
 Uint8 ports[0x100];
 static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
-static int xep_rom_seg = -1;
+int xep_rom_seg = -1;
 
 static int z180_incompatibility_reported = 0;
 
@@ -62,6 +62,7 @@ void set_ep_memseg(int seg, int val)
 #endif
 
 
+#if 0
 int search_xep_rom ( void )
 {
 	int a;
@@ -75,6 +76,7 @@ int search_xep_rom ( void )
 	fprintf(stderr, "XEP ROM cannot be found :(\n");
 	return -1;
 }
+#endif
 
 
 int set_ep_ramsize(int kbytes)
