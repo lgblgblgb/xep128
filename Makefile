@@ -42,7 +42,7 @@ z80ex.o: z80ex/z80ex.c $(ZDEPS)
 z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o z80ex_dasm.o z80ex/z80ex_dasm.c
 
-main.c: xep_rom.hex
+main.o: xep_rom.hex
 
 xep_rom.rom: xep_rom.asm
 	sjasm xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom ; false; }
