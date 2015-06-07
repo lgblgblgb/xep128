@@ -18,7 +18,12 @@ Modifications compared to the original source distribution:
 * Z180 emulation: only a rough emulation: timing is still Z80,
   no on-chip features, no MMU, only about the opcodes which are
   invalid on Z180 (like IXL/IXH/IYL/IYH related), and some of the
-  new Z180 opcodes, z80/z180 mode can be switched at run-time
+  new Z180 opcodes, z80/z180 mode can be switched at run-time.
+  Callback for "invalid on Z180" issue when Z180 mode is selected.
+
+* CMOS/NMOS Z80 emulation
+
+* ED callback: ED ops >0xBB invokes a callback
 
 
 Now back to the original README, thanks for your patience:

@@ -145,6 +145,8 @@ of Z180 timing, not the on-chip features (like DMA) currently, but _only_
 to be able to test softwares if it works with Z180 too (not using Z80
 undocumented features).
 
+For normal Z80, one can select the good old NMOS, or the CMOS emulation.
+
 # Known problems
 
 There are many! I repeat myself: Xep128 is not a generic, or good emulator for
