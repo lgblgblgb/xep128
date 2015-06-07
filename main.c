@@ -29,9 +29,14 @@ static const Uint8 _xep_rom[] = {
 #include "xep_rom.hex"
 };
 
+static int warn_for_mouse_grab = 1;
 
 void emu_win_grab ( SDL_bool state )
 {
+	if (warn_for_mouse_grab) {
+		ERROR_WINDOW("Clicking in emulator window causes to enter BoxSoft mouse emulation mode.\nThis will try to grab your mouse pointer. To exit, press key ESC.\nYou won't get this notice next time within this session of Xep128");
+		warn_for_mouse_grab = 0;
+	}
 	printf("GRAB: %d\n", state);
 	//SDL_SetWindowGrab(sdl_win, state);
 	SDL_SetRelativeMouseMode(state);
