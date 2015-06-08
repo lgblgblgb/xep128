@@ -63,7 +63,7 @@ int set_ep_ramsize(int kbytes);
 int z80_reset ( void );
 void ep_reset ( void );
 void ep_clear_ram ( void );
-extern int rom_size, xep_rom_seg, xep_rom_addr;
+extern int rom_size, xep_rom_seg, xep_rom_addr, ram_start, mem_ws_all, mem_ws_m1;
 FILE *open_emu_file ( const char *name, const char *mode );
 Uint8 read_cpu_byte ( Uint16 addr );
 

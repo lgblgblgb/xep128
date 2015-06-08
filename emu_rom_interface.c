@@ -33,6 +33,16 @@ static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 ROM)\r\n";
 #define SET_A(v) z80ex_set_reg(z80, regAF, (z80ex_get_reg(z80, regAF) & 0xFF) | ((v) << 8))
 #define SET_C(v) z80ex_set_reg(z80, regBC, (z80ex_get_reg(z80, regBC) & 0xFF00) | (v))
 
+static void cmd_ram ( void ) {
+	sprintf(COBUF, "MEM : RAM=%dK ROM=%dK HOLE=%dK\r\nDave: WS=%d WS_M1=%d\r\n",
+		(0x400000 - ram_start) >> 10,
+		rom_size >> 10,
+		(ram_start - rom_size) >> 10,
+		mem_ws_all ? 1 : 0, mem_ws_m1 ? 1 : 0
+	);
+}
+
+
 static void cmd_cpu ( void ) {
 	char buf[512] = "";
 	if (*carg) {
@@ -64,6 +74,7 @@ static void cmd_help ( void );
 
 static const struct commands_st commands[] = {
 	{ "cpu",	"Set/query CPU type/clock", cmd_cpu },
+	{ "ram",        "Set RAM size/report", cmd_ram },
 	{ NULL,		NULL, NULL }
 };
 

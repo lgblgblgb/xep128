@@ -21,11 +21,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 Z80EX_CONTEXT *z80 = NULL;
 static int memsegs[4];
-static int ram_start;
+int ram_start;
 Uint8 memory[0x400000];
 Uint8 ports[0x100];
 static int used_mem_segments[0x100];
-static int mem_ws_all, mem_ws_m1;
+int mem_ws_all, mem_ws_m1;
 int xep_rom_seg = -1;
 int xep_rom_addr;
 
