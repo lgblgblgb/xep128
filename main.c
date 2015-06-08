@@ -305,7 +305,8 @@ int main (int argc, char *argv[]) {
 	memset(memory + rom_size, 0, 0x4000);
 	memcpy(memory + rom_size, _xep_rom, sizeof _xep_rom);
 	xep_rom_seg = rom_size >> 14;
-	fprintf(stderr, "XEP ROM segment will be %02Xh\n", xep_rom_seg);
+	xep_rom_addr = rom_size;
+	fprintf(stderr, "XEP ROM segment will be %02Xh @ %06Xh\n", xep_rom_seg, xep_rom_addr);
 	rom_size += 0x4000;
 	set_ep_ramsize(1024);
 	ep_reset();

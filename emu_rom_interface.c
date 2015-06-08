@@ -24,46 +24,35 @@ struct commands_st {
 	void (*handler)(void);
 };
 
-#define BUFFER_SIZE 4096
-
-static char buffer[BUFFER_SIZE];
-static int buffer_pos = 0;
-static char buffer_out[BUFFER_SIZE + 2];
-static int buffer_out_pos = 0;
+static char buffer[256];
+static char *carg;
 
 static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 ROM)\r\n";
 
-
-static void todo ( void )
-{
-}
-
-
-static void cmd_ver ( void ) {
-	sprintf(buffer_out, "%s", SHORT_HELP);
-}
-
-static void cmd_z180 ( void ) {
-	z80ex_set_z180(z80, 1);
-	sprintf(buffer_out, "CPU: set to Z180\r\n");
-	ERROR_WINDOW("Z180 emulation is activated. Good luck! :-)");
-}
-
-static void cmd_z80 ( void ) {
-	z80ex_set_z180(z80, 0);
-	sprintf(buffer_out, "CPU: set to Z80\r\n");
-}
-
-static void cmd_info ( void ) {
-	sprintf(buffer_out, "CPU: %s %s %fMHz\r\n",
-		z80ex_get_z180(z80) ? "Z180" : "Z80",
-		z80ex_get_nmos(z80) ? "NMOS" : "CMOS",
-		CPU_CLOCK / 1000000.0
-	);
-}
+#define COBUF ((char*)(memory + xep_rom_addr + 0x3802))
+#define SET_A(v) z80ex_set_reg(z80, regAF, (z80ex_get_reg(z80, regAF) & 0xFF) | ((v) << 8))
+#define SET_C(v) z80ex_set_reg(z80, regBC, (z80ex_get_reg(z80, regBC) & 0xFF00) | (v))
 
 static void cmd_cpu ( void ) {
-	sprintf(buffer_out, "CPU: %s %s %fMHz\r\n",
+	char buf[512] = "";
+	if (*carg) {
+		if (!strcmp(carg, "z80")) {
+			z80ex_set_z180(z80, 0);
+			z80ex_set_nmos(z80, 1);
+		}
+		else if (!strcmp(carg, "z80c")) {
+			z80ex_set_z180(z80, 0);
+			z80ex_set_nmos(z80, 0);
+		}
+		else if (!strcmp(carg, "z180")) {
+			z80ex_set_z180(z80, 1);
+			z80ex_set_nmos(z80, 0);
+		} else {
+			sprintf(buf, "*** Unknown CPU type to set: %s\r\n", carg);
+		}
+	}
+	sprintf(COBUF, "%sCPU: %s %s @ %.2fMHz\r\n",
+		buf,
 		z80ex_get_z180(z80) ? "Z180" : "Z80",
 		z80ex_get_nmos(z80) ? "NMOS" : "CMOS",
 		CPU_CLOCK / 1000000.0
@@ -74,14 +63,7 @@ static void cmd_cpu ( void ) {
 static void cmd_help ( void );
 
 static const struct commands_st commands[] = {
-	{ "reset",	"Resets EP", todo },
-	{ "hreset",	"Hard-resets EP", todo },
-	{ "clock",	"Set CPU clock (eg: 7.12)", todo },
-	{ "z80", 	"Set Z80 emulation (instead of Z180)", cmd_z80 },
-	{ "z180",	"Set partial/broken Z180 emulation", cmd_z180 },
-	{ "info",	"Emulator information", cmd_info },
-	{ "help",	"Help", cmd_help },
-	{ "ver",	"Short help / version", cmd_ver },
+	{ "cpu",	"Set/query CPU type/clock", cmd_cpu },
 	{ NULL,		NULL, NULL }
 };
 
@@ -92,10 +74,10 @@ extern const char *BUILDINFO_GIT; // = "62ecfa47df1223524a0600db68d79c4e60832b9f
 
 static void cmd_help ( void ) {
         const struct commands_st *cmds = commands;
-        char *p = sprintf(buffer_out, "Helper ROM: %s%s %s %s\r\nBuilt on: %s\r\n%s\r\nGIT: %s\r\n\r\n", 
+        char *p = sprintf(COBUF, "Helper ROM: %s%s %s %s\r\nBuilt on: %s\r\n%s\r\nGIT: %s\r\n\r\n",
 		SHORT_HELP, WINDOW_TITLE, VERSION, COPYRIGHT,
 		BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT
-	) + buffer_out;
+	) + COBUF;
         while (cmds->cmd) {
                 p += sprintf(p, "%s\t%s\r\n", cmds->cmd, cmds->help);
                 cmds++;
@@ -103,63 +85,84 @@ static void cmd_help ( void ) {
 }
 
 
-
-static void execute_command ()
+static void xep_exos_command_trap ( void )
 {
-	const struct commands_st *cmds = commands;
-	char *p = strchr(buffer, 32);
-	if (p) *(p++) = 0;
-	
-
-	sprintf(buffer_out, "Your command was: [%s]\r\nParameters were: [%s]\r\n", buffer, p ? p : "NOPE :)");
-	
-	while (cmds->cmd) {
-		if (!strcmp(cmds->cmd, buffer)) {
-			sprintf(buffer_out + strlen(buffer_out), "Found command: [%s]\r\n", cmds->cmd);
-			(cmds->handler)();
-			return;
-		}
-		cmds++;
-	}
-	sprintf(buffer_out, "XEP: sub-command \"%s\" is unknown\r\n", buffer);
-}
-
-
-
-void emurom_send ( Uint8 data )
-{
-	buffer_out_pos = 0;
-	buffer_out[0] = 0;
-	if (data == 0) {
-		if (buffer_pos) {
-			if (buffer_pos == BUFFER_SIZE) {
-				buffer_pos = 0;
-				sprintf(buffer_out, "ERROR: too long command, ignored.\r\n");
-				return;
+	Uint8 c, b;
+	Uint16 de;
+	*COBUF = 0; // no ans by def
+	c = z80ex_get_reg(z80, regBC) & 0xFF;
+	b = z80ex_get_reg(z80, regBC) >> 8;
+	de = z80ex_get_reg(z80, regDE);
+	switch (c) {
+		case 2: // EXOS command
+			if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
+				char *p = buffer;
+				b = read_cpu_byte(de) - 3;
+				de += 4;
+				while (b) {
+					c = read_cpu_byte(de++);
+					b--;
+					if (c == 9) c = 32;
+					if (c < 32 || c > 127) continue;
+					if (c >= 'A' && c <= 'Z') c += 32;
+					if (p == buffer && c == 32) continue;
+					if (p > buffer && c == 32 && p[-1] == 32) continue;
+					*(p++) = (c == 32 ? 0 : c);
+				}
+				*p = 0;
+				p[1] = 0;
+				if (p == buffer) {
+					sprintf(COBUF, "No sub-command was requested\r\n");
+				} else {
+					const struct commands_st *cmds = commands;
+					c = 1;
+					while (cmds->cmd) {
+						if (!strcmp(cmds->cmd, buffer)) {
+							//sprintf(buffer_out + strlen(buffer_out), "Found command: [%s]\r\n", cmds->cmd);
+							carg = buffer + strlen(buffer) + 1;
+							(cmds->handler)();
+							c = 0;
+							break;
+						}
+						cmds++;
+					}
+					if (c)
+						sprintf(COBUF, "XEP: sub-command \"%s\" is unknown\r\n", buffer);
+				}
+				SET_A(0);
+				SET_C(0);
 			}
-			buffer[buffer[buffer_pos - 1] == 32 ? buffer_pos - 1 : buffer_pos] = 0;
-			buffer_pos = 0;
-			execute_command();
-		} else {
-			cmd_help();
-		}
-		return;
+			break;
+		case 3: // EXOS help
+			if (b == 0)
+				sprintf(COBUF, "%s", SHORT_HELP);
+			else if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
+				cmd_help();
+				SET_A(0);
+				SET_C(0);
+			}
+			break;
 	}
-	if (data == 9) data = 32;
-	if (data < 32 || data > 127) return;
-	if (buffer_pos == 0 && data == 32) return;
-	if (buffer_pos && data == 32 && buffer[buffer_pos - 1] == 32) return;
-	if (data >= 'A' && data <= 'Z') data += 32;
-	if (buffer_pos < BUFFER_SIZE)
-		buffer[buffer_pos++] = data;
+	// set answer size for XEP ROM
+	c = strlen(COBUF);
+	if (c > 2045) {
+		ERROR_WINDOW("FATAL: XEP ROM answer is too large, %d bytes.", c);
+		exit(1);
+	}
+	*(Uint8*)(COBUF - 2) = c & 0xFF;
+	*(Uint8*)(COBUF - 1) = c >> 8;
 }
 
 
-Uint8 emurom_receive ( void )
+void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 {
-	Uint8 result = buffer_out[buffer_out_pos];
-	if (result) buffer_out_pos++;
-	buffer_pos = 0;
-	return result;
+	switch (opcode) {
+		case 0xBC:
+			xep_exos_command_trap();
+			break;
+		default:
+			ERROR_WINDOW("FATAL: Unknown ED-trap opcode in XEP ROM: PC=%04Xh ED_OP=%02Xh", pc, opcode);
+			exit(1);
+	}
 }
 

@@ -29,94 +29,24 @@ ENDMACRO
 
 
 rom_main_entry_point:
-	LD	A, C
-	CP	2
-	JR	Z, exos_command
-	CP	3
-	RET	NZ
-	; exos help (code = 3)
-	LD	A, B
-	CP	0
-	JR	Z, .rom_list_help
-	CP	3
-	RET	NZ
-	PUSH	DE
-	POP	IX
-	LD	A, (IX+1)
-	CP	'X'
-	RET	NZ
-	LD	A, (IX+2)
-	CP	'E'
-	RET	NZ
-	LD	A, (IX+3)
-	CP	'P'
-	RET	NZ
-	LD	A, "H"
-	OUT	(0x30), A
-	LD	A, "E"
-	OUT	(0x30), A
-	LD	A, "L"
-	OUT	(0x30), A
-	LD	A, "P"
-	OUT	(0x30), A
-	JR	exos_command.answer
-.rom_list_help:
+	DB	0xED, 0xBC	; ED trap for the emulator, it may modify A, C
+	PUSH	AF
 	PUSH	BC
 	PUSH	DE
-	LD	A, "V"
-	OUT	(0x30), A
-	LD	A, "E"
-	OUT	(0x30), A
-	LD	A, "R"
-	OUT	(0x30), A
-	CALL	exos_command.answer
+	LD	DE, 0xF800 ; the ED trap modifies memory from here
+	LD	A, (DE)
+	LD	C, A
+	INC	DE
+	LD	A, (DE)
+	LD	B, A
+	OR	C		; word at F800 is the print size, 0 => no print
+	JR	Z, .no_print
+	INC	DE
+	LD	A, 0xFF		; default channel
+	EXOS	8		; write block EXOS function
+.no_print:
 	POP	DE
 	POP	BC
-	RET
-
-
-exos_command:
-	LD	A, B
-	CP	3
-	RET	NZ
-	PUSH	DE
-	POP	IX
-	LD	A, (IX+1)
-	CP	'X'
-	RET	NZ
-	LD	A, (IX+2)
-	CP	'E'
-	RET	NZ
-	LD	A, (IX+3)
-	CP	'P'
-	RET	NZ
-	; Seems to be our XEP command!
-	LD	A, (DE)
-	SUB	3
-	LD	B, A
-	INC	DE
-	INC	DE
-	INC	DE
-	INC	DE
-.send_command:
-	LD	A, (DE)
-	OUT	(0x30), A
-	INC	DE
-	DJNZ	.send_command
-.answer:
-	XOR	A
-	OUT	(0x30), A ; send end of command signal
-
-.answer_loop:
-	IN	A, (0x30)
-	OR	A
-	JR	Z, .end_of_answer
-	LD	B, A
-	LD	A, 0xFF
-	EXOS	7
-	JR	.answer_loop
-.end_of_answer:
-	XOR	A ; no error code
-	LD	C, A
+	POP	AF
 	RET
 

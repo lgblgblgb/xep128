@@ -27,6 +27,7 @@ Uint8 ports[0x100];
 static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
 int xep_rom_seg = -1;
+int xep_rom_addr;
 
 static int z180_incompatibility_reported = 0;
 
@@ -125,6 +126,11 @@ static Z80EX_BYTE _mread(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, int m1_state,
 }
 
 
+Uint8 read_cpu_byte ( Uint16 addr )
+{
+	return memory[memsegs[addr >> 14] + addr];
+}
+
 
 static void      _mwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, Z80EX_BYTE value, void *unused_2) {
 	register int phys = memsegs[addr >> 14] + addr;
@@ -169,10 +175,6 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unuse
 		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
 			return wd_read_exdos_status();
 #endif
-
-		case 0x30:
-			return emurom_receive();
-
 		/* ZX Spectrum emulator */
 		case 0x40: case 0x41: case 0x42: case 0x43: case 0x44:
 			fprintf(stderr, "ZXEMU: reading port %02Xh\n", port);
@@ -230,10 +232,6 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
 			wd_set_exdos_control(value);
 #endif
-		/* DOH! */
-		case 0x30:
-			emurom_send(value);
-			break;
 		case 0x32:
 		case 0x3F:
 			fprintf(stderr, "Z180: would be Z180 config port, ignored <no Z180 emulation> for writing port %02Xh with value of %02Xh.\n", port, value);
@@ -347,9 +345,8 @@ static Z80EX_BYTE _iread(Z80EX_CONTEXT *unused_1, void *unused_2) {
 static void ed_unknown_opc(Z80EX_CONTEXT *unused_1, Z80EX_BYTE opcode, void *unused_2)
 {
 	int pc = z80ex_get_reg(z80, regPC);
-	if (pc < 0xC000 || ports[0xB3] != xep_rom_seg)
-		return;
-	fprintf(stderr, "XEP: ED trap in XEP ROM segment PC=%04Xh OPC=%02Xh\n", pc, opcode);
+	if (pc >= 0xC000 && ports[0xB3] == xep_rom_seg)
+		xep_rom_trap(pc, opcode);
 }
 
 

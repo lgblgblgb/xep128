@@ -60,12 +60,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 extern SDL_Window *sdl_win;
 
 int set_ep_ramsize(int kbytes);
-int search_xep_rom ( void );
 int z80_reset ( void );
 void ep_reset ( void );
 void ep_clear_ram ( void );
-extern int rom_size, xep_rom_seg;
+extern int rom_size, xep_rom_seg, xep_rom_addr;
 FILE *open_emu_file ( const char *name, const char *mode );
+Uint8 read_cpu_byte ( Uint16 addr );
 
 void dave_reset ( void );
 void dave_int1(int active);
@@ -73,7 +73,6 @@ void dave_configure_interrupts ( Uint8 n );
 void dave_ticks ( int slots );
 void kbd_matrix_reset ( void );
 //extern int mem_ws_all, mem_ws_m1;
-
 
 //int z80_disasm(char *buffer, int buffer_size, int flags, int *t_states, int *t_states_2, Uint16 pc, int seg);
 int z80_dasm(char *buffer, Uint16 pc, int seg);
@@ -147,10 +146,7 @@ extern Uint8 dave_int_read;
 extern Uint8 kbd_matrix[16];
 extern int kbd_selector;
 
-void emurom_send ( Uint8 data );
-Uint8 emurom_receive ( void );
-
-
+void xep_rom_trap ( Uint16 pc, Uint8 opcode);
 
 #endif
 
