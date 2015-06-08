@@ -33,6 +33,10 @@ static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 ROM)\r\n";
 #define SET_A(v) z80ex_set_reg(z80, regAF, (z80ex_get_reg(z80, regAF) & 0xFF) | ((v) << 8))
 #define SET_C(v) z80ex_set_reg(z80, regBC, (z80ex_get_reg(z80, regBC) & 0xFF00) | (v))
 
+static const char *_dave_ws_descrs[4] = {
+	"all", "M1", "no", "no"
+};
+
 static void cmd_ram ( void ) {
 	if (*carg) {
 		int ms = atoi(carg);
@@ -44,11 +48,12 @@ static void cmd_ram ( void ) {
 			sprintf(COBUF, "**** Invalid memory size (K): %s\r\n", carg);
 		return;
 	}
-	sprintf(COBUF, "MEM : RAM=%dK ROM=%dK HOLE=%dK\r\nDave: WS=%d WS_M1=%d\r\n",
+	sprintf(COBUF, "MEM : RAM=%dK ROM=%dK HOLE=%dK\r\nDave: WS=%s IN_CLK=%dMHz\r\n",
 		(0x400000 - ram_start) >> 10,
 		rom_size >> 10,
 		(ram_start - rom_size) >> 10,
-		mem_ws_all ? 1 : 0, mem_ws_m1 ? 1 : 0
+		_dave_ws_descrs[(ports[0xBF] >> 2) & 3],
+		ports[0xBF] & 1 ? 12 : 8
 	);
 }
 
@@ -78,7 +83,7 @@ static void cmd_cpu ( void ) {
 			}
 		}
 	}
-	sprintf(COBUF, "%sCPU: %s %s @ %.2fMHz\r\n",
+	sprintf(COBUF, "%sCPU : %s %s @ %.2fMHz\r\n",
 		buf,
 		z80ex_get_z180(z80) ? "Z180" : "Z80",
 		z80ex_get_nmos(z80) ? "NMOS" : "CMOS",

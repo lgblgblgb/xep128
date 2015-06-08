@@ -25,7 +25,7 @@ int ram_start;
 Uint8 memory[0x400000];
 Uint8 ports[0x100];
 static int used_mem_segments[0x100];
-int mem_ws_all, mem_ws_m1;
+static int mem_ws_all, mem_ws_m1;
 int xep_rom_seg = -1;
 int xep_rom_addr;
 
