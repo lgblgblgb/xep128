@@ -147,6 +147,10 @@ undocumented features).
 
 For normal Z80, one can select the good old NMOS, or the CMOS emulation.
 
+You can issue command :XEP CPU to query CPU emulation status. You can also
+use this to set the CPU type, with another word after CPU, it can be Z80
+(NMOS Z80), Z80C (CMOS Z80) and Z180 (it is always CMOS).
+
 # Known problems
 
 There are many! I repeat myself: Xep128 is not a generic, or good emulator for
