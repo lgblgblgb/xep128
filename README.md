@@ -53,12 +53,21 @@ You will also need the sjasm Z80 assembler somewhere in your PATH, if you
 modified xep_rom.asm at least (otherwise sjasm is not needed).
 
 In the source, you need to issue the command "make". It will compile the
-emulator, and also fetching (with wget) the SD card image through the Net
-(about 256Mbyte in size). If everything is OK, you will get an executable
-binary named "xep128", you can execute it from the current directory (otherwise
-it won't found the ROM and the SD card image - missing the SD card image
-will cause I/O error in EXOS if you try to use, but the ROM package is
-essential of course).
+emulator, you should have an executable "xep128" at the end. Now you need
+the ROM image and the SD card image. You can download it by hand (please
+read the Windows section about the URLs), or you can do it with the following
+commands:
+
+ make combined.rom
+ make sdcard.img
+
+Now, you can execute the emulator from the current directory. Optionally you
+can say "make install" (you need root access) which - by default - installs
+emulator and the ROM/SD card images into /usr/local.
+
+Warning, the SD-card image is 256Mbyte long! You can try the emulator without
+the SD card image, but you won't be able to access its content then, of
+course.
 
 # Installation on Windows (binary, .exe)
 
