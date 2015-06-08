@@ -398,7 +398,8 @@ int z80_reset ( void )
 		ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
 		z80ex_set_z180_callback(z80, invalid_for_z180, NULL);
 		z80ex_set_ed_callback(z80, ed_unknown_opc, NULL);
-		z80ex_set_nmos(z80, 0); // test: turn off NMOS: CMOS CPU!
+		z80ex_set_nmos(z80, 1);
+		z80ex_set_z180(z80, 0);
 	}
 	z80ex_reset(z80);
 	srand((unsigned int)time(NULL));
