@@ -59,6 +59,7 @@ read the Windows section about the URLs), or you can do it with the following
 commands:
 
  make combined.rom
+
  make sdcard.img
 
 Now, you can execute the emulator from the current directory. Optionally you
@@ -123,6 +124,8 @@ can be accessed with shifted key 2. And so on, you may get the idea.
 Pause/break on your keyboard works as "soft reset". Press with shift key for
 hard reset.
 
+Please continue with the next chapter for more advanced topics.
+
 # More information on emulated hardware add-ons
 
 The SD card image is a normal VHD file, you can try to replace it with your own.
@@ -159,6 +162,10 @@ For normal Z80, one can select the good old NMOS, or the CMOS emulation.
 You can issue command :XEP CPU to query CPU emulation status. You can also
 use this to set the CPU type, with another word after CPU, it can be Z80
 (NMOS Z80), Z80C (CMOS Z80) and Z180 (it is always CMOS).
+
+RAM size can be queried with :XEP RAM command, also, you can use this
+construct to set RAM size up with :XEP RAM 128 (it will set 128Kbyte of
+RAM). This also causes the emulated EP to reboot.
 
 # Known problems
 

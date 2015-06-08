@@ -34,6 +34,16 @@ static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 ROM)\r\n";
 #define SET_C(v) z80ex_set_reg(z80, regBC, (z80ex_get_reg(z80, regBC) & 0xFF00) | (v))
 
 static void cmd_ram ( void ) {
+	if (*carg) {
+		int ms = atoi(carg);
+		if (ms >= 64 && ms < 4096 - 32) {
+			ERROR_WINDOW("Setting RAM size to %dKbytes\nEP will reboot now.", set_ep_ramsize(ms));
+			ep_clear_ram();
+			ep_reset();
+		} else
+			sprintf(COBUF, "**** Invalid memory size (K): %s\r\n", carg);
+		return;
+	}
 	sprintf(COBUF, "MEM : RAM=%dK ROM=%dK HOLE=%dK\r\nDave: WS=%d WS_M1=%d\r\n",
 		(0x400000 - ram_start) >> 10,
 		rom_size >> 10,
