@@ -158,13 +158,16 @@ to be able to test softwares if it works with Z180 too (not using Z80
 undocumented features).
 
 For normal Z80, one can select the good old NMOS, or the CMOS emulation.
-
 You can issue command :XEP CPU to query CPU emulation status. You can also
 use this to set the CPU type, with another word after CPU, it can be Z80
-(NMOS Z80), Z80C (CMOS Z80) and Z180 (it is always CMOS).
+(NMOS Z80), Z80C (CMOS Z80) and Z180 (it is always CMOS). EXOS command
+:XEP CPU can also be used with a number as an argument, it sets the CPU
+clock, for example (NOTE: this feature has bugs currently!):
+
+ :XEP CPU 7.12
 
 RAM size can be queried with :XEP RAM command, also, you can use this
-construct to set RAM size up with :XEP RAM 128 (it will set 128Kbyte of
+construct to set RAM size up with :XEP RAM 128 (it will set 128 Kbytes of
 RAM). This also causes the emulated EP to reboot.
 
 # Known problems

@@ -24,6 +24,7 @@ static SDL_Surface *sdl_surf;
 static Uint32 winid;
 
 int rom_size;
+int CPU_CLOCK;
 
 static const Uint8 _xep_rom[] = {
 #include "xep_rom.hex"
@@ -268,7 +269,18 @@ static double balancer;
 //static float SCALER = 5.685098823006883;
 //static float SCALER = 0.2217543859649123;
 //static float SCALER = 0.2223;
-static double SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK; // 0.222462 for 4MHz Z80 [?]
+static double SCALER;
+
+int set_cpu_clock ( int hz )
+{
+	if (hz <  1000000) hz =  1000000;
+	if (hz > 12000000) hz = 12000000;
+	CPU_CLOCK = hz;
+	SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK;
+	fprintf(stderr, "CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
+	return hz;
+}
+
 
 
 static void get_exec_dir ( const char *path )
@@ -317,7 +329,8 @@ int main (int argc, char *argv[]) {
 	running = 1;
 	balancer = 0;
 	int last_optype = 0;
-	printf("CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
+	//printf("CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
+	set_cpu_clock(DEFAULT_CPU_CLOCK);
 	emu_timekeeping_start();
 	while (running) {
 		int t, nts = 0;

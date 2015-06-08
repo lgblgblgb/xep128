@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 // more accurate :) from IstvanV
 #define NICK_SLOTS_PER_SEC 889846
-#define CPU_CLOCK 4000000
+#define DEFAULT_CPU_CLOCK 4000000
 
 #define CONFIG_SDEXT_SUPPORT
 
@@ -59,7 +59,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 extern SDL_Window *sdl_win;
 
+extern int CPU_CLOCK;
 int set_ep_ramsize(int kbytes);
+int set_cpu_clock ( int hz );
 int z80_reset ( void );
 void ep_reset ( void );
 void ep_clear_ram ( void );

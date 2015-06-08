@@ -68,7 +68,14 @@ static void cmd_cpu ( void ) {
 			z80ex_set_z180(z80, 1);
 			z80ex_set_nmos(z80, 0);
 		} else {
-			sprintf(buf, "*** Unknown CPU type to set: %s\r\n", carg);
+			int clk = atof(carg) * 1000000;
+			if (clk < 1000000 || clk > 12000000)
+				sprintf(buf, "*** Unknown CPU type to set or it's not a clock value either (1-12 is OK in MHz): %s\r\n", carg);
+			else {
+				ERROR_WINDOW("Setting CPU clock to %.2fMhz",
+					set_cpu_clock(clk) / 1000000.0
+				);
+			}
 		}
 	}
 	sprintf(COBUF, "%sCPU: %s %s @ %.2fMHz\r\n",
