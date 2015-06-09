@@ -57,6 +57,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 //#define ERRSTR() sys_errlist[errno]
 #define ERRSTR() strerror(errno)
 
+#ifdef _WIN32
+#define DIRSEP "\\"
+#else
+#define DIRSEP "/"
+#endif
+
 extern SDL_Window *sdl_win;
 char *app_pref_path, *app_base_path;
 

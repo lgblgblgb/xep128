@@ -65,11 +65,11 @@ static Uint8 balt_mask, chm, chb, altind;
 static int nick_addressing_init ( Uint32 *pixels_buffer, int line_size )
 {
 	if (line_size < 736) {
-		fprintf(stderr, "NICK: SDL: FATAL ERROR: target SDL surface has width (or pitch?) smaller than 736 pixels [%d]!\n", line_size);
+		ERROR_WINDOW("NICK: SDL: FATAL ERROR: target SDL surface has width (or pitch?) smaller than 736 pixels [%d]!", line_size);
 		return 1;
 	}
 	if (line_size & 3) {
-		fprintf(stderr, "NICK: SDL: FATAL ERROR: line size bytes not 4 bytes aligned!\n");
+		ERROR_WINDOW("NICK: SDL: FATAL ERROR: line size bytes not 4 bytes aligned!");
 		return 1;
 	}
 	//pixels_pitch = line_size - 736 * 4;
@@ -101,7 +101,7 @@ Uint32 *nick_init ( SDL_Surface *surface )
 		surface->format->Amask
 	);
 	if (surface->format->BytesPerPixel != 4) {
-		fprintf(stderr, "NICK: SDL: FATAL ERROR: only 4 bytes / pixel SDL surfaces are supported (you have low colour video mode?!)!\n");
+		ERROR_WINDOW("NICK: SDL: FATAL ERROR: only 4 bytes / pixel SDL surfaces are supported (you have low colour video mode?!)!");
 		return NULL;
 	}
 	pixels = NULL; // no previous state of buffer before the next function
@@ -582,7 +582,7 @@ void nick_render_slot ( void )
 				_update();
 			visible = (pixels >= pixels_limit_up && pixels < pixels_limit_bottom && (!frameskip));
 			if ((vm | ((a >> 2) & 0x18)) >= 8*4 ) {
-				fprintf(stderr, "FATAL ERROR: render funcarray bound check failure\n");
+				ERROR_WINDOW("FATAL ERROR: NICK: render funcarray bound check failure!");
 				exit(1);
 			}
 		
@@ -667,7 +667,7 @@ void nick_render_slot ( void )
 				_render();
 			break;
 		default:
-			fprintf(stderr, "NICK: FATAL ERROR: invalid slot number for rendering: %d\n", slot);
+			ERROR_WINDOW("NICK: FATAL ERROR: invalid slot number for rendering: %d", slot);
 			exit(1);
 			break;
 	}

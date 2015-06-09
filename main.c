@@ -63,6 +63,7 @@ static void shutdown_sdl(void)
 	//SQL_Quit();
 	printer_close();
         printf("Shutdown callback, return.\n");
+	SDL_Quit();
 }
 
 
@@ -70,7 +71,7 @@ FILE *open_emu_file ( const char *name, const char *mode )
 {
 	char buf[PATH_MAX];
 	const char *prefixes[] = {
-		"./",		// try in the current directory first
+		"",		// try in the current directory first
 #ifndef _WIN32
 		DATADIR "/",	// try in the DATADIR, it makes sense on UNIX like sys
 #endif
@@ -301,24 +302,27 @@ int set_cpu_clock ( int hz )
 
 
 
-static void get_exec_dir ( const char *path )
+static void get_sys_dirs ( const char *path )
 {
 	fprintf(stderr, "Program path: %s\n", path);
 	fprintf(stderr, "XEP ROM size: %d\n", sizeof _xep_rom);
-	fprintf(stderr, "SDL base path: %s\n", SDL_GetBasePath());
-	fprintf(stderr, "SDL pref path: %s\n", SDL_GetPrefPath("LGBemus", "xep128"));
+	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
+	if (app_pref_path == NULL) app_pref_path = SDL_strdup("." DIRSEP);
+	app_base_path = SDL_GetBasePath();
+	if (app_base_path == NULL) app_base_path = SDL_strdup("." DIRSEP);
+	fprintf(stderr, "SDL base path: %s\n", app_base_path);
+	fprintf(stderr, "SDL pref path: %s\n", app_pref_path);
 	
 }
 
 
-int main (int argc, char *argv[]) {
-	get_exec_dir(argv[0]);
+
+int main (int argc, char *argv[])
+{
 	atexit(shutdown_sdl);
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) exit_on_SDL_problem("initialization problem");
-	app_pref_path = SDL_GetPrefPath("nemesys", "xep128");
-	if (app_pref_path == NULL) app_pref_path = SDL_strdup("./");
-	app_base_path = SDL_GetBasePath();
-	if (app_base_path == NULL) app_base_path = SDL_strdup("./");
+	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+		exit_on_SDL_problem("initialization problem");
+	get_sys_dirs(argv[0]);
 	sdl_win = SDL_CreateWindow(
                 WINDOW_TITLE " " VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -328,16 +332,22 @@ int main (int argc, char *argv[]) {
         if (!sdl_win) exit_on_SDL_problem("cannot open window");
         winid = SDL_GetWindowID(sdl_win);
 	sdl_surf = SDL_GetWindowSurface(sdl_win);
-	if (!sdl_surf) exit_on_SDL_problem("cannot get window surface");
-	if (z80_reset()) return 1;
-	if (!nick_init(sdl_surf)) return 1;
+	if (!sdl_surf)
+		exit_on_SDL_problem("cannot get window surface");
+	if (z80_reset()) {
+		ERROR_WINDOW("Cannot initialize Z80 emulation. Probably not enough free memory?");
+		return 1;
+	}
+	if (!nick_init(sdl_surf))
+		return 1;
 	SDL_FillRect(sdl_surf, NULL, 0);
 	SDL_UpdateWindowSurface(sdl_win);
 	//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Xep Window", "This is only a test dialog window for Xep128. Click on OK to continue :)", sdl_win);
 	//ERROR_WINDOW("Ez itt a %s a valasz %d\nHolla!","szep",42);
 	//if (z80_reset()) return 1;
 	rom_size = load_roms();
-	if (rom_size <= 0) return 1;
+	if (rom_size <= 0)
+		return 1;
 	memset(memory + rom_size, 0, 0x4000);
 	memcpy(memory + rom_size, _xep_rom, sizeof _xep_rom);
 	xep_rom_seg = rom_size >> 14;

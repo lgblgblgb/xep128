@@ -336,10 +336,10 @@ Uint8 sdext_read_cart_p3 ( Uint16 addr )
 				return 0xFF;
 				return is_hs_read;
 			default:
-				fprintf(stderr, "SDEXT: FATAL, unhandled (RD) case\n");
+				ERROR_WINDOW("SDEXT: FATAL, unhandled (RD) case");
 				exit(1);
 		}
-	fprintf(stderr, "SDEXT: FATAL, control should not go here\n");
+	ERROR_WINDOW("SDEXT: FATAL, control should not get here");
 	exit(1);
 	return 0; // make GCC happy :)
 }
@@ -393,7 +393,7 @@ void sdext_write_cart_p3 ( Uint16 addr, Uint8 data )
 #endif
 			break;
 		default:
-			fprintf(stderr, "SDEXT: FATAL, unhandled (WR) case\n");
+			ERROR_WINDOW("SDEXT: FATAL, unhandled (WR) case");
 			exit(1);
 	}
 }
