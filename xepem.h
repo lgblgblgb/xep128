@@ -43,9 +43,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define CONFIG_SDEXT_SUPPORT
 
-#define COMBINED_ROM_PATH "combined.rom"
-#define SDCARD_IMG_PATH "sdcard.img"
-#define PRINT_OUT_PATH "print.out"
+#define COMBINED_ROM_FN "combined.rom"
+#define SDCARD_IMG_FN "sdcard.img"
+#define PRINT_OUT_FN "print.out"
 
 #define ERROR_WINDOW(...) { \
 	char _buf_for_win_msg[4096]; \
@@ -58,6 +58,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define ERRSTR() strerror(errno)
 
 extern SDL_Window *sdl_win;
+char *app_pref_path, *app_base_path;
 
 extern int CPU_CLOCK;
 int set_ep_ramsize(int kbytes);

@@ -26,6 +26,8 @@ static Uint32 winid;
 int rom_size;
 int CPU_CLOCK;
 
+char *app_pref_path, *app_base_path;
+
 static const Uint8 _xep_rom[] = {
 #include "xep_rom.hex"
 };
@@ -66,18 +68,34 @@ static void shutdown_sdl(void)
 
 FILE *open_emu_file ( const char *name, const char *mode )
 {
-#ifdef WIN32
-	return fopen(name, mode);
-#else
 	char buf[PATH_MAX];
-	FILE *f = fopen(name, mode);
-	if (f != NULL) return f;
-	sprintf(buf, "%s/%s", DATADIR, name);
-	fprintf(stderr, "LOAD: cannot found %s in base dir, trying: %s\n", name, buf);
-	f = fopen(buf, mode);
-	if (f != NULL) ERROR_WINDOW("NOTE: File open from DATADIR instead of current directory: %s\nThat is OK, and it's only a DEBUG message for now ... :)", buf);
-	return f;
+	const char *prefixes[] = {
+		"./",		// try in the current directory first
+#ifndef _WIN32
+		DATADIR "/",	// try in the DATADIR, it makes sense on UNIX like sys
 #endif
+		app_base_path,	// try at base path (where executable is)
+		app_pref_path,	// try at pref path (user writable area)
+		NULL
+	};
+	int a = 0;
+	FILE *f;
+	while (prefixes[a] != NULL) {
+		sprintf(buf, "%s%s", prefixes[a], name);
+		fprintf(stderr, "OPEN: trying path \"%s\" for file \"%s\": ",
+			buf, name
+		);
+		f = fopen(buf, mode);
+		if (f == NULL) {
+			a++;
+			fprintf(stderr, "FAILED\n");
+		} else {
+			fprintf(stderr, "OK :-)\n");
+			return f;
+		}
+	}
+	fprintf(stderr, "OPEN: no file could be open for \"%s\"\n", name);
+	return NULL;
 }
 
 
@@ -85,28 +103,28 @@ static int load_roms ( void )
 {
 	FILE *f;
 	int ret;
-	printf("ROM: loading %s\n", COMBINED_ROM_PATH);
-	f = open_emu_file(COMBINED_ROM_PATH, "rb");
+	printf("ROM: loading %s\n", COMBINED_ROM_FN);
+	f = open_emu_file(COMBINED_ROM_FN, "rb");
 	if (f == NULL) {
-		ERROR_WINDOW("Cannot open ROM image \"%s\": %s", COMBINED_ROM_PATH, ERRSTR());
+		ERROR_WINDOW("Cannot open ROM image \"%s\": %s", COMBINED_ROM_FN, ERRSTR());
 		return -1;
 	}
 	ret = fread(memory, 1, 0x100001, f);
 	printf("Read = %d\n", ret);
 	fclose(f);
 	if (ret < 0) {
-		ERROR_WINDOW("Cannot read ROM image \"%s\": %s", COMBINED_ROM_PATH, ERRSTR());
+		ERROR_WINDOW("Cannot read ROM image \"%s\": %s", COMBINED_ROM_FN, ERRSTR());
 	}
 	if (ret < 0x8000) {
-		ERROR_WINDOW("ROM image \"%s\" is too short.", COMBINED_ROM_PATH);
+		ERROR_WINDOW("ROM image \"%s\" is too short.", COMBINED_ROM_FN);
 		return -1;
 	}
 	if (ret == 0x100001) {
-		ERROR_WINDOW("ROM image \"%s\" is too large.", COMBINED_ROM_PATH);
+		ERROR_WINDOW("ROM image \"%s\" is too large.", COMBINED_ROM_FN);
 		return -1;
 	}
 	if (ret & 0x3FFF) {
-		ERROR_WINDOW("ROM image \"%s\" size is not multiple of 0x4000 bytes.", COMBINED_ROM_PATH);
+		ERROR_WINDOW("ROM image \"%s\" size is not multiple of 0x4000 bytes.", COMBINED_ROM_FN);
 		return -1;
 	}
 	return ret;
@@ -287,6 +305,8 @@ static void get_exec_dir ( const char *path )
 {
 	fprintf(stderr, "Program path: %s\n", path);
 	fprintf(stderr, "XEP ROM size: %d\n", sizeof _xep_rom);
+	fprintf(stderr, "SDL base path: %s\n", SDL_GetBasePath());
+	fprintf(stderr, "SDL pref path: %s\n", SDL_GetPrefPath("LGBemus", "xep128"));
 	
 }
 
@@ -295,6 +315,10 @@ int main (int argc, char *argv[]) {
 	get_exec_dir(argv[0]);
 	atexit(shutdown_sdl);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) exit_on_SDL_problem("initialization problem");
+	app_pref_path = SDL_GetPrefPath("nemesys", "xep128");
+	if (app_pref_path == NULL) app_pref_path = SDL_strdup("./");
+	app_base_path = SDL_GetBasePath();
+	if (app_base_path == NULL) app_base_path = SDL_strdup("./");
 	sdl_win = SDL_CreateWindow(
                 WINDOW_TITLE " " VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,

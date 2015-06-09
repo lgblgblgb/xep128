@@ -48,10 +48,11 @@ static void cmd_ram ( void ) {
 			sprintf(COBUF, "**** Invalid memory size (K): %s\r\n", carg);
 		return;
 	}
-	sprintf(COBUF, "MEM : RAM=%dK ROM=%dK HOLE=%dK\r\nDave: WS=%s IN_CLK=%dMHz\r\n",
+	sprintf(COBUF, "MEM : RAM=%dK ROM=%dK HOLE=%dK\r\n      S:P0=%02Xh S:XEP=%02Xh\r\nDave: WS=%s IN_CLK=%dMHz\r\n",
 		(0x400000 - ram_start) >> 10,
 		rom_size >> 10,
 		(ram_start - rom_size) >> 10,
+		ram_start >> 14, xep_rom_seg,
 		_dave_ws_descrs[(ports[0xBF] >> 2) & 3],
 		ports[0xBF] & 1 ? 12 : 8
 	);
@@ -92,11 +93,52 @@ static void cmd_cpu ( void ) {
 }
 
 
+#ifdef _WIN32
+// /usr/i686-w64-mingw32/include/sysinfoapi.h:
+//#define SECURITY_WIN32
+#include "sysinfoapi.h"
+//#include "secext.h"
+#endif
+
+static void cmd_emu ( void )
+{
+	char buf[1024];
+	SDL_version sdlver_c, sdlver_l;
+	int siz = sizeof buffer;
+	SDL_VERSION(&sdlver_c);
+	SDL_GetVersion(&sdlver_l);
+#ifdef _WIN32
+	//GetUserName(buf, &siz);
+	GetComputerNameEx(ComputerNamePhysicalNetBIOS, buf, &siz);
+#define OS_KIND "Win32"
+#else
+	gethostname(buf, sizeof buf);
+#define OS_KIND "POSIX"
+#endif
+	sprintf(COBUF, "Run by: %s@%s %s %s\r\nSDL c/l: %d.%d.%d %d.%d.%d\r\nBase path: %s\r\nPref path: %s\r\n",
+		getenv("USERNAME"), buf, OS_KIND, SDL_GetPlatform(),
+		sdlver_c.major, sdlver_c.minor, sdlver_c.patch,
+		sdlver_l.major, sdlver_l.minor, sdlver_l.patch,
+		app_base_path, app_pref_path
+	);
+}
+
+
+static void cmd_exit ( void )
+{
+	exit(0);
+}
+
+
+
 static void cmd_help ( void );
 
 static const struct commands_st commands[] = {
 	{ "cpu",	"Set/query CPU type/clock", cmd_cpu },
 	{ "ram",        "Set RAM size/report", cmd_ram },
+	{ "emu",	"Emulation info", cmd_emu },
+	{ "help",	"This help screen", cmd_help },
+	{ "exit",	"Exit Xep128", cmd_exit },
 	{ NULL,		NULL, NULL }
 };
 
@@ -177,13 +219,15 @@ static void xep_exos_command_trap ( void )
 			break;
 	}
 	// set answer size for XEP ROM
-	c = strlen(COBUF);
-	if (c > 2045) {
-		ERROR_WINDOW("FATAL: XEP ROM answer is too large, %d bytes.", c);
+	de = strlen(COBUF);
+	if (de)
+		fprintf(stderr, "XEP ANSWER [%d bytes] = \"%s\"\n", de, COBUF);
+	if (de > 2045) {
+		ERROR_WINDOW("FATAL: XEP ROM answer is too large, %d bytes.", de);
 		exit(1);
 	}
-	*(Uint8*)(COBUF - 2) = c & 0xFF;
-	*(Uint8*)(COBUF - 1) = c >> 8;
+	*(Uint8*)(COBUF - 2) = de & 0xFF;
+	*(Uint8*)(COBUF - 1) = de >> 8;
 }
 
 
