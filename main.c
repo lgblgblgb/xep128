@@ -62,7 +62,7 @@ static void shutdown_sdl(void)
      //   }
 	//SQL_Quit();
 	printer_close();
-        printf("Shutdown callback, return.\n");
+	fprintf(stderr, "Shutdown callback, return.\n");
 	SDL_Quit();
 }
 
@@ -224,13 +224,9 @@ void emu_one_frame(int rasters, int frameksip)
 	SDL_UpdateWindowSurface(sdl_win); // update window content
 	while (SDL_PollEvent(&e) != 0)
 		switch (e.type) {
-			case SDL_QUIT: {
-				FILE *f = fopen("/tmp/vram", "wb");
-				fwrite(memory + 0x3F0000, 1, 0x10000, f);
-				fclose(f);
+			case SDL_QUIT:
 				running = 0;
-				SDL_Log("Szivacs van!");
-				}
+				ERROR_WINDOW("You are about leaving Xep128. Good bye!");
 				return;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
