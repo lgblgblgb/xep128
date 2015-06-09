@@ -178,6 +178,9 @@ show_regs:
 	CALL	space
 	LD	BC, (saved.iy)
 	CALL	printhexword
+	CALL	space
+	LD	A, (test_byte)
+	CALL	printhexbyte
 	IPRINT	"\r\n"
 	RET
 
@@ -199,7 +202,7 @@ z180_opcode_trap_handler:
 
 
 header:
-	IPRINT  "Stupid Z180 test from LGB\r\n\r\nAF   BC   DE   HL   IX   IY\r\n"
+	IPRINT  "Stupid Z180 test from LGB\r\n\r\nAF   BC   DE   HL   IX   IY   M\r\n"
 	RET
 
 
@@ -269,7 +272,7 @@ main:
 	LD	BC, $AA00
 	LD	(saved.af), BC
 	LD	BC, test_byte
-	LD	(saved.ix), BC
+	LD	(saved.iy), BC
 	CALL	show_regs
 
 	LD	BC, .test5
