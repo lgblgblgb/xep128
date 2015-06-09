@@ -2,8 +2,11 @@ This will fetch a zip containing various ROM images, and building a single
 combined.rom file, which is used by Xep128 then. It's loaded as-is into
 EP memory linearly, it should contain ROM images appended to each other.
 
-Emulator also uses its own ROM (XEP). It's not copied by the emulator
+Emulator also uses its own ROM (XEP). It's now copied by the emulator
 after the combined.rom, so there is no need here for combined.rom to
 contain it. It also helps to solve the problem that combined.rom is
-not so much Xep128 version dependent anymore caused by the XEP ROM.
+not so much Xep128 version dependent anymore caused by the XEP ROM. That
+is, you don't need to update file combined.rom ever (hopefully, if I
+don't change the structure of this file), unless you want to use/try
+new ROMs of course.
 

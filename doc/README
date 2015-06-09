@@ -2,4 +2,15 @@ This directory contains more-or-less random documentations, sources of
 programs, etc I found and find useful to develop Xep128.
 
 Some of the texts, programs are written by me, some of them are not!
+There is no single copyright/etc on files in this directory, this
+can mean anything ... unless the license is not stated inside the file
+itself.
+
+z180test.asm
+
+  z180test is a quirky Z180 behaviour tester written by me for
+  Enteprise-128 equipped with Z180 CPU instead of Z80. It's used
+  to test the result on my emulator and compared with a real
+  EP/Z180 (thanks, Zozo!).
+
 

@@ -1,4 +1,0 @@
-z180test.asm is a quirky Z180 behaviour tester for Enteprise-128
-equipped with Z180 CPU instead of Z80. It's used to test the result
-on my emulator and compared with a real EP/Z180 (thanks, Zozo!).
-
