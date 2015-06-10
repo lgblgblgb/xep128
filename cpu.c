@@ -30,26 +30,6 @@ int xep_rom_seg = -1;
 int xep_rom_addr;
 int cpu_type;
 
-static int z180_incompatibility_reported = 0;
-
-static void invalid_for_z180 (Z80EX_CONTEXT *unused_1, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, void *unused_2)
-{
-	int pc = z80ex_get_reg(z80, regPC);
-	fprintf(stderr, "Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\n",
-                prefix, series, opcode,
-                pc,
-                ports[0xB0 | (pc >> 14)],
-                pc & 0x3FFF
-        );
-	if (z180_incompatibility_reported) return;
-	z180_incompatibility_reported = 1;
-	ERROR_WINDOW("Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\nThere will be NO further error reports about this kind of problem to avoid window flooding :)",
-		prefix, series, opcode,
-		pc,
-		ports[0xB0 | (pc >> 14)],
-		pc & 0x3FFF
-	);
-}
 
 
 #if 0
@@ -96,6 +76,7 @@ void set_ep_cpu ( int type )
 		case CPU_Z180:
 			z80ex_set_nmos(z80, 0);
 			z80ex_set_z180(z80, 1);
+			z180_port_start = 0;
 			break;
 		default:
 			ERROR_WINDOW("Unknown CPU type was requested: %d", type);
@@ -183,7 +164,15 @@ static void      _mwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, Z80EX_BYTE va
 
 
 static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unused_2) {
-	Uint8 port = port16 & 0xFF;
+	Uint8 port;
+	if (cpu_type == CPU_Z180 && (port16 & 0xFFC0) == z180_port_start) {
+		if (z180_port_start == 0x80) {
+			ERROR_WINDOW("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
+			exit(1);
+		}
+		return z180_port_read(port16 & 0x3F);
+	}
+	port = port16 & 0xFF;
 	//printf("IO: READ: IN (%02Xh)\n", port);
 	switch (port) {
 		/* EXDOS/WD registers */
@@ -241,7 +230,16 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unuse
 
 static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value, void *unused_2) {
 	Z80EX_BYTE old_value;
-	Uint8 port = port16 & 0xFF;
+	Uint8 port;
+	if (cpu_type == CPU_Z180 && (port16 & 0xFFC0) == z180_port_start) {
+		if (z180_port_start == 0x80) {
+			ERROR_WINDOW("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
+			exit(1);
+		}
+		z180_port_write(port16 & 0x3F, value);
+		return;
+	}
+	port = port16 & 0xFF;
 	old_value = ports[port];
 	ports[port] = value;
 	//printf("IO: WRITE: OUT (%02Xh),%02Xh\n", port, value);
@@ -270,7 +268,7 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 #endif
 		case 0x32:
 		case 0x3F:
-			fprintf(stderr, "Z180: would be Z180 config port, ignored <no Z180 emulation> for writing port %02Xh with value of %02Xh.\n", port, value);
+			fprintf(stderr, "Z180: ignored <no Z180 emulation is active> for writing port = %02Xh, data = %02Xh.\n", port, value);
 			break;
 
 		case 0x44:
@@ -432,11 +430,11 @@ int z80_reset ( void )
 		printf("Z80: emulation has been created.\n");
 		memset(ports, 0xFF, 0x100);
 		ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
-		z80ex_set_z180_callback(z80, invalid_for_z180, NULL);
 		z80ex_set_ed_callback(z80, ed_unknown_opc, NULL);
 		set_ep_cpu(CPU_Z80);
 	}
 	z80ex_reset(z80);
+	z180_internal_reset();
 	srand((unsigned int)time(NULL));
 	z80ex_set_reg(z80, regAF,  rand() & 0xFFFF);
 	z80ex_set_reg(z80, regBC,  rand() & 0xFFFF);

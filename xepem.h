@@ -81,6 +81,10 @@ void set_ep_cpu ( int type );
 #define CPU_Z180	2
 extern int cpu_type;
 
+void z180_internal_reset ( void );
+void z180_port_write ( Uint8 port, Uint8 value );
+Uint8 z180_port_read ( Uint8 port );
+extern int z180_port_start;
 
 void dave_reset ( void );
 void dave_int1(int active);

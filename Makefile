@@ -13,7 +13,7 @@ LIBS	=
 #LIBS	= -Wl,-Bstatic -lz80ex -lz80ex_dasm -Wl,-Bdynamic
 
 INCS	= xepem.h
-SRCS	= main.c cpu.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c
+SRCS	= main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c
 OBJS	= $(SRCS:.c=.o)
 Z80EX	= z80ex.o z80ex_dasm.o
 PRG	= xep128
