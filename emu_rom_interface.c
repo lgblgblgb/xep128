@@ -119,7 +119,8 @@ static void cmd_emu ( void )
 		getenv("USERNAME"), buf, OS_KIND, SDL_GetPlatform(),
 		sdlver_c.major, sdlver_c.minor, sdlver_c.patch,
 		sdlver_l.major, sdlver_l.minor, sdlver_l.patch,
-		app_base_path, app_pref_path
+		app_base_path ? app_base_path : "<ERROR>",
+		app_pref_path ? app_pref_path : "<ERROR>"
 	);
 }
 
