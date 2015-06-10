@@ -75,6 +75,12 @@ void ep_clear_ram ( void );
 extern int rom_size, xep_rom_seg, xep_rom_addr, ram_start;
 FILE *open_emu_file ( const char *name, const char *mode );
 Uint8 read_cpu_byte ( Uint16 addr );
+void set_ep_cpu ( int type );
+#define CPU_Z80		0
+#define CPU_Z80C	1
+#define CPU_Z180	2
+extern int cpu_type;
+
 
 void dave_reset ( void );
 void dave_int1(int active);

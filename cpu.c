@@ -28,6 +28,7 @@ static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
 int xep_rom_seg = -1;
 int xep_rom_addr;
+int cpu_type;
 
 static int z180_incompatibility_reported = 0;
 
@@ -78,6 +79,33 @@ int search_xep_rom ( void )
 	return -1;
 }
 #endif
+
+
+void set_ep_cpu ( int type )
+{
+	cpu_type = type;
+	switch (type) {
+		case CPU_Z80:
+			z80ex_set_nmos(z80, 1);
+			z80ex_set_z180(z80, 0);
+			break;
+		case CPU_Z80C:
+			z80ex_set_nmos(z80, 0);
+			z80ex_set_z180(z80, 0);
+			break;
+		case CPU_Z180:
+			z80ex_set_nmos(z80, 0);
+			z80ex_set_z180(z80, 1);
+			break;
+		default:
+			ERROR_WINDOW("Unknown CPU type was requested: %d", type);
+			exit(1);
+	}
+	fprintf(stderr, "CPU: set to %s %s\n",
+		z80ex_get_z180(z80) ? "Z180" : "Z80",
+		z80ex_get_nmos(z80) ? "NMOS" : "CMOS"
+	);
+}
 
 
 int set_ep_ramsize(int kbytes)
@@ -406,8 +434,7 @@ int z80_reset ( void )
 		ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
 		z80ex_set_z180_callback(z80, invalid_for_z180, NULL);
 		z80ex_set_ed_callback(z80, ed_unknown_opc, NULL);
-		z80ex_set_nmos(z80, 1);
-		z80ex_set_z180(z80, 0);
+		set_ep_cpu(CPU_Z80);
 	}
 	z80ex_reset(z80);
 	srand((unsigned int)time(NULL));

@@ -62,18 +62,13 @@ static void cmd_ram ( void ) {
 static void cmd_cpu ( void ) {
 	char buf[512] = "";
 	if (*carg) {
-		if (!strcmp(carg, "z80")) {
-			z80ex_set_z180(z80, 0);
-			z80ex_set_nmos(z80, 1);
-		}
-		else if (!strcmp(carg, "z80c")) {
-			z80ex_set_z180(z80, 0);
-			z80ex_set_nmos(z80, 0);
-		}
-		else if (!strcmp(carg, "z180")) {
-			z80ex_set_z180(z80, 1);
-			z80ex_set_nmos(z80, 0);
-		} else {
+		if (!strcmp(carg, "z80"))
+			set_ep_cpu(CPU_Z80);
+		else if (!strcmp(carg, "z80c"))
+			set_ep_cpu(CPU_Z80C);
+		else if (!strcmp(carg, "z180"))
+			set_ep_cpu(CPU_Z180);
+		else {
 			int clk = atof(carg) * 1000000;
 			if (clk < 1000000 || clk > 12000000)
 				sprintf(buf, "*** Unknown CPU type to set or it's not a clock value either (1-12 is OK in MHz): %s\r\n", carg);
