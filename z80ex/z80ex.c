@@ -25,7 +25,7 @@
 #define temp_word cpu->tmpword
 
 #include "ptables.c"
-#include "z180.c"
+#include "z180ex.c"
 #include "opcodes/opcodes_base.c"
 #include "opcodes/opcodes_dd.c"
 #include "opcodes/opcodes_fd.c"
