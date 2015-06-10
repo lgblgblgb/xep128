@@ -327,10 +327,38 @@ main:
 	LD	(1), A
 	LD	(2), A
 
-	IPRINT	"\r\nEnd of tests\r\n"
 
+z180_reg_dump:
+	IPRINT	"\r\nPress a key for next page"
+	CALL	getchar
+	IPRINT	"\r\n\r\nDumping Z180 internal ports\r\n\r\n"
+	LD	BC, ZOZO_Z180_PORT_BASE
+.loop_o:
+	PUSH	BC
+	LD	A, C
+	CALL	printhexbyte
+	IPRINT	"    "
+	POP	BC
+.loop_i:
+	IN	A, (C)
+	PUSH	BC
+	CALL	printhexbyte
+	CALL	space
+	POP	BC
+	INC	C
+	LD	A, C
+	AND	$7
+	JR	NZ, .loop_i
+	PUSH	BC
+	IPRINT	"\r\n"
+	POP	BC
+	LD	A, C
+	CP	ZOZO_Z180_PORT_BASE + $40
+	JR	NZ, .loop_o
+
+	IPRINT	"\r\nEnd of tests\r\n"
 	JP	exit_to_basic
-	
+
 
 test_byte:	DB 2
 
