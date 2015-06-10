@@ -146,4 +146,7 @@ void wd_set_exdos_control (Uint8 value)
 	diskInserted = driveSel ? 0 : 1;
 }
 
+#else
+#warning "EXDOS/WD support is not compiled in / not ready"
 #endif
+
