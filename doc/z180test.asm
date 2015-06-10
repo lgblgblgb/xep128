@@ -35,6 +35,10 @@ SCREEN_WIDTH		= 42
 SCREEN_HEIGHT		= 25
 COLOUR_BORDER		= 0
 
+ZOZO_Z180_PORT_BASE	= $40	; Zozo's EXOS mapped Z180 internal ports here
+
+ITC_PORT		= $34 + ZOZO_Z180_PORT_BASE
+
 MACRO EXOS n
 	RST     $30
 	DB      n
@@ -201,20 +205,27 @@ show_regs:
 	RET
 
 z180_opcode_trap_handler:
+	DI			; anyway ...
 	CALL	save_regs
-	EI			; not sure if it's needed (TRAP disables int?)
-	IPRINT "* Z180 TRAP detected "
-	POP	BC
-	CALL	printhexword	; PC on stack
+	LD	BC, ITC_PORT	; high 8 bits must be zero, thus we use ...
+	IN	A, (C)		; ... this form of I/O!
+	PUSH	AF
+	AND	$7F		; reset TRAP bit (bit7)
+	OUT	(C), A		; test todo: try the test without this opc too!
+	EI
+	POP	AF
+	CALL	printhexbyte	; write the value of the ITC register
+	IPRINT	" Z180 TRAP "
+	POP	BC		; POPs the address on the stack (?)
+	CALL	printhexword	; show PC (BC, POPed by the prev. POP BC)
 	CALL	space
-	POP	BC   		; return address pushed by us!
-	PUSH	BC		; leave on the stack
-	LD	(.reta), BC
+	POP	BC   		; return address pushed by us during tests
+	PUSH	BC		; also leave on the stack that value
+	PUSH	BC		; this if for our "faked" RET at the end
 	CALL	printhexword
 	IPRINT	"\r\n"
-	CALL	load_regs
-	DB	$C3		; JP opcode
-.reta:	DW	0
+	JP	load_regs
+	; RET in load_regs will cause to return to our "prepared" ret.addr!
 
 
 header:
@@ -223,13 +234,13 @@ header:
 
 
 main:
+	CALL	ui_init_std
+	CALL	header
+	; Register Z180 trap routine, or such ...
 	LD	A, $C3		; JP opcode
 	LD	(0), A
 	LD	BC, z180_opcode_trap_handler
 	LD	(1), BC
-
-	CALL	ui_init_std
-	CALL	header
 
 	CALL	show_regs
 
@@ -305,7 +316,7 @@ main:
 	PUSH	BC
 	IPRINT	"-> set 6,(iy+0)->a\r\n"
 	CALL	load_regs
-	DB $fd, $cb, $00, $f7
+	DB	$FD, $CB, $00, $F7
 .test6:	CALL	save_regs
 	CALL	show_regs
 	POP	BC
