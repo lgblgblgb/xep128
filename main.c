@@ -77,24 +77,25 @@ FILE *open_emu_file ( const char *name, const char *mode )
 #endif
 		app_base_path,	// try at base path (where executable is)
 		app_pref_path,	// try at pref path (user writable area)
-		NULL
+		"*"
 	};
 	int a = 0;
 	FILE *f;
-	while (prefixes[a] != NULL) {
-		sprintf(buf, "%s%s", prefixes[a], name);
-		fprintf(stderr, "OPEN: trying path \"%s\" for file \"%s\": ",
-			buf, name
-		);
-		f = fopen(buf, mode);
-		if (f == NULL) {
-			a++;
-			fprintf(stderr, "FAILED\n");
-		} else {
-			fprintf(stderr, "OK :-)\n");
-			return f;
+	while (prefixes[a][0] != '*')
+		if (prefixes[a] != NULL) {
+			sprintf(buf, "%s%s", prefixes[a], name);
+			fprintf(stderr, "OPEN: trying file \"%s\" as path \"%s\": ",
+				name, buf
+			);
+			f = fopen(buf, mode);
+			if (f == NULL) {
+				a++;
+				fprintf(stderr, "FAILED\n");
+			} else {
+				fprintf(stderr, "OK\n");
+				return f;
+			}
 		}
-	}
 	fprintf(stderr, "OPEN: no file could be open for \"%s\"\n", name);
 	return NULL;
 }
@@ -303,11 +304,9 @@ static void get_sys_dirs ( const char *path )
 	fprintf(stderr, "Program path: %s\n", path);
 	fprintf(stderr, "XEP ROM size: %d\n", sizeof _xep_rom);
 	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
-	if (app_pref_path == NULL) app_pref_path = SDL_strdup("." DIRSEP);
 	app_base_path = SDL_GetBasePath();
-	if (app_base_path == NULL) app_base_path = SDL_strdup("." DIRSEP);
-	fprintf(stderr, "SDL base path: %s\n", app_base_path);
-	fprintf(stderr, "SDL pref path: %s\n", app_pref_path);
+	fprintf(stderr, "SDL base path: %s\n", app_base_path ? app_base_path : "<ERROR>");
+	fprintf(stderr, "SDL pref path: %s\n", app_pref_path ? app_pref_path : "<ERROR>");
 	
 }
 
