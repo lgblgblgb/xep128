@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define __XEPEM_H
 
 #define Z80EX_Z180_SUPPORT
+#define Z80EX_ED_TRAPPING_SUPPORT
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,7 +74,7 @@ int z80_reset ( void );
 void ep_reset ( void );
 void ep_clear_ram ( void );
 extern int rom_size, xep_rom_seg, xep_rom_addr, ram_start;
-FILE *open_emu_file ( const char *name, const char *mode );
+FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer );
 Uint8 read_cpu_byte ( Uint16 addr );
 void set_ep_cpu ( int type );
 #define CPU_Z80		0

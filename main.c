@@ -67,9 +67,8 @@ static void shutdown_sdl(void)
 }
 
 
-FILE *open_emu_file ( const char *name, const char *mode )
+FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 {
-	char buf[PATH_MAX];
 	const char *prefixes[] = {
 		"",		// try in the current directory first
 #ifndef _WIN32
@@ -77,17 +76,17 @@ FILE *open_emu_file ( const char *name, const char *mode )
 #endif
 		app_base_path,	// try at base path (where executable is)
 		app_pref_path,	// try at pref path (user writable area)
-		"*"
+		NULL
 	};
 	int a = 0;
 	FILE *f;
-	while (prefixes[a][0] != '*')
-		if (prefixes[a] != NULL) {
-			sprintf(buf, "%s%s", prefixes[a], name);
+	while (prefixes[a] != NULL)
+		if (strcmp(prefixes[a], "?")) {
+			sprintf(pathbuffer, "%s%s", prefixes[a], name);
 			fprintf(stderr, "OPEN: trying file \"%s\" as path \"%s\": ",
-				name, buf
+				name, pathbuffer
 			);
-			f = fopen(buf, mode);
+			f = fopen(pathbuffer, mode);
 			if (f == NULL) {
 				a++;
 				fprintf(stderr, "FAILED\n");
@@ -97,6 +96,7 @@ FILE *open_emu_file ( const char *name, const char *mode )
 			}
 		}
 	fprintf(stderr, "OPEN: no file could be open for \"%s\"\n", name);
+	strcpy(pathbuffer, name);
 	return NULL;
 }
 
@@ -105,8 +105,9 @@ static int load_roms ( void )
 {
 	FILE *f;
 	int ret;
+	char path[PATH_MAX + 1];
 	printf("ROM: loading %s\n", COMBINED_ROM_FN);
-	f = open_emu_file(COMBINED_ROM_FN, "rb");
+	f = open_emu_file(COMBINED_ROM_FN, "rb", path);
 	if (f == NULL) {
 		ERROR_WINDOW("Cannot open ROM image \"%s\": %s", COMBINED_ROM_FN, ERRSTR());
 		return -1;
@@ -115,18 +116,18 @@ static int load_roms ( void )
 	printf("Read = %d\n", ret);
 	fclose(f);
 	if (ret < 0) {
-		ERROR_WINDOW("Cannot read ROM image \"%s\": %s", COMBINED_ROM_FN, ERRSTR());
+		ERROR_WINDOW("Cannot read ROM image \"%s\": %s", path, ERRSTR());
 	}
 	if (ret < 0x8000) {
-		ERROR_WINDOW("ROM image \"%s\" is too short.", COMBINED_ROM_FN);
+		ERROR_WINDOW("ROM image \"%s\" is too short.", path);
 		return -1;
 	}
 	if (ret == 0x100001) {
-		ERROR_WINDOW("ROM image \"%s\" is too large.", COMBINED_ROM_FN);
+		ERROR_WINDOW("ROM image \"%s\" is too large.", path);
 		return -1;
 	}
 	if (ret & 0x3FFF) {
-		ERROR_WINDOW("ROM image \"%s\" size is not multiple of 0x4000 bytes.", COMBINED_ROM_FN);
+		ERROR_WINDOW("ROM image \"%s\" size is not multiple of 0x4000 bytes.", path);
 		return -1;
 	}
 	return ret;
@@ -305,8 +306,10 @@ static void get_sys_dirs ( const char *path )
 	fprintf(stderr, "XEP ROM size: %d\n", sizeof _xep_rom);
 	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
 	app_base_path = SDL_GetBasePath();
-	fprintf(stderr, "SDL base path: %s\n", app_base_path ? app_base_path : "<ERROR>");
-	fprintf(stderr, "SDL pref path: %s\n", app_pref_path ? app_pref_path : "<ERROR>");
+	if (app_pref_path == NULL) app_pref_path = SDL_strdup("?");
+	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
+	fprintf(stderr, "SDL base path: %s\n", app_base_path);
+	fprintf(stderr, "SDL pref path: %s\n", app_pref_path);
 	
 }
 
