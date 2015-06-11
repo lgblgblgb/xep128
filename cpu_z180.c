@@ -23,9 +23,10 @@ static Uint8 z180_ports[0x40];
 static int z180_incompatibility_reported = 0;
 
 
-static void invalid_opcode (Z80EX_CONTEXT *unused_1, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, void *unused_2)
+/* A callback only used in Z180 mode */
+static void invalid_opcode (Z80EX_CONTEXT *unused_1, Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76, void *unused_2)
 {
-	int pc = z80ex_get_reg(z80, regPC);
+	z180_ports[0x34] = (z180_ports[0x34] & 0x3F) | itc76; // set ITC register up
 	fprintf(stderr, "Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\n",
 		prefix, series, opcode,
 		pc,
@@ -56,6 +57,9 @@ void z180_port_write ( Uint8 port, Uint8 value )
 {
 	fprintf(stderr, "Z180: write internal port (%02Xh/%02Xh) data = %02Xh\n", port, port | z180_port_start, value);
 	switch (port) {
+		case 0x34:	// ITC register
+			value &= 0x7F; // trap bit can't be set up by user ever!
+			break;
 		case 0x3F:
 			z180_port_start = value & 0xC0;
 			fprintf(stderr, "Z180: internal ports are moved to %02Xh-%02Xh\n", z180_port_start, z180_port_start + 0x3F);

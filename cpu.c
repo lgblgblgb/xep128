@@ -376,11 +376,14 @@ static Z80EX_BYTE _iread(Z80EX_CONTEXT *unused_1, void *unused_2) {
 
 
 
-static void ed_unknown_opc(Z80EX_CONTEXT *unused_1, Z80EX_BYTE opcode, void *unused_2)
+static int ed_unknown_opc(Z80EX_CONTEXT *unused_1, Z80EX_BYTE opcode, void *unused_2)
 {
 	int pc = z80ex_get_reg(z80, regPC);
-	if (pc >= 0xC000 && ports[0xB3] == xep_rom_seg)
+	if (pc >= 0xC000 && ports[0xB3] == xep_rom_seg) {
 		xep_rom_trap(pc, opcode);
+		return 1; // handled in XEP
+	}
+	return 0; // unhandled ED op!
 }
 
 

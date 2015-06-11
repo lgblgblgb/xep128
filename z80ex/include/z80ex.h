@@ -57,11 +57,11 @@ typedef Z80EX_BYTE (*z80ex_intread_cb)(Z80EX_CONTEXT *cpu, void *user_data);
 typedef void (*z80ex_reti_cb)(Z80EX_CONTEXT *cpu, void *user_data);
 
 /*ED function callback, to use unused ED opcodes for your own purpose - LGB*/
-typedef void (*z80ex_ed_cb)(Z80EX_CONTEXT *cpu, Z80EX_BYTE opcode, void *user_data);
+typedef int (*z80ex_ed_cb)(Z80EX_CONTEXT *cpu, Z80EX_BYTE opcode, void *user_data);
 
 #ifdef Z80EX_Z180_SUPPORT
 /* z180 callback, called when Z180 would execute known Z80 "undocumented" opcode where Z180 does otherwise, ie IXH ops etc - LGB*/
-typedef void (*z80ex_z180_cb)(Z80EX_CONTEXT *cpu, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, void *user_data);
+typedef void (*z80ex_z180_cb)(Z80EX_CONTEXT *cpu, Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76, void *user_data);
 #endif
 
 

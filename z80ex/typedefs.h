@@ -83,6 +83,7 @@ struct _z80_cpu_context {
 	int z180;
 	z80ex_z180_cb z180_cb;
 	void *z180_cb_user_data;
+	int internal_int_disable;
 #endif
 };
 

@@ -25,7 +25,6 @@
 #define temp_word cpu->tmpword
 
 #include "ptables.c"
-#include "z180ex.c"
 #include "opcodes/opcodes_base.c"
 #include "opcodes/opcodes_dd.c"
 #include "opcodes/opcodes_fd.c"
@@ -33,12 +32,13 @@
 #include "opcodes/opcodes_ed.c"
 #include "opcodes/opcodes_ddcb.c"
 #include "opcodes/opcodes_fdcb.c"
+#include "z180ex.c"
 
 #define DOQUOTE(x) #x
 #define TOSTRING(x) DOQUOTE(x)
 
-static char revision_type[]=TOSTRING(Z80EX_RELEASE_TYPE);
-static char ver_str[]=TOSTRING(Z80EX_VERSION_STR);
+static char revision_type[] = TOSTRING(Z80EX_RELEASE_TYPE);
+static char ver_str[] = TOSTRING(Z80EX_VERSION_STR);
 static Z80EX_VERSION version = {Z80EX_API_REVISION, Z80EX_VERSION_MAJOR, Z80EX_VERSION_MINOR, revision_type, ver_str};
 
 LIB_EXPORT Z80EX_VERSION *z80ex_get_version()
@@ -50,120 +50,135 @@ LIB_EXPORT Z80EX_VERSION *z80ex_get_version()
 LIB_EXPORT int z80ex_step(Z80EX_CONTEXT *cpu)
 {
 	Z80EX_BYTE opcode, d;
-	z80ex_opcode_fn ofn=NULL;
+	z80ex_opcode_fn ofn = NULL;
 	
-	cpu->doing_opcode=1;
-	cpu->noint_once=0;
-	cpu->reset_PV_on_int=0;
-	cpu->tstate=0;
-	cpu->op_tstate=0;
+	cpu->doing_opcode = 1;
+	cpu->noint_once = 0;
+	cpu->reset_PV_on_int = 0;
+	cpu->tstate = 0;
+	cpu->op_tstate = 0;
 	
-	opcode=READ_OP_M1(); /*fetch opcode*/
-	if(cpu->int_vector_req)
+	opcode = READ_OP_M1(); 		/* fetch opcode */
+	if (cpu->int_vector_req)
 	{
-		TSTATES(2); /*interrupt eats two extra wait-states*/
+		TSTATES(2); 		/* interrupt eats two extra wait-states */
 	}
-	R++; /*R increased by one on every first M1 cycle*/
+	R++;				/* R increased by one on every first M1 cycle */
 
-	T_WAIT_UNTIL(4); /*M1 cycle eats min 4 t-states*/
+	T_WAIT_UNTIL(4);		/* M1 cycle eats min 4 t-states */
 
-	if(!cpu->prefix) opcodes_base[opcode](cpu);
-	else
-	{
-		if((cpu->prefix | 0x20) == 0xFD && ((opcode | 0x20) == 0xFD || opcode == 0xED))
-		{
-			cpu->prefix=opcode;
-			cpu->noint_once=1; /*interrupts are not accepted immediately after prefix*/
-		}
-		else
-		{
-			switch(cpu->prefix)
-			{
+	if (!cpu->prefix)
+		opcodes_base[opcode](cpu);
+	else {
+		if ((cpu->prefix | 0x20) == 0xFD && ((opcode | 0x20) == 0xFD || opcode == 0xED)) {
+			cpu->prefix = opcode;
+			cpu->noint_once = 1; /* interrupts are not accepted immediately after prefix */
+		} else {
+			switch (cpu->prefix) {
 				case 0xDD:
 				case 0xFD:
-					if(opcode == 0xCB)
-					{
-						d=READ_OP(); /*displacement*/
-						temp_byte_s=(d & 0x80)? -(((~d) & 0x7f)+1): d;
-						opcode=READ_OP();
+					if (opcode == 0xCB) {	/* FD/DD prefixed CB opcodes */
+						d = READ_OP(); /* displacement */
+						temp_byte_s = (d & 0x80)? -(((~d) & 0x7f)+1): d;
+						opcode = READ_OP();
 #ifdef Z80EX_Z180_SUPPORT
 						if (cpu->z180) {
-							Z80EX_BYTE rop = (opcode & 0xF8) | 6;
-							ofn = (cpu->prefix == 0xDD)? opcodes_ddcb[rop]: opcodes_fdcb[rop];
-							if (opcode != rop || rop == 0x36)
-								cpu->z180_cb(cpu, cpu->prefix, 0xCB, opcode, cpu->z180_cb_user_data);
+							if ((opcode & 7) != 6 || opcode == 0x36)
+								ofn = trapping(cpu, cpu->prefix, 0xCB, opcode, ITC_B3);
+							else
+								ofn = (cpu->prefix == 0xDD) ? opcodes_ddcb[opcode] : opcodes_fdcb[opcode];
 						} else
 #endif
-							ofn = (cpu->prefix == 0xDD)? opcodes_ddcb[opcode]: opcodes_fdcb[opcode];
-					} else {
+							ofn = (cpu->prefix == 0xDD) ? opcodes_ddcb[opcode] : opcodes_fdcb[opcode];
+					} else { /* FD/DD prefixed base opcodes */
 #ifdef Z80EX_Z180_SUPPORT
-						if(cpu->z180 && opcodes_ddfd_bad_for_z180[opcode]) {
-							ofn = opcodes_base[opcode];
-							cpu->z180_cb(cpu, cpu->prefix, 0, opcode, cpu->z180_cb_user_data);
+						if (cpu->z180 && opcodes_ddfd_bad_for_z180[opcode]) {
+							ofn = trapping(cpu, cpu->prefix, 0x00, opcode, ITC_B2);
 						} else {
 #endif
-							ofn = (cpu->prefix == 0xDD)? opcodes_dd[opcode]: opcodes_fd[opcode];
-							if(ofn == NULL) ofn=opcodes_base[opcode]; /*'mirrored' instructions*/
+							ofn = (cpu->prefix == 0xDD) ? opcodes_dd[opcode] : opcodes_fd[opcode];
+							if (ofn == NULL) ofn = opcodes_base[opcode]; /* 'mirrored' instructions NOTE: this should NOT happen with Z180! */
 #ifdef Z80EX_Z180_SUPPORT
 						}
 #endif
 					}
 					break;
 								
-				case 0xED:
-					ofn = opcodes_ed[opcode];
-					if(ofn == NULL) {
-						if (opcode > 0xBB)
-							cpu->ed_cb(cpu, opcode, cpu->ed_cb_user_data);
-						ofn=opcodes_base[0x00];
+				case 0xED: /* ED opcodes */
+#ifdef Z80EX_ED_TRAPPING_SUPPORT
+					if (opcode > 0xBB) {
+						/* check if ED-trap emu func accepted the opcode as its own "faked" */
+						if (cpu->ed_cb(cpu, opcode, cpu->ed_cb_user_data)) {
+							ofn = opcodes_base[0x00];
+							break;
+						}
+					}
+#endif
+#ifdef Z80EX_Z180_SUPPORT
+					if (cpu->z180)
+						ofn = opcodes_ed_z180[opcode];
+					else
+#endif
+						ofn = opcodes_ed[opcode];
+					if (ofn == NULL) {
+#ifdef Z80EX_Z180_SUPPORT
+						if (cpu->z180)
+							ofn = trapping(cpu, 0x00, 0xED, opcode, ITC_B2);
+						else
+#endif
+							ofn = opcodes_base[0x00];
 					}
 					break;
 				
-				case 0xCB:
-					ofn = opcodes_cb[opcode];
+				case 0xCB: /* CB opcodes */
 #ifdef Z80EX_Z180_SUPPORT
-					if (cpu->z180 && opcode >= 0x30 && opcode <= 0x37)
-						cpu->z180_cb(cpu, 0, 0xCB, opcode, cpu->z180_cb_user_data); /* TODO: we still allow to execute ... */
+					if (cpu->z180 && (opcode & 0xF8) == 0x30)
+						ofn = trapping(cpu, 0x00, 0xCB, opcode, ITC_B2);
+					else
 #endif
+						ofn = opcodes_cb[opcode];
 					break;
 					
 				default:
-					/*this must'nt happen!*/
+					/* this must'nt happen! */
 					assert(0);
 					break;
 			}
 		
 			ofn(cpu);
 		
-			cpu->prefix=0;
+			cpu->prefix = 0;
 		}
 	}
 		
-	cpu->doing_opcode=0;
-	return(cpu->tstate);
+	cpu->doing_opcode = 0;
+	return cpu->tstate;
 }
 
 LIB_EXPORT Z80EX_BYTE z80ex_last_op_type(Z80EX_CONTEXT *cpu)
 {
-	return(cpu->prefix);
+	return cpu->prefix;
 }
 	
 LIB_EXPORT void z80ex_reset(Z80EX_CONTEXT *cpu)
 {
-	PC=0x0000; IFF1=IFF2=0; IM=IM0;
-	AF=SP=BC=DE=HL=IX=IY=AF_=BC_=DE_=HL_=0xffff;
-	I=R=R7=0;
-	cpu->noint_once=0; cpu->reset_PV_on_int=0; cpu->halted=0;
-	cpu->int_vector_req=0;
-	cpu->doing_opcode=0;
-	cpu->tstate=cpu->op_tstate=0;
-	cpu->prefix=0;
+	PC = 0x0000; IFF1 = IFF2 = 0; IM = IM0;
+	AF= SP = BC = DE = HL = IX = IY = AF_ = BC_ = DE_ = HL_ = 0xffff;
+	I = R = R7 = 0;
+	cpu->noint_once = 0; cpu->reset_PV_on_int = 0; cpu->halted = 0;
+	cpu->int_vector_req = 0;
+	cpu->doing_opcode = 0;
+	cpu->tstate = cpu->op_tstate = 0;
+	cpu->prefix = 0;
+	cpu->internal_int_disable = 0;
 }
 
 
-static void z80ex_dummy_ed_cb (Z80EX_CONTEXT *cpu, Z80EX_BYTE opcode, void *user_data) {}
+static int z80ex_dummy_ed_cb (Z80EX_CONTEXT *cpu, Z80EX_BYTE opcode, void *user_data) {
+	return 0; /* unhandled by default */
+}
 #ifdef Z80EX_Z180_SUPPORT
-static void z80ex_dummy_z180_cb (Z80EX_CONTEXT *cpu, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, void *user_data) {}
+static void z80ex_dummy_z180_cb (Z80EX_CONTEXT *cpu, Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76, void *user_data) {}
 #endif
 
 
@@ -178,28 +193,29 @@ LIB_EXPORT Z80EX_CONTEXT *z80ex_create(
 {
 	Z80EX_CONTEXT *cpu;
 	
-	if((cpu=(Z80EX_CONTEXT *)malloc(sizeof(Z80EX_CONTEXT))) == NULL) return(NULL);
-	memset(cpu,0x00,sizeof(Z80EX_CONTEXT));
+	if ((cpu=(Z80EX_CONTEXT *)malloc(sizeof(Z80EX_CONTEXT))) == NULL) return NULL;
+	memset(cpu, 0x00, sizeof(Z80EX_CONTEXT));
 	
 	z80ex_reset(cpu);
 	
-	cpu->mread_cb=mrcb_fn;
-	cpu->mread_cb_user_data=mrcb_data;
-	cpu->mwrite_cb=mwcb_fn;
-	cpu->mwrite_cb_user_data=mwcb_data;	
-	cpu->pread_cb=prcb_fn;
-	cpu->pread_cb_user_data=prcb_data;	
-	cpu->pwrite_cb=pwcb_fn;
-	cpu->pwrite_cb_user_data=pwcb_data;
-	cpu->intread_cb=ircb_fn;
-	cpu->intread_cb_user_data=ircb_data;
+	cpu->mread_cb = mrcb_fn;
+	cpu->mread_cb_user_data = mrcb_data;
+	cpu->mwrite_cb = mwcb_fn;
+	cpu->mwrite_cb_user_data = mwcb_data;
+	cpu->pread_cb = prcb_fn;
+	cpu->pread_cb_user_data = prcb_data;
+	cpu->pwrite_cb = pwcb_fn;
+	cpu->pwrite_cb_user_data = pwcb_data;
+	cpu->intread_cb = ircb_fn;
+	cpu->intread_cb_user_data = ircb_data;
 	cpu->nmos = 1;
+	cpu->internal_int_disable = 0;
 #ifdef Z80EX_Z180_SUPPORT
 	cpu->z180 = 0;
 	cpu->z180_cb = z80ex_dummy_z180_cb;
 #endif
 	cpu->ed_cb = z80ex_dummy_ed_cb;
-	return(cpu);
+	return cpu;
 }
 
 LIB_EXPORT void z80ex_destroy(Z80EX_CONTEXT *cpu)
@@ -210,8 +226,8 @@ LIB_EXPORT void z80ex_destroy(Z80EX_CONTEXT *cpu)
 #ifdef Z80EX_Z180_SUPPORT
 LIB_EXPORT void z80ex_set_z180_callback(Z80EX_CONTEXT *cpu, z80ex_z180_cb cb_fn, void *user_data)
 {
-	cpu->z180_cb=cb_fn;
-	cpu->z180_cb_user_data=user_data;
+	cpu->z180_cb = cb_fn;
+	cpu->z180_cb_user_data = user_data;
 }
 LIB_EXPORT int  z80ex_get_z180(Z80EX_CONTEXT *cpu)
 {
@@ -220,6 +236,7 @@ LIB_EXPORT int  z80ex_get_z180(Z80EX_CONTEXT *cpu)
 LIB_EXPORT void z80ex_set_z180(Z80EX_CONTEXT *cpu, int z180)
 {
 	cpu->z180 = z180;
+	cpu->internal_int_disable = 0;
 }
 #endif
 
@@ -236,79 +253,83 @@ LIB_EXPORT int z80ex_get_nmos(Z80EX_CONTEXT *cpu)
 
 LIB_EXPORT void z80ex_set_ed_callback(Z80EX_CONTEXT *cpu, z80ex_ed_cb cb_fn, void *user_data)
 {
-	cpu->ed_cb=cb_fn;
-	cpu->ed_cb_user_data=user_data;
+	cpu->ed_cb = cb_fn;
+	cpu->ed_cb_user_data = user_data;
 }
 
 LIB_EXPORT void z80ex_set_tstate_callback(Z80EX_CONTEXT *cpu, z80ex_tstate_cb cb_fn, void *user_data)
 {
-	cpu->tstate_cb=cb_fn;
-	cpu->tstate_cb_user_data=user_data;
+	cpu->tstate_cb = cb_fn;
+	cpu->tstate_cb_user_data = user_data;
 }
 
 LIB_EXPORT void z80ex_set_reti_callback(Z80EX_CONTEXT *cpu, z80ex_reti_cb cb_fn, void *user_data)
 {
-	cpu->reti_cb=cb_fn;
-	cpu->reti_cb_user_data=user_data;
+	cpu->reti_cb = cb_fn;
+	cpu->reti_cb_user_data = user_data;
 }
 
 LIB_EXPORT void z80ex_set_memread_callback(Z80EX_CONTEXT *cpu, z80ex_mread_cb mrcb_fn, void *mrcb_data)
 {
-	cpu->mread_cb=mrcb_fn;
-	cpu->mread_cb_user_data=mrcb_data;
+	cpu->mread_cb = mrcb_fn;
+	cpu->mread_cb_user_data = mrcb_data;
 }
 
 LIB_EXPORT void z80ex_set_memwrite_callback(Z80EX_CONTEXT *cpu, z80ex_mwrite_cb mwcb_fn, void *mwcb_data)
 {
-	cpu->mwrite_cb=mwcb_fn;
-	cpu->mwrite_cb_user_data=mwcb_data;	
+	cpu->mwrite_cb = mwcb_fn;
+	cpu->mwrite_cb_user_data = mwcb_data;
 }
 
 LIB_EXPORT void z80ex_set_portread_callback(Z80EX_CONTEXT *cpu, z80ex_pread_cb prcb_fn, void *prcb_data)
 {
-	cpu->pread_cb=prcb_fn;
-	cpu->pread_cb_user_data=prcb_data;
+	cpu->pread_cb = prcb_fn;
+	cpu->pread_cb_user_data = prcb_data;
 }
 
 LIB_EXPORT void z80ex_set_portwrite_callback(Z80EX_CONTEXT *cpu, z80ex_pwrite_cb pwcb_fn, void *pwcb_data)
 {
-	cpu->pwrite_cb=pwcb_fn;
-	cpu->pwrite_cb_user_data=pwcb_data;
+	cpu->pwrite_cb = pwcb_fn;
+	cpu->pwrite_cb_user_data = pwcb_data;
 }
 
 LIB_EXPORT void z80ex_set_intread_callback(Z80EX_CONTEXT *cpu, z80ex_intread_cb ircb_fn, void *ircb_data)
 {
-	cpu->intread_cb=ircb_fn;
-	cpu->intread_cb_user_data=ircb_data;
+	cpu->intread_cb = ircb_fn;
+	cpu->intread_cb_user_data = ircb_data;
 }
 
 /*non-maskable interrupt*/
 LIB_EXPORT int z80ex_nmi(Z80EX_CONTEXT *cpu)
 {
-	if(cpu->doing_opcode || cpu->noint_once || cpu->prefix) return(0);	
+	if (cpu->doing_opcode || cpu->noint_once || cpu->prefix) return 0;
 	
-	if(cpu->halted) { PC++; cpu->halted = 0; } /*so we met an interrupt... stop waiting*/
+	if (cpu->halted) {
+		/*so we met an interrupt... stop waiting*/
+		PC++;
+		cpu->halted = 0;
+	}
 	
-	cpu->doing_opcode=1;
+	cpu->doing_opcode = 1;
 	
-	R++; /*accepting interrupt increases R by one*/
-	/*IFF2=IFF1;*/ /*contrary to zilog z80 docs, IFF2 is not modified on NMI. proved by Slava Tretiak aka restorer*/
-	IFF1=0;
+	R++; /* accepting interrupt increases R by one */
+	/*IFF2=IFF1;*/ /* contrary to zilog z80 docs, IFF2 is not modified on NMI. proved by Slava Tretiak aka restorer */
+	IFF1 = 0;
 
 	TSTATES(5); 
 	
-	cpu->mwrite_cb(cpu, --SP, cpu->pc.b.h, cpu->mwrite_cb_user_data); /*PUSH PC -- high byte */
+	cpu->mwrite_cb(cpu, --SP, cpu->pc.b.h, cpu->mwrite_cb_user_data); /* PUSH PC -- high byte */
 	TSTATES(3);
 		
-	cpu->mwrite_cb(cpu, --SP, cpu->pc.b.l, cpu->mwrite_cb_user_data); /*PUSH PC -- low byte */
+	cpu->mwrite_cb(cpu, --SP, cpu->pc.b.l, cpu->mwrite_cb_user_data); /* PUSH PC -- low byte */
 	TSTATES(3);
 	
-	PC=0x0066;
-	MEMPTR=PC; /*FIXME: is that really so?*/
+	PC = 0x0066;
+	MEMPTR = PC; /* FIXME: is that really so? */
 		
-	cpu->doing_opcode=0;
+	cpu->doing_opcode = 0;
 	
-	return(11); /*NMI always takes 11 t-states*/
+	return 11; /* NMI always takes 11 t-states */
 }
 
 /*maskable interrupt*/
@@ -318,73 +339,80 @@ LIB_EXPORT int z80ex_int(Z80EX_CONTEXT *cpu)
 	Z80EX_BYTE iv;
 	unsigned long tt;
 	
-	/*If the INT line is low and IFF1 is set, and there's no opcode executing just now,
+	/* If the INT line is low and IFF1 is set, and there's no opcode executing just now,
 	a maskable interrupt is accepted, whether or not the
-	last INT routine has finished*/
-	if(!IFF1 || cpu->noint_once || cpu->doing_opcode || cpu->prefix) return(0);
+	last INT routine has finished */
+	if (
+		!IFF1 || cpu->noint_once || cpu->doing_opcode || cpu->prefix
+#ifdef Z80EX_Z180_SUPPORT
+		|| cpu->internal_int_disable
+#endif
+	) return 0;
 
-	cpu->tstate=0;
-	cpu->op_tstate=0;
+	cpu->tstate = 0;
+	cpu->op_tstate = 0;
 	
-	if(cpu->halted) { PC++; cpu->halted = 0; } /*so we met an interrupt... stop waiting*/
+	if (cpu->halted) {
+		/* so we met an interrupt... stop waiting */
+		PC++;
+		cpu->halted = 0;
+	}
 	
-	/*When an INT is accepted, both IFF1 and IFF2 are cleared, preventing another interrupt from
-	occurring which would end up as an infinite loop*/
-	IFF1=IFF2=0;
+	/* When an INT is accepted, both IFF1 and IFF2 are cleared, preventing another interrupt from
+	occurring which would end up as an infinite loop */
+	IFF1 = IFF2 = 0;
 
-	/*original (NMOS) zilog z80 bug:*/
-	/*If a LD A,I or LD A,R (which copy IFF2 to the P/V flag) is interrupted, then the P/V flag is reset, even if interrupts were enabled beforehand.*/
-	/*(this bug was fixed in CMOS version of z80)*/
-	if(cpu->reset_PV_on_int) {F = (F & ~FLAG_P);}
-	cpu->reset_PV_on_int=0;
+	/* original (NMOS) zilog z80 bug: */
+	/* If a LD A,I or LD A,R (which copy IFF2 to the P/V flag) is interrupted, then the P/V flag is reset, even if interrupts were enabled beforehand. */
+	/* (this bug was fixed in CMOS version of z80) */
+	if (cpu->reset_PV_on_int) {
+		F = (F & ~FLAG_P);
+	}
+	cpu->reset_PV_on_int = 0;
 
-	cpu->int_vector_req=1;
-	cpu->doing_opcode=1;
+	cpu->int_vector_req = 1;
+	cpu->doing_opcode = 1;
 	
-	switch(IM)
-	{
+	switch (IM) {
 		case IM0:
-			/*note: there's no need to do R++ and WAITs here, it'll be handled by z80ex_step*/
-			tt=z80ex_step(cpu);
-		
-			while(cpu->prefix) /*this is not the end?*/
-			{
+			/* note: there's no need to do R++ and WAITs here, it'll be handled by z80ex_step */
+			tt = z80ex_step(cpu);
+			while(cpu->prefix) { /* this is not the end? */
 				tt+=z80ex_step(cpu);
 			}
-			
-			cpu->tstate=tt;
+			cpu->tstate = tt;
 			break;
 		
 		case IM1:
 			R++; 
-			TSTATES(2); /*two extra wait-states*/
-			/*An RST 38h is executed, no matter what value is put on the bus or what
-			value the I register has. 13 t-states (2 extra + 11 for RST).*/
-			opcodes_base[0xff](cpu); /*RST38*/
+			TSTATES(2); /* two extra wait-states */
+			/* An RST 38h is executed, no matter what value is put on the bus or what
+			value the I register has. 13 t-states (2 extra + 11 for RST). */
+			opcodes_base[0xff](cpu); /* RST 38 */
 			break;
 		
 		case IM2:
 			R++; 
-			/*takes 19 clock periods to complete (seven to fetch the
+			/* takes 19 clock periods to complete (seven to fetch the
 			lower eight bits from the interrupting device, six to save the program
-			counter, and six to obtain the jump address)*/
+			counter, and six to obtain the jump address) */
 			iv=READ_OP();
 			T_WAIT_UNTIL(7);
-			inttemp=(0x100*I)+iv;
+			inttemp = (0x100 * I) + iv;
 		
-			PUSH(PC,7,10);
+			PUSH(PC, 7, 10);
 				
-			READ_MEM(PCL,inttemp++,13); READ_MEM(PCH,inttemp,16);
-			MEMPTR=PC;
+			READ_MEM(PCL, inttemp++, 13); READ_MEM(PCH, inttemp, 16);
+			MEMPTR = PC;
 			T_WAIT_UNTIL(19);
 			
 			break;
 	}
 	
-	cpu->doing_opcode=0;
-	cpu->int_vector_req=0;
+	cpu->doing_opcode = 0;
+	cpu->int_vector_req = 0;
 	
-	return(cpu->tstate);
+	return cpu->tstate;
 }
 
 LIB_EXPORT void z80ex_w_states(Z80EX_CONTEXT *cpu, unsigned w_states)
@@ -394,15 +422,14 @@ LIB_EXPORT void z80ex_w_states(Z80EX_CONTEXT *cpu, unsigned w_states)
 
 LIB_EXPORT void z80ex_next_t_state(Z80EX_CONTEXT *cpu)
 {
-	if(cpu->tstate_cb != NULL) cpu->tstate_cb(cpu, cpu->tstate_cb_user_data);
+	if (cpu->tstate_cb != NULL) cpu->tstate_cb(cpu, cpu->tstate_cb_user_data);
 	cpu->tstate++;
 	cpu->op_tstate++;
 }
 
 LIB_EXPORT Z80EX_WORD z80ex_get_reg(Z80EX_CONTEXT *cpu, Z80_REG_T reg)
 {
-	switch(reg)
-	{
+	switch (reg) {
 		case regAF: return(AF);
 		case regBC: return(BC);
 		case regDE: return(DE);
@@ -422,63 +449,60 @@ LIB_EXPORT Z80EX_WORD z80ex_get_reg(Z80EX_CONTEXT *cpu, Z80_REG_T reg)
 		case regIFF1: return(IFF1);
 		case regIFF2: return(IFF2);
 	}
-	
-	return(0);
+	return 0;
 }
 
 LIB_EXPORT void z80ex_set_reg(Z80EX_CONTEXT *cpu, Z80_REG_T reg, Z80EX_WORD value)
 {
-	switch(reg)
-	{
-		case regAF: AF=value; return;
-		case regBC: BC=value; return;
-		case regDE: DE=value; return;
-		case regHL: HL=value; return;
-		case regAF_: AF_=value; return;
-		case regBC_: BC_=value; return;
-		case regDE_: DE_=value; return;
-		case regHL_: HL_=value; return;
-		case regIX: IX=value; return;
-		case regIY: IY=value; return;
-		case regPC: PC=value; return;
-		case regSP: SP=value; return;
-		case regI: I=(value & 0xff); return;
-		case regR: R=(value & 0xff); return;
-		case regR7: R7=(value & 0xff); return;
+	switch (reg) {
+		case regAF: AF = value; return;
+		case regBC: BC = value; return;
+		case regDE: DE = value; return;
+		case regHL: HL = value; return;
+		case regAF_: AF_ = value; return;
+		case regBC_: BC_ = value; return;
+		case regDE_: DE_ = value; return;
+		case regHL_: HL_ = value; return;
+		case regIX: IX = value; return;
+		case regIY: IY = value; return;
+		case regPC: PC = value; return;
+		case regSP: SP = value; return;
+		case regI: I = (value & 0xff); return;
+		case regR: R = (value & 0xff); return;
+		case regR7: R7 = (value & 0xff); return;
 		case regIM:
-			switch(value & 0x03)
-			{
-				case 0: IM=IM0; return;
-				case 1: IM=IM1; return;
-				case 2: IM=IM2; return;
+			switch (value & 0x03) {
+				case 0: IM = IM0; return;
+				case 1: IM = IM1; return;
+				case 2: IM = IM2; return;
 			}
-		case regIFF1: IFF1=(value & 0x01); return;
-		case regIFF2: IFF2=(value & 0x01); return;
+		case regIFF1: IFF1 = (value & 0x01); return;
+		case regIFF2: IFF2 = (value & 0x01); return;
 	}
 }
 
 LIB_EXPORT int z80ex_op_tstate(Z80EX_CONTEXT *cpu)
 {
-	return(cpu->tstate);
+	return cpu->tstate;
 }
 
 LIB_EXPORT int z80ex_doing_halt(Z80EX_CONTEXT *cpu)
 {
-	return(cpu->halted);
+	return cpu->halted;
 }
 
 /*LIB_EXPORT int z80ex_get_noint_once(Z80EX_CONTEXT *cpu)
 {
-	return(cpu->noint_once);
+	return cpu->noint_once;
 }*/
 
 LIB_EXPORT int z80ex_int_possible(Z80EX_CONTEXT *cpu)
 {
-	return((!IFF1 || cpu->noint_once || cpu->doing_opcode || cpu->prefix)? 0 : 1);
+	return ((!IFF1 || cpu->noint_once || cpu->doing_opcode || cpu->prefix) ? 0 : 1);
 }
 
 LIB_EXPORT int z80ex_nmi_possible(Z80EX_CONTEXT *cpu)
 {
-	return((cpu->noint_once || cpu->doing_opcode || cpu->prefix)? 0 : 1);
+	return ((cpu->noint_once || cpu->doing_opcode || cpu->prefix) ? 0 : 1);
 }
 
