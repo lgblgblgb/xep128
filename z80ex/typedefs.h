@@ -75,8 +75,10 @@ struct _z80_cpu_context {
 	Z80EX_SIGNED_BYTE tmpbyte_s;
 
 	/* ED callback support - LGB */
+#ifdef Z80EX_ED_TRAPPING_SUPPORT
 	z80ex_ed_cb ed_cb;
 	void *ed_cb_user_data;
+#endif
 	int nmos; /* NMOS Z80 mode if '1', CMOS if '0' */
 	/* Z180 related - LGB */
 #ifdef Z80EX_Z180_SUPPORT

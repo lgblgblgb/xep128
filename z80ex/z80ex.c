@@ -170,13 +170,17 @@ LIB_EXPORT void z80ex_reset(Z80EX_CONTEXT *cpu)
 	cpu->doing_opcode = 0;
 	cpu->tstate = cpu->op_tstate = 0;
 	cpu->prefix = 0;
+#ifdef Z80EX_Z180_SUPPORT
 	cpu->internal_int_disable = 0;
+#endif
 }
 
 
+#ifdef Z80EX_ED_TRAPPING_SUPPORT
 static int z80ex_dummy_ed_cb (Z80EX_CONTEXT *cpu, Z80EX_BYTE opcode, void *user_data) {
 	return 0; /* unhandled by default */
 }
+#endif
 #ifdef Z80EX_Z180_SUPPORT
 static void z80ex_dummy_z180_cb (Z80EX_CONTEXT *cpu, Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76, void *user_data) {}
 #endif
@@ -209,12 +213,14 @@ LIB_EXPORT Z80EX_CONTEXT *z80ex_create(
 	cpu->intread_cb = ircb_fn;
 	cpu->intread_cb_user_data = ircb_data;
 	cpu->nmos = 1;
-	cpu->internal_int_disable = 0;
 #ifdef Z80EX_Z180_SUPPORT
+	cpu->internal_int_disable = 0;
 	cpu->z180 = 0;
 	cpu->z180_cb = z80ex_dummy_z180_cb;
 #endif
+#ifdef Z80EX_ED_TRAPPING_SUPPORT
 	cpu->ed_cb = z80ex_dummy_ed_cb;
+#endif
 	return cpu;
 }
 
@@ -251,11 +257,13 @@ LIB_EXPORT int z80ex_get_nmos(Z80EX_CONTEXT *cpu)
 }
 
 
+#ifdef Z80EX_ED_TRAPPING_SUPPORT
 LIB_EXPORT void z80ex_set_ed_callback(Z80EX_CONTEXT *cpu, z80ex_ed_cb cb_fn, void *user_data)
 {
 	cpu->ed_cb = cb_fn;
 	cpu->ed_cb_user_data = user_data;
 }
+#endif
 
 LIB_EXPORT void z80ex_set_tstate_callback(Z80EX_CONTEXT *cpu, z80ex_tstate_cb cb_fn, void *user_data)
 {

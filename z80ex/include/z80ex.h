@@ -114,7 +114,9 @@ extern void z80ex_set_portwrite_callback(Z80EX_CONTEXT *cpu, z80ex_pwrite_cb pwc
 /*set INT read callback*/
 extern void z80ex_set_intread_callback(Z80EX_CONTEXT *cpu, z80ex_intread_cb ircb_fn, void *ircb_data);
 
+#ifdef Z80EX_ED_TRAPPING_SUPPORT
 extern void z80ex_set_ed_callback(Z80EX_CONTEXT *cpu, z80ex_ed_cb cb_fn, void *user_data);
+#endif
 
 extern void z80ex_set_nmos(Z80EX_CONTEXT *cpu, int nmos);
 extern int  z80ex_get_nmos(Z80EX_CONTEXT *cpu);
