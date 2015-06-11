@@ -45,7 +45,7 @@ z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
 ui-gtk.o: ui-gtk.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(shell pkg-config --cflags gtk+-3.0) $< -o $@
 
-main.o: xep_rom.hex
+main.o: xep_rom.hex app_icon.c
 
 xep_rom.rom: xep_rom.asm
 	sjasm xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom ; false; }

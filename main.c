@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
 #include "xepem.h"
+#include "app_icon.c"
 
 SDL_Window *sdl_win = NULL;
 static SDL_Surface *sdl_surf;
@@ -63,6 +64,8 @@ static void shutdown_sdl(void)
 	//SQL_Quit();
 	printer_close();
 	fprintf(stderr, "Shutdown callback, return.\n");
+	if (sdl_win)
+		SDL_DestroyWindow(sdl_win);
 	SDL_Quit();
 }
 
@@ -325,9 +328,14 @@ int main (int argc, char *argv[])
                 WINDOW_TITLE " " VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                 736, 288*2,
-                SDL_WINDOW_SHOWN // | SDL_WINDOW_FULLSCREEN_DESKTOP
+                SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE // | SDL_WINDOW_FULLSCREEN_DESKTOP
         );
         if (!sdl_win) exit_on_SDL_problem("cannot open window");
+	/* set window icon */
+	sdl_surf = SDL_CreateRGBSurfaceFrom((void*)_icon_pixels,96,96,32,96*4,0x000000ff,0x0000ff00,0x00ff0000,0xff000000);
+	SDL_SetWindowIcon(sdl_win, sdl_surf);
+	SDL_FreeSurface(sdl_surf);
+	/* end of set window icon */
         winid = SDL_GetWindowID(sdl_win);
 	sdl_surf = SDL_GetWindowSurface(sdl_win);
 	if (!sdl_surf)
