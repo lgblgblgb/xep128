@@ -23,10 +23,24 @@ static Uint8 z180_ports[0x40];
 static int z180_incompatibility_reported = 0;
 
 
+// These "default" values from a real Z180, at least reading it from software (non-readable ports can be a problem though)
+static const Uint8 _z180_ports_default[0x40] = {
+	0x10, 0x00, 0x27, 0x07, 0x04, 0x02, 0xFF, 0xFF,
+	0xFF, 0xFF, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+	0x00, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+	0x7A, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x3F, 0x80,
+	0x00, 0xFE, 0x00, 0x00, 0xFE, 0x00, 0x00, 0xFE,
+	0x00, 0xFE, 0x00, 0x00, 0xFE, 0x00, 0x00, 0xFE,
+	0x32, 0xC1, 0x00, 0x00, 0x39, 0xFF, 0xFC, 0xFF,
+	0x00, 0x00, 0xF0, 0xFF, 0xFF, 0xFF, 0xFF, 0x1F
+};
+
+
 /* A callback only used in Z180 mode */
 static void invalid_opcode (Z80EX_CONTEXT *unused_1, Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76, void *unused_2)
 {
 	z180_ports[0x34] = (z180_ports[0x34] & 0x3F) | itc76; // set ITC register up
+	fprintf(stderr, "Z180: setting ICT register to: %02Xh\n", z180_ports[0x34]);
 	fprintf(stderr, "Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\n",
 		prefix, series, opcode,
 		pc,
@@ -47,9 +61,11 @@ static void invalid_opcode (Z80EX_CONTEXT *unused_1, Z80EX_WORD pc, Z80EX_BYTE p
 void z180_internal_reset ( void )
 {
 	z180_port_start = 0;
-	memset(z180_ports, 0, sizeof z180_ports);
+	memcpy(z180_ports, _z180_ports_default, 0x40);
 	z80ex_set_z180_callback(z80, invalid_opcode, NULL);
 	z180_incompatibility_reported = 0;
+	// z180_ports[0x34] = 0x39;	// ITC register
+	// z180_ports[0x3F] = 0x1F;	// ICR - I/O control register
 }
 
 
@@ -58,11 +74,12 @@ void z180_port_write ( Uint8 port, Uint8 value )
 	fprintf(stderr, "Z180: write internal port (%02Xh/%02Xh) data = %02Xh\n", port, port | z180_port_start, value);
 	switch (port) {
 		case 0x34:	// ITC register
-			value &= 0x7F; // trap bit can't be set up by user ever!
+			value = (z180_ports[port] & 0x07) | 0x38; // change was: 47->07 in hex
 			break;
-		case 0x3F:
+		case 0x3F:	// I/O control register (ICR)
 			z180_port_start = value & 0xC0;
 			fprintf(stderr, "Z180: internal ports are moved to %02Xh-%02Xh\n", z180_port_start, z180_port_start + 0x3F);
+			value = (value & 0xE0) | 0x1F;	// only first three bits are interpreted, the rest are '1' for read
 			break;
 	}
 	z180_ports[port] = value;

@@ -2,7 +2,8 @@ ROM		= combined.rom
 ROM_PACK	= rom_pack.zip
 ROM_PACK_URL	= http://xep128.lgb.hu/files/rom_pack.zip
 #ROM_PACK_FILES	= EXOS24UK-NOILLOPS.rom sdext-cart-64k.rom EPDOS-Z.rom ZT18UK-emuhoz.rom zx-emu-40.rom
-ROM_PACK_FILES	= EXOS24UK-NOILLOPS.rom sd-cart-0.3-FTU-57k.rom filler-8k.rom zx-emu-40.rom ZT18UK-emuhoz.rom EPDOS-1.9-beta.rom
+#ROM_PACK_FILES	= EXOS24UK-NOILLOPS.rom sd-cart-0.3-FTU-57k.rom filler-8k.rom zx-emu-40.rom ZT18UK-emuhoz.rom EPDOS-1.9-beta.rom
+ROM_PACK_FILES	= EXOS24UK-NOILLOPS.rom sd-cart-0.3-FTU-57k.rom filler-8k.rom zx-emu-40.rom EPDOS-1.9-beta.rom
 
 all: $(ROM)
 

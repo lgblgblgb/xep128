@@ -26,8 +26,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define MULT_OP_T_STATES 13
 #define TST_OP_T_STATES 4
 
-#define ITC_B2	0xC0
-#define ITC_B3	0x80
+#define ITC_B3	0xC0
+#define ITC_B2	0x80
 
 
 
@@ -52,6 +52,7 @@ static void z180_trap ( Z80EX_CONTEXT *cpu ) {
 static const z80ex_opcode_fn trapping ( Z80EX_CONTEXT *cpu, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76 ) {
 
 	PC--; /* back to the byte caused the invalid opcode trap */
+	if (prefix && series == 0xCB) PC--; /* odd enough, but it seems real Z180 stacks PC on the disp. byte in prefixed CB op!!! */
 	/* call user handler stuff */
 	cpu->z180_cb(cpu, PC, prefix, series, opcode, itc76, cpu->z180_cb_user_data);
 	return z180_trap; /* respond with trap handler, heh! */
@@ -82,52 +83,64 @@ static const int opcodes_ddfd_bad_for_z180[0x100] = {
 };
 
 
-static void zop_ED_0x00(Z80EX_CONTEXT *cpu) {		/* 0xED 0x00 : TST  A,(HL) */
+static void zop_ED_0x00(Z80EX_CONTEXT *cpu) {		/* 0xED 0x00 : IN0  B,(n) */
 }
-static void zop_ED_0x01(Z80EX_CONTEXT *cpu) {		/* 0xED 0x01 : TST  A,(HL) */
+static void zop_ED_0x01(Z80EX_CONTEXT *cpu) {		/* 0xED 0x01 : OUT0 (n),B */
 }
-static void zop_ED_0x04(Z80EX_CONTEXT *cpu) {		/* 0xED 0x04 : TST  A,(HL) */
+static void zop_ED_0x04(Z80EX_CONTEXT *cpu) {		/* 0xED 0x04 : TST  A,B */
+	TST(B);
+	T_WAIT_UNTIL(TST_OP_T_STATES);
 }
-static void zop_ED_0x08(Z80EX_CONTEXT *cpu) {		/* 0xED 0x08 : TST  A,(HL) */
+static void zop_ED_0x08(Z80EX_CONTEXT *cpu) {		/* 0xED 0x08 : IN0  C,(n) */
 }
-static void zop_ED_0x09(Z80EX_CONTEXT *cpu) {		/* 0xED 0x09 : TST  A,(HL) */
+static void zop_ED_0x09(Z80EX_CONTEXT *cpu) {		/* 0xED 0x09 : OUT0 (n),C */
 }
-static void zop_ED_0x0C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x0C : TST  A,(HL) */
+static void zop_ED_0x0C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x0C : TST  A,C */
+	TST(C);
+	T_WAIT_UNTIL(TST_OP_T_STATES);
 }
-static void zop_ED_0x10(Z80EX_CONTEXT *cpu) {		/* 0xED 0x10 : TST  A,(HL) */
+static void zop_ED_0x10(Z80EX_CONTEXT *cpu) {		/* 0xED 0x10 : IN0  D,(n) */
 }
-static void zop_ED_0x11(Z80EX_CONTEXT *cpu) {		/* 0xED 0x11 : TST  A,(HL) */
+static void zop_ED_0x11(Z80EX_CONTEXT *cpu) {		/* 0xED 0x11 : OUT0 (n),D */
 }
-static void zop_ED_0x14(Z80EX_CONTEXT *cpu) {		/* 0xED 0x14 : TST  A,(HL) */
+static void zop_ED_0x14(Z80EX_CONTEXT *cpu) {		/* 0xED 0x14 : TST  A,D */
+	TST(D);
+	T_WAIT_UNTIL(TST_OP_T_STATES);
 }
-static void zop_ED_0x18(Z80EX_CONTEXT *cpu) {		/* 0xED 0x18 : TST  A,(HL) */
+static void zop_ED_0x18(Z80EX_CONTEXT *cpu) {		/* 0xED 0x18 : IN0  E,(n) */
 }
-static void zop_ED_0x19(Z80EX_CONTEXT *cpu) {		/* 0xED 0x19 : TST  A,(HL) */
+static void zop_ED_0x19(Z80EX_CONTEXT *cpu) {		/* 0xED 0x19 : OUT0 (n),E */
 }
-static void zop_ED_0x1C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x1C : TST  A,(HL) */
+static void zop_ED_0x1C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x1C : TST  A,E */
+	TST(E);
+	T_WAIT_UNTIL(TST_OP_T_STATES);
 }
-static void zop_ED_0x20(Z80EX_CONTEXT *cpu) {		/* 0xED 0x20 : TST  A,(HL) */
+static void zop_ED_0x20(Z80EX_CONTEXT *cpu) {		/* 0xED 0x20 : IN0  H,(n) */
 }
-static void zop_ED_0x21(Z80EX_CONTEXT *cpu) {		/* 0xED 0x21 : TST  A,(HL) */
+static void zop_ED_0x21(Z80EX_CONTEXT *cpu) {		/* 0xED 0x21 : OUT0 (n),H */
 }
-static void zop_ED_0x24(Z80EX_CONTEXT *cpu) {		/* 0xED 0x24 : TST  A,(HL) */
+static void zop_ED_0x24(Z80EX_CONTEXT *cpu) {		/* 0xED 0x24 : TST  A,H */
+	TST(H);
+	T_WAIT_UNTIL(TST_OP_T_STATES);
 }
-static void zop_ED_0x28(Z80EX_CONTEXT *cpu) {		/* 0xED 0x28 : TST  A,(HL) */
+static void zop_ED_0x28(Z80EX_CONTEXT *cpu) {		/* 0xED 0x28 : IN0  L,(n) */
 }
-static void zop_ED_0x29(Z80EX_CONTEXT *cpu) {		/* 0xED 0x29 : TST  A,(HL) */
+static void zop_ED_0x29(Z80EX_CONTEXT *cpu) {		/* 0xED 0x29 : OUT0 (n),L */
 }
-static void zop_ED_0x2C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x2C : TST  A,(HL) */
+static void zop_ED_0x2C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x2C : TST  A,L */
+	TST(L);
+	T_WAIT_UNTIL(TST_OP_T_STATES);
 }
-static void zop_ED_0x30(Z80EX_CONTEXT *cpu) {		/* 0xED 0x30 : TST  A,(HL) */
+static void zop_ED_0x30(Z80EX_CONTEXT *cpu) {		/* 0xED 0x30 : IN0  F,(n) */
 }
 static void zop_ED_0x34(Z80EX_CONTEXT *cpu) {		/* 0xED 0x34 : TST  A,(HL) */
 	READ_MEM(temp_byte, (HL), 4);
 	TST(temp_byte);
 	T_WAIT_UNTIL(7);
 }
-static void zop_ED_0x38(Z80EX_CONTEXT *cpu) {		/* 0xED 0x38 : TST  A,(HL) */
+static void zop_ED_0x38(Z80EX_CONTEXT *cpu) {		/* 0xED 0x38 : IN0  A,(n) */
 }
-static void zop_ED_0x39(Z80EX_CONTEXT *cpu) {		/* 0xED 0x39 : TST  A,(HL) */
+static void zop_ED_0x39(Z80EX_CONTEXT *cpu) {		/* 0xED 0x39 : OUT0 (n),A */
 }
 static void zop_ED_0x3C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x3C : TST  A,A  */
 	TST(A);
@@ -141,27 +154,32 @@ static void zop_ED_0x5C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x5C : MULT DE */
 	DE = D * E;
 	T_WAIT_UNTIL(MULT_OP_T_STATES);
 }
-static void zop_ED_0x64(Z80EX_CONTEXT *cpu) {		/* 0xED 0x64 : MULT HL */
+static void zop_ED_0x64(Z80EX_CONTEXT *cpu) {		/* 0xED 0x64 : TST  A,n */
 }
 static void zop_ED_0x6C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x6C : MULT HL */
 	HL = H * L;
 	T_WAIT_UNTIL(MULT_OP_T_STATES);
 }
-static void zop_ED_0x74(Z80EX_CONTEXT *cpu) {		/* 0xED 0x74 : TST  A,(HL) */
+static void zop_ED_0x74(Z80EX_CONTEXT *cpu) {		/* 0xED 0x74 : TST  (C),n */
 }
-static void zop_ED_0x76(Z80EX_CONTEXT *cpu) {		/* 0xED 0x76 : TST  A,(HL) */
+static void zop_ED_0x76(Z80EX_CONTEXT *cpu) {		/* 0xED 0x76 : SLP */
+	HALT(); /* really, not sure what SLP does, since it's opcode 0xED 0x76, we try
+	to execute 0x76 as it would be normal HALT opcode. The difference maybe only
+	the "depth" CPU is powered down, so for the emulation it does not make too much
+	different - I think - LGB */
+	T_WAIT_UNTIL(4); /* FIXME */
 }
 static void zop_ED_0x7C(Z80EX_CONTEXT *cpu) {		/* 0xED 0x7C : MULT SP */
 	SP = SPH * SPL;
 	T_WAIT_UNTIL(MULT_OP_T_STATES);
 }
-static void zop_ED_0x83(Z80EX_CONTEXT *cpu) {		/* 0xED 0x83 : TST  A,(HL) */
+static void zop_ED_0x83(Z80EX_CONTEXT *cpu) {		/* 0xED 0x83 : OTIM */
 }
-static void zop_ED_0x8B(Z80EX_CONTEXT *cpu) {		/* 0xED 0x8B : TST  A,(HL) */
+static void zop_ED_0x8B(Z80EX_CONTEXT *cpu) {		/* 0xED 0x8B : OTDM */
 }
-static void zop_ED_0x93(Z80EX_CONTEXT *cpu) {		/* 0xED 0x93 : TST  A,(HL) */
+static void zop_ED_0x93(Z80EX_CONTEXT *cpu) {		/* 0xED 0x93 : OTIMR */
 }
-static void zop_ED_0x9B(Z80EX_CONTEXT *cpu) {		/* 0xED 0x9B : TST  A,(HL) */
+static void zop_ED_0x9B(Z80EX_CONTEXT *cpu) {		/* 0xED 0x9B : OTDMR */
 }
 
 

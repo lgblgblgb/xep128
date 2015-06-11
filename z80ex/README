@@ -20,11 +20,15 @@ Modifications compared to the original source distribution:
   invalid on Z180 (like IXL/IXH/IYL/IYH related), and some of the
   new Z180 opcodes, z80/z180 mode can be switched at run-time.
   Callback for "invalid on Z180" issue when Z180 mode is selected.
+  Invalid instruction trap is emulated (with the callback mentioned).
+  Z180 internal I/O area should be implemented by the user of the
+  modified Z80Ex, it's not handled here.
 
 * CMOS/NMOS Z80 emulation
 
-* ED callback: ED ops >0xBB invokes a callback
-
+* ED callback: ED ops opc>0xBB invokes a callback, if it returns
+  with non-zero value, it means the caller want it handle, thus
+  it's not invalid opcode (not even in Z180 mode)
 
 Now back to the original README, thanks for your patience:
 
