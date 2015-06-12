@@ -328,13 +328,18 @@ int main (int argc, char *argv[])
                 WINDOW_TITLE " " VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                 736, 288*2,
-                SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE // | SDL_WINDOW_FULLSCREEN_DESKTOP
+                SDL_WINDOW_SHOWN // | SDL_WINDOW_RESIZABLE // | SDL_WINDOW_FULLSCREEN_DESKTOP
         );
         if (!sdl_win) exit_on_SDL_problem("cannot open window");
+	SDL_SetWindowMinimumSize(sdl_win, 736, 288*2);
 	/* set window icon */
 	sdl_surf = SDL_CreateRGBSurfaceFrom((void*)_icon_pixels,96,96,32,96*4,0x000000ff,0x0000ff00,0x00ff0000,0xff000000);
-	SDL_SetWindowIcon(sdl_win, sdl_surf);
-	SDL_FreeSurface(sdl_surf);
+	if (sdl_surf == NULL)
+		fprintf(stderr, "Cannot create surface for window icon: %s\n", SDL_GetError());
+	else {
+		SDL_SetWindowIcon(sdl_win, sdl_surf);
+		SDL_FreeSurface(sdl_surf);
+	}
 	/* end of set window icon */
         winid = SDL_GetWindowID(sdl_win);
 	sdl_surf = SDL_GetWindowSurface(sdl_win);
