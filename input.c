@@ -23,6 +23,12 @@ static Uint8 _mouse_data_byte, _mouse_data_half, _mouse_last_shift, _mouse_read_
 int shift_pressed = 0;
 
 
+void mouse_reset_button ( void )
+{
+	_mouse_button_state = 0;
+}
+
+
 static const int keytable[][3]={
 	{ SDL_SCANCODE_1,3,0x02},		/* 1 */
 	{ SDL_SCANCODE_2,3,0x40},		/* 2 */
@@ -115,6 +121,7 @@ void emu_mouse_button(Uint8 button, int press)
 		_mouse_grab = 1;
 		//emu_osd_msg("Mouse grab. Press ESC to exit.");
 		emu_win_grab(SDL_TRUE);
+		mouse_reset_button();
 	}
 }
 
