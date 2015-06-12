@@ -22,9 +22,29 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 static FILE *fp = NULL;
 static int fp_to_open = 1;
 
+#define BUFFER_SIZE 1024
+
+static Uint8 buffer[BUFFER_SIZE];
+static int buffer_pos;
+
+
+static void write_printer_buffer ( void )
+{
+	if (buffer_pos && fp != NULL) {
+		if (fwrite(buffer, buffer_pos, 1, fp) != 1) {
+			ERROR_WINDOW("Cannot write printer output: %s\nFurther printer I/O has been disabled.", ERRSTR());
+			fclose(fp);
+			fp = NULL;
+		}
+	}
+	buffer_pos = 0;
+}
+
+
 void printer_close ( void )
 {
 	if (fp) {
+		write_printer_buffer();
 		fclose(fp);
 		fprintf(stderr, "Closing printer output file.\n");
 		fp_to_open = 1;
@@ -32,16 +52,25 @@ void printer_close ( void )
 	}
 }
 
+
 void printer_send_data ( Uint8 data )
 {
 	//fprintf(stderr, "PRINTER GOT DATA: %d\n", data);
 	if (fp_to_open) {
 		fp = fopen(PRINT_OUT_FN, "a");
-		if (fp == NULL) ERROR_WINDOW("Cannot create/append printer output file \"%s\": %s.\nYou can use Xep128 but printer output will not be logged!", PRINT_OUT_FN, ERRSTR());
+		if (fp == NULL) {
+			ERROR_WINDOW("Cannot create/append printer output file \"%s\": %s.\nYou can use Xep128 but printer output will not be logged!", PRINT_OUT_FN, ERRSTR());
+		} else {
+			ERROR_WINDOW("Printer event, file \"%s\" has been opened for the output.", PRINT_OUT_FN);
+		}
 		fp_to_open = 0;
+		buffer_pos = 0;
 	}
-	if (fp)
-		fprintf(fp, "%c", data);
+	if (fp != NULL) {
+		buffer[buffer_pos++] = data;
+		if (buffer_pos == BUFFER_SIZE)
+			write_printer_buffer();
+		// fprintf(fp, "%c", data);
+	}
 }
-
 
