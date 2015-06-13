@@ -43,19 +43,21 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define DEFAULT_CPU_CLOCK 4000000
 
 #define CONFIG_SDEXT_SUPPORT
+#define CONFIG_W5300_SUPPORT
+#define W5300_IO_BASE 0x90
 
 #define COMBINED_ROM_FN "combined.rom"
 #define SDCARD_IMG_FN "sdcard.img"
 #define PRINT_OUT_FN "print.out"
 
-#define ERROR_WINDOW(...) { \
+#define ERROR_WINDOW(...) do { \
 	char _buf_for_win_msg[4096]; \
 	sprintf(_buf_for_win_msg, __VA_ARGS__); \
 	fprintf(stderr, "ERROR: %s\n", _buf_for_win_msg); \
 	kbd_matrix_reset(); \
 	mouse_reset_button(); \
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Xep128 Report", _buf_for_win_msg, sdl_win); \
-}
+} while(0)
 //#define ERRSTR() sys_errlist[errno]
 #define ERRSTR() strerror(errno)
 
@@ -66,7 +68,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #endif
 
 extern SDL_Window *sdl_win;
-char *app_pref_path, *app_base_path;
+extern char *app_pref_path, *app_base_path;
+extern char current_directory[PATH_MAX + 1];
 
 extern int CPU_CLOCK;
 int set_ep_ramsize(int kbytes);
@@ -169,6 +172,23 @@ extern Uint8 kbd_matrix[16];
 extern int kbd_selector;
 
 void xep_rom_trap ( Uint16 pc, Uint8 opcode);
+
+void w5300_reset ( void );
+void w5300_init ( void (*cb)(int) );
+void w5300_shutdown ( void );
+void w5300_write_mr0 ( Uint8 data );
+void w5300_write_mr1 ( Uint8 data );
+void w5300_write_idm_ar0 ( Uint8 data );
+void w5300_write_idm_ar1 ( Uint8 data );
+void w5300_write_idm_dr0 ( Uint8 data );
+void w5300_write_idm_dr1 ( Uint8 data );
+Uint8 w5300_read_mr0 ( void );
+Uint8 w5300_read_mr1 ( void );
+Uint8 w5300_read_idm_ar0 ( void );
+Uint8 w5300_read_idm_ar1 ( void );
+Uint8 w5300_read_idm_dr0 ( void );
+Uint8 w5300_read_idm_dr1 ( void );
+
 
 #endif
 
