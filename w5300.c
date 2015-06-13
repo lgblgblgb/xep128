@@ -2,6 +2,20 @@
    Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
+   Partial Wiznet W5300 emulation, using the host OS (which runs the emulator)
+   TCP/IP API. Thus, many of the W5300 features won't work, or limited, like:
+   RAW mode, ICMP sockets, listening mode (it would be possible but eg in case
+   of UNIX there would be a need for privilege, which is not so nice to
+   run an emulator as "root" user), no IP/MAC setting (always uses the OS IP
+   and MAC). DHCP and DNS is planned to "faked" so w5300 softwares trying to
+   get IP address via DHCP or wanting resolve a DNS name would get an answer
+   from this w5300 emulator instead of from the "real" network.
+
+   Note: I've just discovered that FUSE Spectrum emulator does have some kind
+   of w5100 emulation. Though w5100 and w5300 are not the very same, some things
+   are similar, so their sources may help me in the future, thanks for their
+   work (also a GNU/GPL software, so there is no license problem here).
+
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
