@@ -134,7 +134,9 @@ the SDext ROM software does not mind it too much.
 
 RTC is emulated enough for time keeping (query only, you can't set the time).
 ZT (ZozoTools) ROM is included in the combined ROM package, you can see the
-clock with typing this at the IS-BASIC prompt:
+clock with typing this at the IS-BASIC prompt (_Warning: because of conflict
+with Z180 and ZozoTools, this may not available in the current ROM image.
+Clock/RTC would work, just you can't test it with this command, sorry_):
 
  :CLOCK
 
