@@ -89,5 +89,7 @@ Other hardware emulation:
 SDL:
 
 	* fullscreen mode
+	* window resizing ability for custom "zoom" factor
 	* check possible hardware acceleration, better performance, etc (?)
+	* like the previous: check if Render/texture is better than surface?
 

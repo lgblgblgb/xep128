@@ -58,11 +58,10 @@ void printer_send_data ( Uint8 data )
 	//fprintf(stderr, "PRINTER GOT DATA: %d\n", data);
 	if (fp_to_open) {
 		fp = fopen(PRINT_OUT_FN, "a");
-		if (fp == NULL) {
-			ERROR_WINDOW("Cannot create/append printer output file \"%s\": %s.\nYou can use Xep128 but printer output will not be logged!", PRINT_OUT_FN, ERRSTR());
-		} else {
-			ERROR_WINDOW("Printer event, file \"%s\" has been opened for the output.", PRINT_OUT_FN);
-		}
+		if (fp == NULL)
+			ERROR_WINDOW("Cannot create/append printer output file \"%s" DIRSEP "%s\": %s.\nYou can use Xep128 but printer output will not be logged!", current_directory, PRINT_OUT_FN, ERRSTR());
+		else
+			ERROR_WINDOW("Printer event, file \"%s" DIRSEP "%s\" has been opened for the output.", current_directory, PRINT_OUT_FN);
 		fp_to_open = 0;
 		buffer_pos = 0;
 	}
