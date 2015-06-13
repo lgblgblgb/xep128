@@ -4,18 +4,13 @@ DATADIR	= $(PREFIX)/lib/xep128
 CC	= gcc
 DEBUG	=
 CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\"
-ZCFLAGS	= -fno-common -ansi -pedantic -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_VERSION_STR=1.1.21 -DZ80EX_API_REVISION=1 -DZ80EX_VERSION_MAJOR=1 -DZ80EX_VERSION_MINOR=21 $(DEBUG) -DZ80EX_ED_TRAPPING_SUPPORT -DZ80EX_RELEASE_TYPE=
+ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_VERSION_STR=1.1.21 -DZ80EX_API_REVISION=1 -DZ80EX_VERSION_MAJOR=1 -DZ80EX_VERSION_MINOR=21 $(DEBUG) -DZ80EX_ED_TRAPPING_SUPPORT -DZ80EX_RELEASE_TYPE=
 CPPFLAGS= -Iz80ex/include -I.
 LDFLAGS	= $(shell sdl2-config --libs) $(DEBUG)
 LIBS	=
-#LIBS	= -lz80ex -lz80ex_dasm
-#LIBS	= $(Z80EX) z80ex/lib/libz80ex_dasm.a
-#LIBS	= -Wl,-Bstatic -lz80ex -lz80ex_dasm -Wl,-Bdynamic
-
 INCS	= xepem.h
 SRCS	= main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c
 OBJS	= $(SRCS:.c=.o)
-Z80EX	= z80ex.o z80ex_dasm.o
 PRG	= xep128
 PRG_EXE	= xep128.exe
 SDIMG	= sdcard.img
@@ -24,7 +19,7 @@ ROM	= combined.rom
 DLL	= SDL2.dll
 DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
 ZIP32	= xep128-win32.zip
-ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h z80ex/z180ex.c
+ZDEPS	= Makefile z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h z80ex/z180ex.c
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
@@ -37,10 +32,16 @@ all:
 %.s: %.c $(INCS) Makefile
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-z80ex.o: z80ex/z80ex.c $(ZDEPS)
+z80ex/z180ex-posix.o: z80ex/z80ex.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -DZ80EX_Z180_SUPPORT -c -o $@ z80ex/z80ex.c
-z80ex_dasm.o: z80ex/z80ex_dasm.c $(ZDEPS)
+z80ex/z180ex_dasm-posix.o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -DZ80EX_Z180_SUPPORT -c -o $@ z80ex/z80ex_dasm.c
+z80ex/z80ex-posix.o: z80ex/z80ex.c $(ZDEPS)
+	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex.c
+z80ex/z80ex_dasm-posix.o: z80ex/z80ex_dasm.c $(ZDEPS)
+	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex_dasm.c
+
+ztest:	z80ex/z180ex-posix.o z80ex/z180ex_dasm-posix.o z80ex/z80ex-posix.o z80ex/z80ex_dasm-posix.o
 
 ui-gtk.o: ui-gtk.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(shell pkg-config --cflags gtk+-3.0) $< -o $@
@@ -77,10 +78,10 @@ $(ROM):
 data:	$(SDIMG) $(ROM)
 	rm -f buildinfo.c
 
-$(PRG): $(OBJS) $(Z80EX) $(INCS) Makefile
+$(PRG): $(OBJS) z80ex/z180ex-posix.o z80ex/z180ex_dasm-posix.o $(INCS) Makefile
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.o
-	$(CC) -o $(PRG) $(OBJS) buildinfo.o $(Z80EX) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-posix.o z80ex/z180ex_dasm-posix.o $(LDFLAGS) $(LIBS)
 
 win32:	$(DLL) xep_rom.hex
 	@echo "*** BUILDING FOR WINDOWS ***"
@@ -101,13 +102,13 @@ strip:	$(PRG)
 	strip $(PRG)
 
 clean:
-	rm -f $(OBJS) $(Z80EX) $(PRG) $(PRG_EXE) $(ZIP32) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst
+	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst
 	$(MAKE) -C rom clean
 
 distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
-	rm -f $(SDIMG) $(DLL) $(ROM)
+	rm -f $(SDIMG) $(DLL) $(ROM) z80ex/*.o $(PRG) $(PRG_EXE) $(ZIP32)
 
 commit:
 	git diff
@@ -115,5 +116,5 @@ commit:
 	EDITOR="vim -c 'startinsert'" git commit -a
 	git push
 
-.PHONY: all clean distclean strip commit win32 publish data install
+.PHONY: all clean distclean strip commit win32 publish data install ztest
 
