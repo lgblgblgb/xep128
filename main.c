@@ -28,6 +28,7 @@ int rom_size;
 int CPU_CLOCK;
 
 char *app_pref_path, *app_base_path;
+char current_directory[PATH_MAX + 1];
 
 static const Uint8 _xep_rom[] = {
 #include "xep_rom.hex"
@@ -63,6 +64,9 @@ static void shutdown_sdl(void)
      //   }
 	//SQL_Quit();
 	printer_close();
+#ifdef CONFIG_W5300_SUPPORT
+	w5300_shutdown();
+#endif
 	fprintf(stderr, "Shutdown callback, return.\n");
 	if (sdl_win)
 		SDL_DestroyWindow(sdl_win);
@@ -218,6 +222,13 @@ void emu_timekeeping_start ( void )
 }
 
 
+#ifdef SCREENSHOT_TRIES
+void write_png_rgb(const char *name, void *d, int width, int height, int stride);
+unsigned lodepng_encode32_file(const char* filename,
+                               const unsigned char* image, unsigned w, unsigned h);
+#include "lodepng.h"
+#endif
+
 
 // called by nick.c
 void emu_one_frame(int rasters, int frameksip)
@@ -236,8 +247,15 @@ void emu_one_frame(int rasters, int frameksip)
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 				if (e.key.repeat == 0 && (e.key.windowID == winid || e.key.windowID == 0)) {
-					if (e.key.keysym.scancode == SDL_SCANCODE_F11 && e.key.state == SDL_PRESSED)
-						fprintf(stderr,"TODO: TOOGLE FULLSCREEN!\n");
+					if (e.key.keysym.scancode == SDL_SCANCODE_F11 && e.key.state == SDL_PRESSED) {
+#ifdef SCREENSHOT_TRIES
+						write_png_rgb("screenshot.png", sdl_surf->pixels, 736, 288 * 2, 736 * 4);
+						if (lodepng_encode32_file("screenshot-2.png", sdl_surf->pixels, 736, 288 * 2))
+							fprintf(stderr, "LODEPNG save error!\n");
+#endif
+						fprintf(stderr, "TODO: TOOGLE FULLSCREEN!\n");
+					} else if (e.key.keysym.scancode == SDL_SCANCODE_PRINTSCREEN && e.key.state == SDL_PRESSED)
+						fprintf(stderr, "TODO: screenshot!\n");
 					else if (e.key.keysym.scancode == SDL_SCANCODE_PAUSE && e.key.state == SDL_PRESSED) {
 						if (shift_pressed) ep_clear_ram();
 						ep_reset();
@@ -313,7 +331,11 @@ static void get_sys_dirs ( const char *path )
 	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
 	fprintf(stderr, "SDL base path: %s\n", app_base_path);
 	fprintf(stderr, "SDL pref path: %s\n", app_pref_path);
-	
+	if (getcwd(current_directory, sizeof current_directory) == NULL) {
+		ERROR_WINDOW("Cannot query the current directory.");
+		exit(1);
+	}
+	fprintf(stderr, "Current directory: %s\n", current_directory);	
 }
 
 
@@ -369,6 +391,9 @@ int main (int argc, char *argv[])
 	ep_reset();
 #ifdef CONFIG_SDEXT_SUPPORT
 	sdext_init();
+#endif
+#ifdef CONFIG_W5300_SUPPORT
+	w5300_init(NULL);
 #endif
 	ticks = SDL_GetTicks();
 	running = 1;

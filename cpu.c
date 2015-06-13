@@ -175,6 +175,14 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unuse
 	port = port16 & 0xFF;
 	//printf("IO: READ: IN (%02Xh)\n", port);
 	switch (port) {
+#ifdef CONFIG_W5300_SUPPORT
+		case W5300_IO_BASE + 0: return w5300_read_mr0();
+		case W5300_IO_BASE + 1: return w5300_read_mr1();
+		case W5300_IO_BASE + 2: return w5300_read_idm_ar0();
+		case W5300_IO_BASE + 3: return w5300_read_idm_ar1();
+		case W5300_IO_BASE + 4: return w5300_read_idm_dr0();
+		case W5300_IO_BASE + 5: return w5300_read_idm_dr1();
+#endif
 		/* EXDOS/WD registers */
 #ifdef CONFIG_EXDOS_SUPPORT
 		case 0x10:
@@ -245,22 +253,35 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 	//printf("IO: WRITE: OUT (%02Xh),%02Xh\n", port, value);
 	//if ((port & 0xF0) == 0x80) printf("NICK WRITE!\n");
 	switch (port) {
+#ifdef CONFIG_W5300_SUPPORT
+		case W5300_IO_BASE + 0: w5300_write_mr0(value); break;
+		case W5300_IO_BASE + 1: w5300_write_mr1(value); break;
+		case W5300_IO_BASE + 2: w5300_write_idm_ar0(value); break;
+		case W5300_IO_BASE + 3: w5300_write_idm_ar1(value); break;
+		case W5300_IO_BASE + 4: w5300_write_idm_dr0(value); break;
+		case W5300_IO_BASE + 5: w5300_write_idm_dr1(value); break;
+#endif
 		/* EXDOS/WD registers */
 #ifdef CONFIG_EXDOS_SUPPORT
 		case 0x10:
 		case 0x14:
-			return wd_send_command(value);
+			wd_send_command(value);
+			break;
 		case 0x11:
 		case 0x15:
 			wd_track = value;
+			break;
 		case 0x12:
 		case 0x16:
 			wd_sector = value;
+			break;
 		case 0x13:
 		case 0x17:
 			wd_write_data(value);
+			break;
 		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
 			wd_set_exdos_control(value);
+			break;
 #else
 		case 0x10: case 0x14: case 0x11: case 0x15: case 0x12: case 0x16: case 0x13: case 0x17:
 		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
