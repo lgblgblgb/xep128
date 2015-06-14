@@ -119,7 +119,7 @@ void w5300_write_mr1 ( Uint8 data ) {		// low byte of MR
 		w5300_reset();
 		w5300_shutdown();	// shuts down host OS connections, etc, emulator is being done
 	} else {
-		if (data & 8) ERROR_WINDOW("W5300: PPoE mode is not emulated");
+		if (data & 8) ERROR_WINDOW("W5300: PPPoE mode is not emulated");
 		if (data & 4) ERROR_WINDOW("W5300: data bus byte-order swap feature is not emulated");
 		if ((data & 1) == 0) ERROR_WINDOW("W5300: direct mode is NOT emulated, only indirect");
 		mr1 = data;

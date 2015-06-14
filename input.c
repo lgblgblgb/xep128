@@ -118,9 +118,9 @@ void emu_mouse_button(Uint8 button, int press)
 	printf("MOUSE BUTTON %d press = %d\n", button, press);
 	_mouse_button_state = press;
 	if (press && _mouse_grab == 0) {
-		_mouse_grab = 1;
 		//emu_osd_msg("Mouse grab. Press ESC to exit.");
 		emu_win_grab(SDL_TRUE);
+		_mouse_grab = 1;
 		mouse_reset_button();
 	}
 }
@@ -206,4 +206,15 @@ void emu_kbd(SDL_Keysym sym, int press)
 			return;
 		} else
 			a++;
+}
+
+
+int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
+{
+        int v = _mouse_grab;
+        kbd_matrix_reset();
+        mouse_reset_button();
+	if (v == SDL_TRUE) emu_win_grab(SDL_FALSE);
+	SDL_ShowSimpleMessageBox(sdlflag, "Xep128 Report", msg, sdl_win);
+	if (v == SDL_TRUE) emu_win_grab(v);
 }

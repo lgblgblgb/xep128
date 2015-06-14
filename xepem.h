@@ -50,14 +50,17 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define SDCARD_IMG_FN "sdcard.img"
 #define PRINT_OUT_FN "print.out"
 
-#define ERROR_WINDOW(...) do { \
-	char _buf_for_win_msg[4096]; \
-	sprintf(_buf_for_win_msg, __VA_ARGS__); \
-	fprintf(stderr, "ERROR: %s\n", _buf_for_win_msg); \
-	kbd_matrix_reset(); \
-	mouse_reset_button(); \
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Xep128 Report", _buf_for_win_msg, sdl_win); \
+int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
+#define _REPORT_WINDOW_(sdlflag, str, ...) do { \
+	char _buf_for_win_msg_[4096]; \
+	sprintf(_buf_for_win_msg_, __VA_ARGS__); \
+	fprintf(stderr, str ": %s\n", _buf_for_win_msg_); \
+	_sdl_emu_secured_message_box_(sdlflag, _buf_for_win_msg_); \
 } while(0)
+#define INFO_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_INFORMATION, "INFO", __VA_ARGS__)
+#define WARNING_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_WARNING, "WARNING", __VA_ARGS__)
+#define ERROR_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_ERROR, "ERROR", __VA_ARGS__)
+
 //#define ERRSTR() sys_errlist[errno]
 #define ERRSTR() strerror(errno)
 

@@ -49,7 +49,7 @@ static void invalid_opcode (Z80EX_CONTEXT *unused_1, Z80EX_WORD pc, Z80EX_BYTE p
 	);
 	if (z180_incompatibility_reported) return;
 	z180_incompatibility_reported = 1;
-	ERROR_WINDOW("Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\nThere will be NO further error reports about this kind of problem to avoid window flooding :)",
+	INFO_WINDOW("Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\nThere will be NO further error reports about this kind of problem to avoid window flooding :)",
 		prefix, series, opcode,
 		pc,
 		ports[0xB0 | (pc >> 14)],

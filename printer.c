@@ -32,7 +32,7 @@ static void write_printer_buffer ( void )
 {
 	if (buffer_pos && fp != NULL) {
 		if (fwrite(buffer, buffer_pos, 1, fp) != 1) {
-			ERROR_WINDOW("Cannot write printer output: %s\nFurther printer I/O has been disabled.", ERRSTR());
+			WARNING_WINDOW("Cannot write printer output: %s\nFurther printer I/O has been disabled.", ERRSTR());
 			fclose(fp);
 			fp = NULL;
 		}
@@ -59,9 +59,9 @@ void printer_send_data ( Uint8 data )
 	if (fp_to_open) {
 		fp = fopen(PRINT_OUT_FN, "a");
 		if (fp == NULL)
-			ERROR_WINDOW("Cannot create/append printer output file \"%s" DIRSEP "%s\": %s.\nYou can use Xep128 but printer output will not be logged!", current_directory, PRINT_OUT_FN, ERRSTR());
+			WARNING_WINDOW("Cannot create/append printer output file \"%s%s\": %s.\nYou can use Xep128 but printer output will not be logged!", current_directory, PRINT_OUT_FN, ERRSTR());
 		else
-			ERROR_WINDOW("Printer event, file \"%s" DIRSEP "%s\" has been opened for the output.", current_directory, PRINT_OUT_FN);
+			INFO_WINDOW("Printer event, file \"%s%s\" has been opened for the output.", current_directory, PRINT_OUT_FN);
 		fp_to_open = 0;
 		buffer_pos = 0;
 	}

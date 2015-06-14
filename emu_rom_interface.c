@@ -41,7 +41,7 @@ static void cmd_ram ( void ) {
 	if (*carg) {
 		int ms = atoi(carg);
 		if (ms >= 64 && ms < 4096 - 32) {
-			ERROR_WINDOW("Setting RAM size to %dKbytes\nEP will reboot now.", set_ep_ramsize(ms));
+			INFO_WINDOW("Setting RAM size to %dKbytes\nEP will reboot now.", set_ep_ramsize(ms));
 			ep_clear_ram();
 			ep_reset();
 		} else
@@ -76,7 +76,7 @@ static void cmd_cpu ( void ) {
 			if (clk < 1000000 || clk > 12000000)
 				sprintf(buf, "*** Unknown CPU type to set or it's not a clock value either (1-12 is OK in MHz): %s\r\n", carg);
 			else {
-				ERROR_WINDOW("Setting CPU clock to %.2fMhz",
+				INFO_WINDOW("Setting CPU clock to %.2fMhz",
 					set_cpu_clock(clk) / 1000000.0
 				);
 			}
@@ -124,7 +124,7 @@ static void cmd_emu ( void )
 
 static void cmd_exit ( void )
 {
-	ERROR_WINDOW("XEP ROM command directs shutting down.");
+	INFO_WINDOW("XEP ROM command directs shutting down.");
 	exit(0);
 }
 

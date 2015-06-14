@@ -39,7 +39,7 @@ static int warn_for_mouse_grab = 1;
 void emu_win_grab ( SDL_bool state )
 {
 	if (warn_for_mouse_grab) {
-		ERROR_WINDOW("Clicking in emulator window causes to enter BoxSoft mouse emulation mode.\nThis will try to grab your mouse pointer. To exit, press key ESC.\nYou won't get this notice next time within this session of Xep128");
+		INFO_WINDOW("Clicking in emulator window causes to enter BoxSoft mouse emulation mode.\nThis will try to grab your mouse pointer. To exit, press key ESC.\nYou won't get this notice next time within this session of Xep128");
 		warn_for_mouse_grab = 0;
 	}
 	printf("GRAB: %d\n", state);
@@ -77,12 +77,12 @@ static void shutdown_sdl(void)
 FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 {
 	const char *prefixes[] = {
-		"",		// try in the current directory first
+		current_directory,	// try in the current directory first
 #ifndef _WIN32
-		DATADIR "/",	// try in the DATADIR, it makes sense on UNIX like sys
+		DATADIR "/",		// try in the DATADIR, it makes sense on UNIX like sys
 #endif
-		app_base_path,	// try at base path (where executable is)
-		app_pref_path,	// try at pref path (user writable area)
+		app_base_path,		// try at base path (where executable is)
+		app_pref_path,		// try at pref path (user writable area)
 		NULL
 	};
 	int a = 0;
@@ -242,7 +242,7 @@ void emu_one_frame(int rasters, int frameksip)
 		switch (e.type) {
 			case SDL_QUIT:
 				running = 0;
-				ERROR_WINDOW("You are about leaving Xep128. Good bye!");
+				INFO_WINDOW("You are about leaving Xep128. Good bye!");
 				return;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
@@ -335,6 +335,7 @@ static void get_sys_dirs ( const char *path )
 		ERROR_WINDOW("Cannot query the current directory.");
 		exit(1);
 	}
+	strcat(current_directory, DIRSEP);
 	fprintf(stderr, "Current directory: %s\n", current_directory);	
 }
 
