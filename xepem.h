@@ -73,6 +73,10 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
 #define DIRSEP "/"
 #endif
 
+#define SCREEN_WIDTH	736
+#define SCREEN_HEIGHT	288
+#define SCREEN_FORMAT	SDL_PIXELFORMAT_ARGB8888
+
 extern SDL_Window *sdl_win;
 extern char *app_pref_path, *app_base_path;
 extern char current_directory[PATH_MAX + 1];
@@ -107,7 +111,7 @@ void mouse_reset_button ( void );
 
 //int z80_disasm(char *buffer, int buffer_size, int flags, int *t_states, int *t_states_2, Uint16 pc, int seg);
 int z80_dasm(char *buffer, Uint16 pc, int seg);
-Uint32 *nick_init ( SDL_Surface *surface );
+Uint32 *nick_init ( void );
 void nick_set_border ( Uint8 bcol );
 void nick_set_bias ( Uint8 value );
 void nick_set_lptl ( Uint8 value );

@@ -20,9 +20,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 #include "app_icon.c"
 
+static Uint32 *ep_pixels;
+static int is_fullscreen = 0;
 SDL_Window *sdl_win = NULL;
-static SDL_Surface *sdl_surf;
+SDL_Renderer *sdl_ren;
+SDL_Texture *sdl_tex;
+//static SDL_Surface *sdl_surf;
 static Uint32 winid;
+static int win_xsize, win_ysize;
 
 int rom_size;
 int CPU_CLOCK;
@@ -146,7 +151,7 @@ static unsigned int ticks;
 static int running;
 
 
-
+#if 0
 static void deinterlacer ( SDL_Surface *surf )
 {
 	Uint32 *p = surf->pixels;
@@ -156,6 +161,7 @@ static void deinterlacer ( SDL_Surface *surf )
 		p += surf->w * 2;
 	}
 }
+#endif
 
 
 
@@ -236,8 +242,12 @@ void emu_one_frame(int rasters, int frameksip)
 	//emu_gui_iterations();
 	//int ticks_new, used;
 	SDL_Event e;
-	deinterlacer(sdl_surf);
-	SDL_UpdateWindowSurface(sdl_win); // update window content
+	//deinterlacer(sdl_surf);
+	//SDL_UpdateWindowSurface(sdl_win); // update window content
+	SDL_UpdateTexture(sdl_tex, NULL, ep_pixels, SCREEN_WIDTH * sizeof (Uint32));
+	SDL_RenderClear(sdl_ren);
+	SDL_RenderCopy(sdl_ren, sdl_tex, NULL, NULL);
+	SDL_RenderPresent(sdl_ren);
 	while (SDL_PollEvent(&e) != 0)
 		switch (e.type) {
 			case SDL_QUIT:
@@ -250,10 +260,20 @@ void emu_one_frame(int rasters, int frameksip)
 				if (e.key.repeat == 0 && (e.key.windowID == winid || e.key.windowID == 0)) {
 					if (e.key.keysym.scancode == SDL_SCANCODE_F11 && e.key.state == SDL_PRESSED) {
 #ifdef SCREENSHOT_TRIES
-						write_png_rgb("screenshot.png", sdl_surf->pixels, 736, 288 * 2, 736 * 4);
-						if (lodepng_encode32_file("screenshot-2.png", sdl_surf->pixels, 736, 288 * 2))
+						write_png_rgb("screenshot.png", sdl_surf->pixels, SCREEN_WIDTH, SCREEN_HEIGHT * 2, SCREEN_WIDTH * 4);
+						if (lodepng_encode32_file("screenshot-2.png", sdl_surf->pixels, SCREEN_WIDTH, SCREEN_HEIGHT * 2))
 							fprintf(stderr, "LODEPNG save error!\n");
 #endif
+						if (is_fullscreen) {
+							SDL_SetWindowFullscreen(sdl_win, 0);
+							is_fullscreen = 0;
+							SDL_SetWindowSize(sdl_win, win_xsize, win_ysize); // see the comment below
+							SDL_RaiseWindow(sdl_win);
+						} else {
+							SDL_GetWindowSize(sdl_win, &win_xsize, &win_ysize); // it seems windows needs it to re-set on exit from fullscreen!
+							SDL_SetWindowFullscreen(sdl_win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+							is_fullscreen = 1;
+						}
 						fprintf(stderr, "TODO: TOOGLE FULLSCREEN!\n");
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_PRINTSCREEN && e.key.state == SDL_PRESSED)
 						fprintf(stderr, "TODO: screenshot!\n");
@@ -341,6 +361,18 @@ static void get_sys_dirs ( const char *path )
 }
 
 
+static void set_app_icon ( SDL_Window *win, const void *app_icon )
+{
+	SDL_Surface *surf = SDL_CreateRGBSurfaceFrom((void*)app_icon,96,96,32,96*4,0x000000ff,0x0000ff00,0x00ff0000,0xff000000);
+	if (surf == NULL)
+		fprintf(stderr, "Cannot create surface for window icon: %s\n", SDL_GetError());
+	else {
+		SDL_SetWindowIcon(win, surf);
+		SDL_FreeSurface(surf);
+	}
+}
+
+
 
 int main (int argc, char *argv[])
 {
@@ -351,32 +383,35 @@ int main (int argc, char *argv[])
 	sdl_win = SDL_CreateWindow(
                 WINDOW_TITLE " " VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                736, 288*2,
-                SDL_WINDOW_SHOWN // | SDL_WINDOW_RESIZABLE // | SDL_WINDOW_FULLSCREEN_DESKTOP
+                SCREEN_WIDTH, SCREEN_HEIGHT * 2,
+                SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE // | SDL_WINDOW_FULLSCREEN_DESKTOP
         );
         if (!sdl_win) exit_on_SDL_problem("cannot open window");
-	SDL_SetWindowMinimumSize(sdl_win, 736, 288*2);
-	/* set window icon */
-	sdl_surf = SDL_CreateRGBSurfaceFrom((void*)_icon_pixels,96,96,32,96*4,0x000000ff,0x0000ff00,0x00ff0000,0xff000000);
-	if (sdl_surf == NULL)
-		fprintf(stderr, "Cannot create surface for window icon: %s\n", SDL_GetError());
-	else {
-		SDL_SetWindowIcon(sdl_win, sdl_surf);
-		SDL_FreeSurface(sdl_surf);
-	}
-	/* end of set window icon */
+	SDL_SetWindowMinimumSize(sdl_win, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
+	set_app_icon(sdl_win, _icon_pixels);
+	sdl_ren = SDL_CreateRenderer(sdl_win, -1, 0);
+	if (sdl_ren == NULL)
+		ERROR_WINDOW("Cannot create SDL renderer: %s", SDL_GetError());
+	sdl_tex = SDL_CreateTexture(sdl_ren, SCREEN_FORMAT, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+	if (sdl_tex == NULL)
+		ERROR_WINDOW("Cannot create SDL texture: %s", SDL_GetError());
+	//
         winid = SDL_GetWindowID(sdl_win);
-	sdl_surf = SDL_GetWindowSurface(sdl_win);
-	if (!sdl_surf)
-		exit_on_SDL_problem("cannot get window surface");
+	//sdl_surf = SDL_GetWindowSurface(sdl_win);
+	//if (!sdl_surf)
+	//	exit_on_SDL_problem("cannot get window surface");
 	if (z80_reset()) {
 		ERROR_WINDOW("Cannot initialize Z80 emulation. Probably not enough free memory?");
 		return 1;
 	}
-	if (!nick_init(sdl_surf))
+	ep_pixels = nick_init();
+	if (ep_pixels == NULL)
 		return 1;
-	SDL_FillRect(sdl_surf, NULL, 0);
-	SDL_UpdateWindowSurface(sdl_win);
+	//SDL_FillRect(sdl_surf, NULL, 0);
+	//SDL_UpdateWindowSurface(sdl_win);
+	// rendering hints, size ...
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+	SDL_RenderSetLogicalSize(sdl_ren, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
 	//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Xep Window", "This is only a test dialog window for Xep128. Click on OK to continue :)", sdl_win);
 	//ERROR_WINDOW("Ez itt a %s a valasz %d\nHolla!","szep",42);
 	//if (z80_reset()) return 1;

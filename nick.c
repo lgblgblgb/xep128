@@ -53,9 +53,6 @@ static int chs, msbalt, lsbalt;
 static Uint8 balt_mask, chm, chb, altind;
 
 
-
-
-
 #define RASTER_FIRST_VISIBLE 25
 #define RASTER_LAST_VISIBLE   312
 #define RASTER_NO_VSYNC_BEFORE 300
@@ -74,24 +71,28 @@ static int nick_addressing_init ( Uint32 *pixels_buffer, int line_size )
 	}
 	//pixels_pitch = line_size - 736 * 4;
 	printf("NICK: first visible scanline = %d, last visible scanline = %d, line pitch pixels = %d\n", RASTER_FIRST_VISIBLE, RASTER_LAST_VISIBLE, 0);
+#if 0
 	if (pixels)
 		pixels = (pixels_init - pixels) + pixels_buffer; // recalculate current position
 	else
-		pixels = pixels_init;
-	pixels = pixels_init = pixels_buffer - RASTER_FIRST_VISIBLE * line_size;
+		pixels = pixels_buffer; // was: pixels = pixels_init
+#endif
+	pixels = pixels_init = (pixels_buffer - RASTER_FIRST_VISIBLE * line_size);
 	pixels_limit_up = pixels_buffer;
 	pixels_limit_bottom = pixels_init + RASTER_LAST_VISIBLE * line_size;
 	pixels_limit_vsync_shortest = pixels_init + RASTER_NO_VSYNC_BEFORE * line_size;
 	pixels_limit_vsync_long_force = pixels_init + RASTER_FORCE_VSYNC * line_size;
-	pixels_gap = line_size - 736;
+	pixels_gap = line_size - SCREEN_WIDTH;
 	return 0;
 }
 
 
 
-Uint32 *nick_init ( SDL_Surface *surface )
+Uint32 *nick_init ( void )
 {
 	int a;
+	Uint32 *buf = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 4);
+#if 0
 	printf("NICK: SDL: emuscreen buffer width=%d height=%d PITCH=%d bytes/pixel=%d bits/pixel=%d alpha=%d\n",
 		surface->w,
 		surface->h,
@@ -104,8 +105,13 @@ Uint32 *nick_init ( SDL_Surface *surface )
 		ERROR_WINDOW("NICK: SDL: FATAL ERROR: only 4 bytes / pixel SDL surfaces are supported (you have low colour video mode?!)!");
 		return NULL;
 	}
+#endif
+	if (buf == NULL) {
+		ERROR_WINDOW("Cannot allocate memory for screen buffer.");
+		return NULL;
+	}
 	pixels = NULL; // no previous state of buffer before the next function
-	if (nick_addressing_init((Uint32*)surface->pixels, surface->w * 2))
+	if (nick_addressing_init(buf, SCREEN_WIDTH))
 		return NULL;
 	for (a = 0; a < 256; a++) {
 		// RGB colours for the target screen
@@ -113,7 +119,8 @@ Uint32 *nick_init ( SDL_Surface *surface )
 		r = (((a << 2) & 4) | ((a >> 2) & 2) | ((a >> 6) & 1)) * 255 / 7;
 		g = (((a << 1) & 4) | ((a >> 3) & 2) | ((a >> 7) & 1)) * 255 / 7;
 		b = (                 ((a >> 1) & 2) | ((a >> 5) & 1)) * 255 / 3;
-		full_palette[a] = SDL_MapRGBA(surface->format, r, g, b, 0xFF);
+		//full_palette[a] = SDL_MapRGBA(SCREEN_FORMAT, r, g, b, 0xFF);
+		full_palette[a] = (0xFF << 24) | (r << 16) | (g << 8) | b;
 		//printf("PAL#%d = (%d,%d,%d) = %d\n", a, r, g, b, full_palette[a]);
 		// this is translation table for  4 colour modes
 		col4trans[a * 4 + 0] = ((a >> 2) & 2) | ((a >> 7) & 1);
@@ -140,7 +147,7 @@ Uint32 *nick_init ( SDL_Surface *surface )
 	vsync = 0;
 	vram = memory + 0x3F0000;
 	printf("NICK: initialized.\n");
-	return full_palette;
+	return buf;
 }
 
 Uint8 nick_get_last_byte ( void )
