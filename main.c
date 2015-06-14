@@ -241,8 +241,9 @@ void emu_one_frame(int rasters, int frameksip)
 	while (SDL_PollEvent(&e) != 0)
 		switch (e.type) {
 			case SDL_QUIT:
-				running = 0;
-				INFO_WINDOW("You are about leaving Xep128. Good bye!");
+				if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1) running = 0; 
+				//running = 0;
+				//INFO_WINDOW("You are about leaving Xep128. Good bye!");
 				return;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:

@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
 
-static int _mouse_dx, _mouse_dy, _mouse_grab;
+static int _mouse_dx, _mouse_dy, _mouse_grab = 0;
 static Uint8 _mouse_data_byte, _mouse_data_half, _mouse_last_shift, _mouse_read_state, _mouse_button_state;
 int shift_pressed = 0;
 
@@ -211,10 +211,58 @@ void emu_kbd(SDL_Keysym sym, int press)
 
 int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
 {
-        int v = _mouse_grab;
+        int mg = _mouse_grab, r;
         kbd_matrix_reset();
         mouse_reset_button();
-	if (v == SDL_TRUE) emu_win_grab(SDL_FALSE);
-	SDL_ShowSimpleMessageBox(sdlflag, "Xep128 Report", msg, sdl_win);
-	if (v == SDL_TRUE) emu_win_grab(v);
+	if (mg == SDL_TRUE) emu_win_grab(SDL_FALSE);
+	r = SDL_ShowSimpleMessageBox(sdlflag, "Xep128", msg, sdl_win);
+	if (mg == SDL_TRUE) emu_win_grab(mg);
+	return r;
+}
+
+
+int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
+{
+	char items_buf[512], *items = items_buf;
+	int buttonid, mg = _mouse_grab;
+	SDL_MessageBoxButtonData buttons[16];
+	SDL_MessageBoxData messageboxdata = {
+		SDL_MESSAGEBOX_INFORMATION, /* .flags */
+		sdl_win, /* .window */
+		"Xep128", /* .title */
+		msg, /* .message */
+		0,	/* number of buttons, will be updated! */
+		buttons,
+		NULL	// &colorScheme
+	};
+	strcpy(items_buf, items_in);
+	for (;;) {
+		char *p = strchr(items, '|');
+		switch (*items) {
+			case '!':
+				buttons[messageboxdata.numbuttons].flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+				items++;
+				break;
+			case '?':
+				buttons[messageboxdata.numbuttons].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+				items++;
+				break;
+			default:
+				buttons[messageboxdata.numbuttons].flags = 0;
+				break;
+		}
+		buttons[messageboxdata.numbuttons].text = items;
+		buttons[messageboxdata.numbuttons].buttonid = messageboxdata.numbuttons;
+		messageboxdata.numbuttons++;
+		if (p == NULL) break;
+		*p = 0;
+		items = p + 1;
+	}
+	/* win grab, kbd/mouse emu reset etc before the window! */
+	kbd_matrix_reset();
+	mouse_reset_button();
+	if (mg == SDL_TRUE) emu_win_grab(SDL_FALSE);
+	SDL_ShowMessageBox(&messageboxdata, &buttonid);
+	if (mg == SDL_TRUE) emu_win_grab(mg);
+	return buttonid;
 }

@@ -61,6 +61,9 @@ int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
 #define WARNING_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_WARNING, "WARNING", __VA_ARGS__)
 #define ERROR_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_ERROR, "ERROR", __VA_ARGS__)
 
+int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
+#define QUESTION_WINDOW(items, msg) _sdl_emu_secured_modal_box_(items, msg)
+
 //#define ERRSTR() sys_errlist[errno]
 #define ERRSTR() strerror(errno)
 
