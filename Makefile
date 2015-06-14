@@ -19,7 +19,8 @@ ROM	= combined.rom
 DLL	= SDL2.dll
 DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
 ZIP32	= xep128-win32.zip
-ZDEPS	= Makefile z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h z80ex/z180ex.c
+ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h z80ex/z180ex.c
+ARCH	= native
 
 all:
 	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
@@ -32,16 +33,18 @@ all:
 %.s: %.c $(INCS) Makefile
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-z80ex/z180ex-posix.o: z80ex/z80ex.c $(ZDEPS)
+z80ex/z180ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -DZ80EX_Z180_SUPPORT -c -o $@ z80ex/z80ex.c
-z80ex/z180ex_dasm-posix.o: z80ex/z80ex_dasm.c $(ZDEPS)
+z80ex/z180ex_dasm-$(ARCH).o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -DZ80EX_Z180_SUPPORT -c -o $@ z80ex/z80ex_dasm.c
-z80ex/z80ex-posix.o: z80ex/z80ex.c $(ZDEPS)
+z80ex/z80ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex.c
-z80ex/z80ex_dasm-posix.o: z80ex/z80ex_dasm.c $(ZDEPS)
+z80ex/z80ex_dasm-$(ARCH).o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex_dasm.c
 
-ztest:	z80ex/z180ex-posix.o z80ex/z180ex_dasm-posix.o z80ex/z80ex-posix.o z80ex/z80ex_dasm-posix.o
+ztest:	z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o z80ex/z80ex-$(ARCH).o z80ex/z80ex_dasm-$(ARCH).o
+	$(MAKE) -f Makefile.win32 ztest
+	@echo "**** RESULT:" ; ls -l z80ex/*.o
 
 ui-gtk.o: ui-gtk.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(shell pkg-config --cflags gtk+-3.0) $< -o $@
@@ -55,6 +58,7 @@ xep_rom.hex: xep_rom.rom
 	od -A n -t x1 -v xep_rom.rom | sed 's/ /,0x/g;s/^,/ /;s/$$/,/' > xep_rom.hex
 
 install: $(PRG) $(ROM) $(SDIMG)
+	$(MAKE) strip
 	mkdir -p $(BINDIR) $(DATADIR)
 	cp $(PRG) $(BINDIR)/
 	cp $(ROM) $(SDIMG) $(DATADIR)/
@@ -78,10 +82,10 @@ $(ROM):
 data:	$(SDIMG) $(ROM)
 	rm -f buildinfo.c
 
-$(PRG): $(OBJS) z80ex/z180ex-posix.o z80ex/z180ex_dasm-posix.o $(INCS) Makefile
+$(PRG): $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(INCS) Makefile
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.o
-	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-posix.o z80ex/z180ex_dasm-posix.o $(LDFLAGS) $(LIBS)
+	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(LDFLAGS) $(LIBS)
 
 win32:	$(DLL) xep_rom.hex
 	@echo "*** BUILDING FOR WINDOWS ***"
@@ -101,6 +105,9 @@ publish:
 strip:	$(PRG)
 	strip $(PRG)
 
+zclean:
+	rm -f z80ex/*.o
+
 clean:
 	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst
 	$(MAKE) -C rom clean
@@ -108,7 +115,8 @@ clean:
 distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
-	rm -f $(SDIMG) $(DLL) $(ROM) z80ex/*.o $(PRG) $(PRG_EXE) $(ZIP32)
+	$(MAKE) zclean
+	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) $(PRG_EXE) $(ZIP32)
 
 commit:
 	git diff
@@ -116,5 +124,5 @@ commit:
 	EDITOR="vim -c 'startinsert'" git commit -a
 	git push
 
-.PHONY: all clean distclean strip commit win32 publish data install ztest
+.PHONY: all clean distclean strip commit win32 publish data install ztest zclean
 
