@@ -80,6 +80,8 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
 extern SDL_Window *sdl_win;
 extern char *app_pref_path, *app_base_path;
 extern char current_directory[PATH_MAX + 1];
+extern char rom_path[PATH_MAX + 1];
+extern char sdimg_path[PATH_MAX + 1];
 
 extern int CPU_CLOCK;
 int set_ep_ramsize(int kbytes);

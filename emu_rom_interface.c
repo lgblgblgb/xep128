@@ -113,11 +113,17 @@ static void cmd_emu ( void )
 	gethostname(buf, sizeof buf);
 #define OS_KIND "POSIX"
 #endif
-	sprintf(COBUF, "Run by: %s@%s %s %s\r\nDrivers: %s %s\r\nSDL c/l: %d.%d.%d %d.%d.%d\r\nBase path: %s\r\nPref path: %s\r\n",
-		getenv("USERNAME"), buf, OS_KIND, SDL_GetPlatform(), SDL_GetCurrentVideoDriver(), SDL_GetCurrentAudioDriver(),
+	sprintf(COBUF, "Run by: %s@%s %s %s\r\nDrivers: %s %s\r\nSDL c/l: %d.%d.%d %d.%d.%d\r\nBase path: %s\r\nPref path: %s\r\nStart dir: %s\r\nROM: %s\r\nSD img: %s\r\n",
+#ifdef _WIN32
+		getenv("USERNAME"),
+#else
+		getenv("USER"),
+#endif
+		buf, OS_KIND, SDL_GetPlatform(), SDL_GetCurrentVideoDriver(), SDL_GetCurrentAudioDriver(),
 		sdlver_c.major, sdlver_c.minor, sdlver_c.patch,
 		sdlver_l.major, sdlver_l.minor, sdlver_l.patch,
-		app_base_path, app_pref_path
+		app_base_path, app_pref_path, current_directory,
+		rom_path, sdimg_path
 	);
 }
 

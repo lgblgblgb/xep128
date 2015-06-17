@@ -92,8 +92,10 @@ Other hardware emulation:
 SDL:
 
 	* [PENDING] screenshot, into "usable" PNG
+	  [DONE] with lodepng [TODO] use libpng in Linux
 	* [PENDING] fullscreen mode
 	* [PENDING] window resizing ability for custom "zoom" factor
 	* check possible hardware acceleration, better performance, etc (?)
 	* [PENDING] like the previous: check if Render/texture is better than surface?
+	* joystick input with SDL functions?
 

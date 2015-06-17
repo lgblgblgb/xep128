@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #ifdef CONFIG_SDEXT_SUPPORT
 
 int sdext_cp3m_usability = SDEXT_PHYSADDR_CART_P3_SELMASK_OFF;
+char sdimg_path[PATH_MAX + 1];
 static int rom_page_ofs;
 static int is_hs_read;
 static Uint8 _spi_last_w;
@@ -113,9 +114,11 @@ void sdext_clear_ram(void)
  * sized SDEXT flash image */
 void sdext_init ( void )
 {
-	char path[PATH_MAX + 1];
-	sdf = open_emu_file(SDCARD_IMG_FN, "rb", path);
-	if (sdf == NULL) WARNING_WINDOW("SD card image file \"%s\" cannot be open: %s. You can use Xep128 but SD card access won't work!", path, ERRSTR());
+	sdf = open_emu_file(SDCARD_IMG_FN, "rb", sdimg_path);
+	if (sdf == NULL) {
+		WARNING_WINDOW("SD card image file \"%s\" cannot be open: %s. You can use Xep128 but SD card access won't work!", sdimg_path, ERRSTR());
+		*sdimg_path = 0;
+	}
 	memset(sd_rom_ext, 0xFF, 0x10000);
 	memcpy(sd_rom_ext, memory + 7 * 0x4000, 0x4000); // copy ROM image 16K to the extended area (the FLASH.ROM I have 8K is used only though)
 	sdext_clear_ram();

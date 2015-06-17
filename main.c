@@ -34,6 +34,7 @@ int CPU_CLOCK;
 
 char *app_pref_path, *app_base_path;
 char current_directory[PATH_MAX + 1];
+char rom_path[PATH_MAX + 1];
 
 static const Uint8 _xep_rom[] = {
 #include "xep_rom.hex"
@@ -113,15 +114,14 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 }
 
 
-static int load_roms ( void )
+static int load_roms ( const char *basename, char *path )
 {
 	FILE *f;
 	int ret;
-	char path[PATH_MAX + 1];
-	printf("ROM: loading %s\n", COMBINED_ROM_FN);
-	f = open_emu_file(COMBINED_ROM_FN, "rb", path);
+	printf("ROM: loading %s\n", basename);
+	f = open_emu_file(basename, "rb", path);
 	if (f == NULL) {
-		ERROR_WINDOW("Cannot open ROM image \"%s\": %s", COMBINED_ROM_FN, ERRSTR());
+		ERROR_WINDOW("Cannot open ROM image \"%s\": %s", basename, ERRSTR());
 		return -1;
 	}
 	ret = fread(memory, 1, 0x100001, f);
@@ -455,7 +455,7 @@ int main (int argc, char *argv[])
 	//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Xep Window", "This is only a test dialog window for Xep128. Click on OK to continue :)", sdl_win);
 	//ERROR_WINDOW("Ez itt a %s a valasz %d\nHolla!","szep",42);
 	//if (z80_reset()) return 1;
-	rom_size = load_roms();
+	rom_size = load_roms(COMBINED_ROM_FN, rom_path);
 	if (rom_size <= 0)
 		return 1;
 	memset(memory + rom_size, 0, 0x4000);

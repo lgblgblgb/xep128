@@ -210,5 +210,6 @@ IstvanV has the greap ep128emu emulator which may help me too -  and Zozosoft.
 LibZ80ex is the Z80 emulator used in Xep128 (not written by me!).
 FUSE Spectrum emulator is important: it seems Z80Ex contains some code from
 FUSE, also they have wiznet w5100 emulation which is similar to the w5300
-so it can help me somewhat.
-
+so it can help me somewhat. LodePNG (not written by me!) project is used
+to create PNG screenshots. It has been somewhat modified to exclude C++
+parts and some defaults though.
