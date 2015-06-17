@@ -37,12 +37,14 @@ Nick:
 	* should be re-written
 	* support all mode/colour combos, even if it's not "official"
 	* more cycle exact emulation
-	* way better vsync emulation, interlaced, etc
+	* way better vsync emulation
+	* INTERLACEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE :)
 	* Nick2 stuffs, just for fun? For the future FPGA-EP with more features :)
 
 Memory:
 
-	* ability to configure RAM
+	* [DONE via XEP ROM] ability to configure RAM
+	* [DONE?] wait states on non-VRAM
 	* VRAM "slowness" emulation (Nick/CPU shared access)
 
 Emulator:
@@ -59,13 +61,14 @@ Emulator:
 	* maybe: OSD, if something import happens (mouse grab starts, full screen entered, whatever), also for FPS/speed display if requested?
 	* video and/or audio recording mode maybe?
 	* scripting in command window?
-	* disassembler etc? [in command window?]
+	* disassembler etc? (in command window?)
 
 Host OS / target:
 
 	* Android build?
 	* debian package building easily?
 	* port to Raspberry Pi: ARM/Linux and maybe to bare iron (without OS!) as well (true EP feeling?)
+	* I have no idea about MacOSX. And cross compiling ...
 
 Network emulation:
 
@@ -74,7 +77,7 @@ Network emulation:
 ZX Spectrum emulator card:
 
 	* find the bug with attributes?
-	* implement EP+ (FPGA EP) feature based emulation without using NMI + slowdown, etc
+	* Wild idea: implement EP+ (FPGA EP) feature based emulation without using NMI + slowdown, etc
 
 Other hardware emulation:
 
@@ -88,8 +91,9 @@ Other hardware emulation:
 
 SDL:
 
-	* fullscreen mode
-	* window resizing ability for custom "zoom" factor
+	* [PENDING] screenshot, into "usable" PNG
+	* [PENDING] fullscreen mode
+	* [PENDING] window resizing ability for custom "zoom" factor
 	* check possible hardware acceleration, better performance, etc (?)
-	* like the previous: check if Render/texture is better than surface?
+	* [PENDING] like the previous: check if Render/texture is better than surface?
 

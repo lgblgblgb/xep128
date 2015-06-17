@@ -1,3 +1,7 @@
+# Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
+# Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+# http://xep128.lgb.hu/
+
 PREFIX	= /usr/local
 BINDIR	= $(PREFIX)/bin
 DATADIR	= $(PREFIX)/lib/xep128
@@ -9,7 +13,8 @@ CPPFLAGS= -Iz80ex/include -I.
 LDFLAGS	= $(shell sdl2-config --libs) $(DEBUG)
 LIBS	=
 INCS	= xepem.h
-SRCS	= main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c
+LINSRCS	=
+SRCS	= $(LINSRCS) lodepng.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c
 OBJS	= $(SRCS:.c=.o)
 PRG	= xep128
 PRG_EXE	= xep128.exe

@@ -227,12 +227,43 @@ void emu_timekeeping_start ( void )
 	running = 1;
 }
 
+#define SCREENSHOT_TRIES
 
 #ifdef SCREENSHOT_TRIES
-void write_png_rgb(const char *name, void *d, int width, int height, int stride);
-unsigned lodepng_encode32_file(const char* filename,
-                               const unsigned char* image, unsigned w, unsigned h);
+// unsigned lodepng_encode32_file(const char* filename, const unsigned char* image, unsigned w, unsigned h);
+
 #include "lodepng.h"
+
+int emu_screenshot ( void )
+{
+	Uint8 *pix = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 2 * 3);
+	int a;
+	if (pix == NULL)
+		ERROR_WINDOW("Not enough memory for taking a screenshot :(");
+	for (a = 0; a < SCREEN_HEIGHT * SCREEN_WIDTH; a++) {
+		int d = (a / SCREEN_WIDTH) * SCREEN_WIDTH * 6 + (a % SCREEN_WIDTH) * 3;
+		pix[d + 0] = pix[d + 0 + SCREEN_WIDTH * 3] = (ep_pixels[a] >> 16) & 0xFF;
+		pix[d + 1] = pix[d + 1 + SCREEN_WIDTH * 3] = (ep_pixels[a] >> 8) & 0xFF;
+		pix[d + 2] = pix[d + 2 + SCREEN_WIDTH * 3] = ep_pixels[a] & 0xFF;
+	}
+	if (lodepng_encode24_file("screenshot.png", (unsigned char*)pix, SCREEN_WIDTH, SCREEN_HEIGHT * 2)) {
+		free(pix);
+		ERROR_WINDOW("LodePNG screenshot taking error");
+		return 0;
+	} else {
+		free(pix);
+		INFO_WINDOW("Screenshot has been saved.");
+		return 1;
+	}
+}
+
+#else
+
+int emu_screenshot ( void )
+{
+	ERROR_WINDOW("Sorry, screenshort is not implemented yet :-(");
+}
+
 #endif
 
 
@@ -250,6 +281,17 @@ void emu_one_frame(int rasters, int frameksip)
 	SDL_RenderPresent(sdl_ren);
 	while (SDL_PollEvent(&e) != 0)
 		switch (e.type) {
+			case SDL_WINDOWEVENT:
+				if (!is_fullscreen && e.window.event == SDL_WINDOWEVENT_RESIZED) {
+					fprintf(stderr, "Window is resized to %d x %d\n",
+						e.window.data1,
+						e.window.data2
+					);
+					if (e.window.data1 < SCREEN_WIDTH || e.window.data2 < SCREEN_HEIGHT * 2)
+						SDL_SetWindowSize(sdl_win, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
+					// TODO: keep aspect ratio, otherwise ugly letterboxing is done by SDL which does not make any sense!
+				}
+				break;
 			case SDL_QUIT:
 				if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1) running = 0; 
 				//running = 0;
@@ -259,24 +301,22 @@ void emu_one_frame(int rasters, int frameksip)
 			case SDL_KEYUP:
 				if (e.key.repeat == 0 && (e.key.windowID == winid || e.key.windowID == 0)) {
 					if (e.key.keysym.scancode == SDL_SCANCODE_F11 && e.key.state == SDL_PRESSED) {
-#ifdef SCREENSHOT_TRIES
-						write_png_rgb("screenshot.png", sdl_surf->pixels, SCREEN_WIDTH, SCREEN_HEIGHT * 2, SCREEN_WIDTH * 4);
-						if (lodepng_encode32_file("screenshot-2.png", sdl_surf->pixels, SCREEN_WIDTH, SCREEN_HEIGHT * 2))
-							fprintf(stderr, "LODEPNG save error!\n");
-#endif
 						if (is_fullscreen) {
-							SDL_SetWindowFullscreen(sdl_win, 0);
 							is_fullscreen = 0;
+							SDL_SetWindowFullscreen(sdl_win, 0);
 							SDL_SetWindowSize(sdl_win, win_xsize, win_ysize); // see the comment below
 							SDL_RaiseWindow(sdl_win);
+							fprintf(stderr, "UI: leaving full screen mode\n");
 						} else {
+							is_fullscreen = 1;
 							SDL_GetWindowSize(sdl_win, &win_xsize, &win_ysize); // it seems windows needs it to re-set on exit from fullscreen!
 							SDL_SetWindowFullscreen(sdl_win, SDL_WINDOW_FULLSCREEN_DESKTOP);
-							is_fullscreen = 1;
+							fprintf(stderr, "UI: entering full screen mode\n");
 						}
-						fprintf(stderr, "TODO: TOOGLE FULLSCREEN!\n");
-					} else if (e.key.keysym.scancode == SDL_SCANCODE_PRINTSCREEN && e.key.state == SDL_PRESSED)
-						fprintf(stderr, "TODO: screenshot!\n");
+					} else if (e.key.keysym.scancode == SDL_SCANCODE_F9 && e.key.state == SDL_PRESSED) {
+						if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1) running = 0;
+					} else if (e.key.keysym.scancode == SDL_SCANCODE_F10 && e.key.state == SDL_PRESSED)
+						emu_screenshot();
 					else if (e.key.keysym.scancode == SDL_SCANCODE_PAUSE && e.key.state == SDL_PRESSED) {
 						if (shift_pressed) ep_clear_ram();
 						ep_reset();
@@ -392,6 +432,8 @@ int main (int argc, char *argv[])
 	sdl_ren = SDL_CreateRenderer(sdl_win, -1, 0);
 	if (sdl_ren == NULL)
 		ERROR_WINDOW("Cannot create SDL renderer: %s", SDL_GetError());
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // disable vsync
 	sdl_tex = SDL_CreateTexture(sdl_ren, SCREEN_FORMAT, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 	if (sdl_tex == NULL)
 		ERROR_WINDOW("Cannot create SDL texture: %s", SDL_GetError());
@@ -409,8 +451,6 @@ int main (int argc, char *argv[])
 		return 1;
 	//SDL_FillRect(sdl_surf, NULL, 0);
 	//SDL_UpdateWindowSurface(sdl_win);
-	// rendering hints, size ...
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 	SDL_RenderSetLogicalSize(sdl_ren, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
 	//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Xep Window", "This is only a test dialog window for Xep128. Click on OK to continue :)", sdl_win);
 	//ERROR_WINDOW("Ez itt a %s a valasz %d\nHolla!","szep",42);

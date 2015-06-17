@@ -9,6 +9,7 @@ Xep128 main site: http://xep128.lgb.hu/
 Source repository: http://github.com/lgblgblgb/xep128
 
 Xep128 uses Z80 emulator "Z80ex": https://sourceforge.net/projects/z80ex/
+and lodePNG to write screenshots.
 
 Xep128 is licensed under the terms of GNU/GPL v2, for more information please
 read file LICENSE. You can find the source on github, see above.
@@ -109,6 +110,16 @@ If you click into the emulation window, it enters into "mouse grab" mode,
 and you can use your mouse (if the software running on the emulated Ep128
 supports mouse, of course). You can exit from this grab mode, if you press
 the ESC button.
+
+Emulation window can be resized, and/or you can switch between fullscreen and
+window mode by pressing F11. Note, these functions can have some bugs
+currently.
+
+You can leave emulator with closing its window, by pressing F9, or giving
+the EXOS command "_XEP exit_" (":XEP" exit in IS-BASIC of course).
+
+F10 creates a screenshot in PNG format, but it does not work currently, or
+has bugs (it depends when you read this file ...).
 
 You can try SymbOS out, it's included on the SD card image. It's a very nice
 multitasking (!) window-oriented graphical operating system ported to multiple

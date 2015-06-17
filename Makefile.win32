@@ -1,3 +1,7 @@
+# Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
+# Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+# http://xep128.lgb.hu/
+
 CC	= i686-w64-mingw32-gcc
 DEBUG	=
 CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --cflags) $(DEBUG)
@@ -10,7 +14,8 @@ LIBS	=
 #LIBS	= -Wl,-Bstatic -lz80ex -lz80ex_dasm -Wl,-Bdynamic
 
 INCS	= xepem.h
-SRCS	= main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c
+WINSRCS	=
+SRCS	= $(WINSRCS) lodepng.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c
 OBJS	= $(SRCS:.c=.o)
 PRG_EXE	= xep128.exe
 ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/typedefs.h z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/include/z80ex_common.h z80ex/include/z80ex_dasm.h z80ex/include/z80ex.h z80ex/z180ex.c
