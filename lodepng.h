@@ -804,7 +804,7 @@ extra functionality.
 
 LodePNG exists out of two files:
 -lodepng.h: the header file for both C and C++
--lodepng.c(pp): give it the name lodepng.c or lodepng.cpp (or .cc) depending on your usage
+-lodepng.c(pp): give it the name lodepng.c depending on your usage
 
 If you want to start using LodePNG right away without reading this doc, get the
 examples from the LodePNG website to see how to use it in code, or check the
@@ -879,11 +879,11 @@ These files work without modification for both C and C++ compilers because all
 the additional C++ code is in "#ifdef __cplusplus" blocks that make C-compilers
 ignore it, and the C code is made to compile both with strict ISO C90 and C++.
 
-To use the C++ version, you need to rename the source file to lodepng.cpp
+To use the C++ version, you need to rename the source file to lodepng.c
 (instead of lodepng.c), and compile it with a C++ compiler.
 
 To use the C version, you need to rename the source file to lodepng.c (instead
-of lodepng.cpp), and compile it with a C compiler.
+of lodepng.c), and compile it with a C compiler.
 
 
 3. Security
@@ -1335,7 +1335,7 @@ fopen.
 Visual Studio may want "stdafx.h" files to be included in each source file and
 give an error "unexpected end of file while looking for precompiled header".
 This is not standard C++ and will not be added to the stock LodePNG. You can
-disable it for lodepng.cpp only by right clicking it, Properties, C/C++,
+disable it for lodepng.c only by right clicking it, Properties, C/C++,
 Precompiled Headers, and set it to Not Using Precompiled Headers there.
 
 NOTE: Modern versions of VS should be fully supported, but old versions, e.g.
@@ -1489,7 +1489,7 @@ symbol.
 *) 27 may 2007: zlib and png code separated (but still in the same file),
     simple encoder/decoder functions added for more simple usage cases
 *) 19 may 2007: minor fixes, some code cleaning, new error added (error 69),
-    moved some examples from here to lodepng_examples.cpp
+    moved some examples from here to lodepng_examples.c
 *) 12 may 2007: palette decoding bug fixed
 *) 24 apr 2007: changed the license from BSD to the zlib license
 *) 11 mar 2007: very simple addition: ability to encode bKGD chunks.
@@ -1536,7 +1536,7 @@ symbol.
     needed, and performed some optimizations.
 *) 07 jun 2006: (!) Renamed functions to decodePNG and placed them
     in LodePNG namespace. Changed the order of the parameters. Rewrote the
-    documentation in the header. Renamed files to lodepng.cpp and lodepng.h
+    documentation in the header. Renamed files to lodepng.c and lodepng.h
 *) 22 apr 2006: Optimized and improved some code
 *) 07 sep 2005: (!) Changed to std::vector interface
 *) 12 aug 2005: Initial release (C++, decoder only)
