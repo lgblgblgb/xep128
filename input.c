@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 static int _mouse_dx, _mouse_dy, _mouse_grab = 0;
 static Uint8 _mouse_data_byte, _mouse_data_half, _mouse_last_shift, _mouse_read_state, _mouse_button_state;
-int shift_pressed = 0;
 
 
 void mouse_reset_button ( void )
@@ -141,7 +140,7 @@ void emu_mouse_motion(int dx, int dy)
 
 void mouse_reset(void)
 {
-	_mouse_grab = 0;
+	// _mouse_grab = 0; // fix to comment our: reset pressed with grabbed mouse
 	_mouse_read_state = 0;
 	_mouse_last_shift = 0;
 	_mouse_data_byte = 0;
@@ -189,8 +188,6 @@ void mouse_check_data_shift(Uint8 val)
 void emu_kbd(SDL_Keysym sym, int press)
 {
 	int a = 0;
-	if (sym.scancode == SDL_SCANCODE_LSHIFT || sym.scancode == SDL_SCANCODE_RSHIFT)
-		shift_pressed = press;
 	if (_mouse_grab && sym.scancode == SDL_SCANCODE_ESCAPE) {
 		_mouse_grab = 0;
 		emu_win_grab(SDL_FALSE);

@@ -45,7 +45,7 @@ void kbd_matrix_reset ( void )
 void dave_reset ( void )
 {
 	int a;
-	kbd_matrix_reset();
+	//kbd_matrix_reset();
 	for (a = 0xA0; a <= 0xBF; a++)
 		port_write(a, 0);
 	dave_int_read = 0;

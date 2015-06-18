@@ -132,7 +132,6 @@ void emu_mouse_motion(int dx, int dy);
 Uint8 mouse_read(void);
 void mouse_check_data_shift(Uint8 val);
 void mouse_reset(void);
-extern int shift_pressed;
 
 time_t emu_getunixtime(void);
 

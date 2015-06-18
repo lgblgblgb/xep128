@@ -174,6 +174,8 @@ static double td_balancer = 0;
 
 static struct timeval tv_old;
 
+static int td_em_ALL = 0, td_pc_ALL = 0, td_count_ALL = 0;
+
 /* This is the emulation timing stuff
  * Should be called at the END of the emulation loop.
  * Input parameter: microseconds needed for the "real" (emulated) computer to do our loop 
@@ -188,6 +190,21 @@ void emu_timekeeping_delay ( int td_em )
 	//td_ep = 1000000 * rasters * 57 / NICK_SLOTS_PER_SEC; // microseconds would need for an EP128 to do this
 	td = td_em - td_pc; // the time difference (+X = PC is faster - real time EP emulation, -X = EP is faster - real time EP emulation is not possible)
 	printf("DELAY: pc=%d em=%d sleep=%d\n", td_pc, td_em, td);
+	/* for reporting only: BEGIN */
+	td_em_ALL += td_em;
+	td_pc_ALL += td_pc;
+	if (td_count_ALL == 50) {
+		char buf[256];
+		//fprintf(stderr, "STAT: count = %d, EM = %d, PC = %d, usage = %f%\n", td_count_ALL, td_em_ALL, td_pc_ALL, 100.0 * (double)td_pc_ALL / (double)td_em_ALL);
+		sprintf(buf, "%s [%.2fMHz ~ %d%%]", WINDOW_TITLE " " VERSION " ",
+			CPU_CLOCK / 1000000.0,
+			td_pc_ALL * 100 / td_em_ALL
+		);
+		SDL_SetWindowTitle(sdl_win, buf);
+		td_count_ALL = 0;
+	} else
+		td_count_ALL++;
+	/* for reporting only: END */
 	if (td > 0) {
 		td_balancer += td;
 		if (td_balancer > 0)
@@ -318,7 +335,8 @@ void emu_one_frame(int rasters, int frameksip)
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_F10 && e.key.state == SDL_PRESSED)
 						emu_screenshot();
 					else if (e.key.keysym.scancode == SDL_SCANCODE_PAUSE && e.key.state == SDL_PRESSED) {
-						if (shift_pressed) ep_clear_ram();
+						if (e.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
+							ep_clear_ram();
 						ep_reset();
 					} else
 						emu_kbd(e.key.keysym, e.key.state == SDL_PRESSED);
@@ -466,6 +484,7 @@ int main (int argc, char *argv[])
 	rom_size += 0x4000;
 	set_ep_ramsize(1024);
 	ep_reset();
+	kbd_matrix_reset();
 #ifdef CONFIG_SDEXT_SUPPORT
 	sdext_init();
 #endif
