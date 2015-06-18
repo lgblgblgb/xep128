@@ -202,6 +202,8 @@ void emu_timekeeping_delay ( int td_em )
 		);
 		SDL_SetWindowTitle(sdl_win, buf);
 		td_count_ALL = 0;
+		td_pc_ALL = 0;
+		td_em_ALL = 0;
 	} else
 		td_count_ALL++;
 	/* for reporting only: END */
