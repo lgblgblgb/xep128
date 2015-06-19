@@ -124,7 +124,7 @@ void emu_mouse_button(Uint8 button, int press)
 	_mouse_button_state = press;
 	if (press && _mouse_grab == 0) {
 		//emu_osd_msg("Mouse grab. Press ESC to exit.");
-		emu_win_grab(SDL_TRUE);
+		screen_grab(SDL_TRUE);
 		_mouse_grab = 1;
 		mouse_reset_button();
 	}
@@ -198,7 +198,7 @@ void emu_kbd(SDL_Keysym sym, int press)
 	int a = 0;
 	if (_mouse_grab && sym.scancode == SDL_SCANCODE_ESCAPE) {
 		_mouse_grab = 0;
-		emu_win_grab(SDL_FALSE);
+		screen_grab(SDL_FALSE);
 	}
 	printf("KEY: scan=%d sym=%d press=%d\n", sym.scancode, sym.sym, press);
 	while (keytable[a][0] != -1)
@@ -219,9 +219,9 @@ int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
         int mg = _mouse_grab, r;
         kbd_matrix_reset();
         mouse_reset_button();
-	if (mg == SDL_TRUE) emu_win_grab(SDL_FALSE);
+	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
 	r = SDL_ShowSimpleMessageBox(sdlflag, "Xep128", msg, sdl_win);
-	if (mg == SDL_TRUE) emu_win_grab(mg);
+	if (mg == SDL_TRUE) screen_grab(mg);
 	return r;
 }
 
@@ -266,8 +266,8 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
 	/* win grab, kbd/mouse emu reset etc before the window! */
 	kbd_matrix_reset();
 	mouse_reset_button();
-	if (mg == SDL_TRUE) emu_win_grab(SDL_FALSE);
+	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
 	SDL_ShowMessageBox(&messageboxdata, &buttonid);
-	if (mg == SDL_TRUE) emu_win_grab(mg);
+	if (mg == SDL_TRUE) screen_grab(mg);
 	return buttonid;
 }

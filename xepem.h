@@ -77,7 +77,6 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
 #define SCREEN_HEIGHT	288
 #define SCREEN_FORMAT	SDL_PIXELFORMAT_ARGB8888
 
-extern SDL_Window *sdl_win;
 extern char *app_pref_path, *app_base_path;
 extern char current_directory[PATH_MAX + 1];
 extern char rom_path[PATH_MAX + 1];
@@ -137,7 +136,6 @@ void mouse_reset(void);
 time_t emu_getunixtime(void);
 
 void emu_one_frame(int usecs, int frameksip);
-void emu_win_grab ( SDL_bool state );
 
 #ifdef CONFIG_EXDOS_SUPPORT
 extern Uint8 wd_sector;
@@ -201,6 +199,17 @@ Uint8 w5300_read_idm_ar1 ( void );
 Uint8 w5300_read_idm_dr0 ( void );
 Uint8 w5300_read_idm_dr1 ( void );
 
+/* screen.c */
+
+void screen_grab ( SDL_bool state );
+void screen_set_fullscreen ( int state );
+void screen_present_frame (Uint32 *ep_pixels);
+void screen_window_resized ( void );
+int screen_shot ( Uint32 *ep_pixels );
+int screen_init ( void );
+extern Uint32 sdl_winid;
+extern SDL_Window *sdl_win;
+extern int is_fullscreen;
 
 #endif
 

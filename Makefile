@@ -14,7 +14,7 @@ LDFLAGS	= $(shell sdl2-config --libs) $(DEBUG)
 LIBS	=
 INCS	= xepem.h
 LINSRCS	=
-SRCS	= $(LINSRCS) lodepng.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c
+SRCS	= $(LINSRCS) lodepng.c screen.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c
 OBJS	= $(SRCS:.c=.o)
 PRG	= xep128
 PRG_EXE	= xep128.exe
@@ -136,6 +136,7 @@ dep:
 	$(MAKE) depend
 
 depend:
+	$(MAKE) xep_rom.hex
 	$(CC) -MM $(CFLAGS) $(CPPFLAGS) $(SRCS) > .depend
 
 .PHONY: all clean distclean strip commit win32 publish data install ztest zclean dep depend
