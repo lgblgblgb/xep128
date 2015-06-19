@@ -25,7 +25,7 @@ static SDL_Renderer *sdl_ren = NULL;
 static SDL_Texture  *sdl_tex = NULL;
 static int warn_for_mouse_grab = 1;
 Uint32 sdl_winid;
-static int win_xsize, win_ysize;
+static int win_xsize, win_ysize, resize_counter = 0, win_size_changed = 0;
 
 
 
@@ -44,10 +44,38 @@ void screen_grab ( SDL_bool state )
 }
 
 
-void screen_window_resized ( void )
+#define SCREEN_RATIO ((double)SCREEN_WIDTH / (double)(SCREEN_HEIGHT * 2))
+
+
+void screen_window_resized ( int new_xsize, int new_ysize )
 {
-	SDL_GetWindowSize(sdl_win, &win_xsize, &win_ysize);
-	fprintf(stderr, "WINDOW: query window geometry: %d x %d\n", win_xsize, win_ysize);
+	float ratio;
+	if (is_fullscreen)
+		return;
+	if (new_xsize == win_xsize && new_ysize == win_ysize)
+		return;
+	fprintf(stderr, "UI: window geometry change from %d x %d to %d x %d\n", win_xsize, win_ysize, new_xsize, new_ysize);
+	if (new_ysize == 0) new_ysize = 1;
+	ratio = (float)new_xsize / (float)new_ysize;
+	if (new_xsize * new_ysize > win_xsize * win_ysize) {	// probably user means making window larger (area of window increased)
+		if (ratio > SCREEN_RATIO)
+			new_ysize = new_xsize / SCREEN_RATIO;
+		else
+			new_xsize = new_ysize * SCREEN_RATIO;
+	} else {						// probably user means making window smaller (area of window decreased)
+		if (ratio > SCREEN_RATIO)
+			new_xsize = new_ysize * SCREEN_RATIO;
+		else
+			new_ysize = new_xsize / SCREEN_RATIO;
+	}
+	if (new_xsize < SCREEN_WIDTH || new_ysize < SCREEN_HEIGHT * 2) {
+		win_xsize = SCREEN_WIDTH;
+		win_ysize = SCREEN_HEIGHT * 2;
+	} else {
+		win_xsize = new_xsize;
+		win_ysize = new_ysize;
+	}
+	win_size_changed = 1;
 }
 
 
@@ -56,7 +84,7 @@ void screen_set_fullscreen ( int state )
 	if (is_fullscreen == state) return;
 	is_fullscreen = state;
 	if (state) {
-		screen_window_resized();
+		SDL_GetWindowSize(sdl_win, &win_xsize, &win_ysize);
 		SDL_SetWindowFullscreen(sdl_win, SDL_WINDOW_FULLSCREEN_DESKTOP);
 		SDL_RaiseWindow(sdl_win);
 		fprintf(stderr, "UI: entering full screen mode\n");
@@ -71,6 +99,15 @@ void screen_set_fullscreen ( int state )
 
 void screen_present_frame (Uint32 *ep_pixels)
 {
+	if (resize_counter == 10) {
+		if (win_size_changed) {
+			SDL_SetWindowSize(sdl_win, win_xsize, win_ysize);
+			fprintf(stderr, "UI: correcting window size to %d x %d\n", win_xsize, win_ysize);
+			win_size_changed = 0;
+		}
+		resize_counter = 0;
+	} else
+		resize_counter++;
 	SDL_UpdateTexture(sdl_tex, NULL, ep_pixels, SCREEN_WIDTH * sizeof (Uint32));
 	SDL_RenderClear(sdl_ren);
 	SDL_RenderCopy(sdl_ren, sdl_tex, NULL, NULL);
@@ -137,18 +174,20 @@ static void set_app_icon ( SDL_Window *win, const void *app_icon )
 
 int screen_init ( void )
 {
+	win_xsize = SCREEN_WIDTH;
+	win_ysize = SCREEN_HEIGHT * 2;
 	sdl_win = SDL_CreateWindow(
                 WINDOW_TITLE " " VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                SCREEN_WIDTH, SCREEN_HEIGHT * 2,
+                win_xsize, win_ysize,
                 SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
         );
         if (!sdl_win) {
-		ERROR_WINDOW("cannot open window");
+		ERROR_WINDOW("Cannot open SDL window: %s", SDL_GetError());
 		return 1;
 	}
 	SDL_SetWindowMinimumSize(sdl_win, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
-	screen_window_resized();
+	//screen_window_resized();
 	set_app_icon(sdl_win, _icon_pixels);
 	sdl_ren = SDL_CreateRenderer(sdl_win, -1, 0);
 	if (sdl_ren == NULL) {

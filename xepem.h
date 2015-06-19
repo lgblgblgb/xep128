@@ -204,7 +204,7 @@ Uint8 w5300_read_idm_dr1 ( void );
 void screen_grab ( SDL_bool state );
 void screen_set_fullscreen ( int state );
 void screen_present_frame (Uint32 *ep_pixels);
-void screen_window_resized ( void );
+void screen_window_resized ( int new_xsize, int new_ysize );
 int screen_shot ( Uint32 *ep_pixels );
 int screen_init ( void );
 extern Uint32 sdl_winid;

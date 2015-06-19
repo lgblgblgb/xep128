@@ -216,10 +216,7 @@ void emu_one_frame(int rasters, int frameksip)
 						e.window.data1,
 						e.window.data2
 					);
-					screen_window_resized();
-					if (e.window.data1 < SCREEN_WIDTH || e.window.data2 < SCREEN_HEIGHT * 2)
-						SDL_SetWindowSize(sdl_win, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
-					// TODO: keep aspect ratio, otherwise ugly letterboxing is done by SDL which does not make any sense!
+					screen_window_resized(e.window.data1, e.window.data2);
 				}
 				break;
 			case SDL_QUIT:
@@ -302,7 +299,7 @@ int set_cpu_clock ( int hz )
 
 
 
-static void get_sys_dirs ( const char *path )
+static int get_sys_dirs ( const char *path )
 {
 	fprintf(stderr, "Program path: %s\n", path);
 	fprintf(stderr, "XEP ROM size: %d\n", sizeof _xep_rom);
@@ -313,11 +310,12 @@ static void get_sys_dirs ( const char *path )
 	fprintf(stderr, "SDL base path: %s\n", app_base_path);
 	fprintf(stderr, "SDL pref path: %s\n", app_pref_path);
 	if (getcwd(current_directory, sizeof current_directory) == NULL) {
-		ERROR_WINDOW("Cannot query the current directory.");
-		exit(1);
+		ERROR_WINDOW("Cannot query the current directory: %s", ERRSTR());
+		return 1;
 	}
 	strcat(current_directory, DIRSEP);
-	fprintf(stderr, "Current directory: %s\n", current_directory);	
+	fprintf(stderr, "Current directory: %s\n", current_directory);
+	return 0;
 }
 
 
@@ -329,7 +327,8 @@ int main (int argc, char *argv[])
 		ERROR_WINDOW("Fatal SDL initialization problem: %s", SDL_GetError());
 		return 1;
 	}
-	get_sys_dirs(argv[0]);
+	if (get_sys_dirs(argv[0]))
+		return 1;
 	if (screen_init())
 		return 1;
 	if (z80_reset()) {
