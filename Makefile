@@ -87,7 +87,7 @@ $(ROM):
 data:	$(SDIMG) $(ROM)
 	rm -f buildinfo.c
 
-$(PRG): $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(INCS) Makefile
+$(PRG): .depend $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(INCS) Makefile
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.o
 	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(LDFLAGS) $(LIBS)
@@ -114,7 +114,7 @@ zclean:
 	rm -f z80ex/*.o
 
 clean:
-	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst
+	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst .depend
 	$(MAKE) -C rom clean
 
 distclean:
@@ -129,5 +129,18 @@ commit:
 	EDITOR="vim -c 'startinsert'" git commit -a
 	git push
 
-.PHONY: all clean distclean strip commit win32 publish data install ztest zclean
+.depend:
+	$(MAKE) depend
+
+dep:
+	$(MAKE) depend
+
+depend:
+	$(CC) -MM $(CFLAGS) $(CPPFLAGS) $(SRCS) > .depend
+
+.PHONY: all clean distclean strip commit win32 publish data install ztest zclean dep depend
+
+ifneq ($(wildcard .depend),)
+include .depend
+endif
 

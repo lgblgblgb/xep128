@@ -41,4 +41,5 @@ xep128-win32.zip
 buildinfo.c
 xep_rom.lst
 screenshot*.png
+.depend
 
