@@ -111,6 +111,15 @@ and you can use your mouse (if the software running on the emulated Ep128
 supports mouse, of course). You can exit from this grab mode, if you press
 the ESC button.
 
+Joystick (currently both of them at the _same_ time ...) is emulated with the
+numeric keypad arrow keys. Because of some conflict between the "boxsoft mouse
+interface" and joystick, there is an odd solution now: if you are in "mouse
+grab" mode (see above) EP software will read data as mouse events, otherwise
+joystick. There is some auto detection, that shift pulses used by the mouse
+query routines cause to switch into mouse mode after that read only. Thus,
+SymbOS (see later) will detect the mouse, but also there is an odd behaviour
+the mouse behaves oddly if you are not in the grab mode though ...
+
 Emulation window can be resized, and/or you can switch between fullscreen and
 window mode by pressing F11. Note, these functions can have some bugs
 currently.

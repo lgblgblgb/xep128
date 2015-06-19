@@ -20,7 +20,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 static int _mouse_dx, _mouse_dy, _mouse_grab = 0;
 static Uint8 _mouse_data_byte, _mouse_data_half, _mouse_last_shift, _mouse_read_state, _mouse_button_state;
+static int _mouse_pulse = 0; // try to detect SymbOS or other simllar tests
 
+
+int mouse_is_enabled ( void )
+{
+	return _mouse_grab || _mouse_pulse;
+}
 
 void mouse_reset_button ( void )
 {
@@ -155,6 +161,7 @@ Uint8 mouse_read(void)
 	Uint8 data = _mouse_button_state ? 0 : 4;
 	if (kbd_selector > 0 && kbd_selector < 5)
 		data |= (_mouse_data_half >> (kbd_selector - 1)) & 1;
+	_mouse_pulse = 0;
 	return data;
 }
 
@@ -163,6 +170,7 @@ void mouse_check_data_shift(Uint8 val)
 {
 	if ((val & 2) == _mouse_last_shift) return;
 	_mouse_last_shift = val & 2;
+	_mouse_pulse = 1;
 	switch (_mouse_read_state) {
 		case 0:
 			_mouse_data_byte = ((unsigned int)_mouse_dx) & 0xFF;	// signed will be converted to unsigned

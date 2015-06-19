@@ -109,6 +109,7 @@ void dave_configure_interrupts ( Uint8 n );
 void dave_ticks ( int slots );
 void kbd_matrix_reset ( void );
 void mouse_reset_button ( void );
+int mouse_is_enabled ( void );
 //extern int mem_ws_all, mem_ws_m1;
 
 //int z80_disasm(char *buffer, int buffer_size, int flags, int *t_states, int *t_states_2, Uint16 pc, int seg);

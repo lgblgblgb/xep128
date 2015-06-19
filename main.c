@@ -448,8 +448,9 @@ int main (int argc, char *argv[])
         );
         if (!sdl_win) exit_on_SDL_problem("cannot open window");
 	SDL_SetWindowMinimumSize(sdl_win, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
-	set_app_icon(sdl_win, _icon_pixels);
+	//set_app_icon(sdl_win, _icon_pixels);
 	sdl_ren = SDL_CreateRenderer(sdl_win, -1, 0);
+	set_app_icon(sdl_win, _icon_pixels);
 	if (sdl_ren == NULL)
 		ERROR_WINDOW("Cannot create SDL renderer: %s", SDL_GetError());
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");

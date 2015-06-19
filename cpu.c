@@ -224,7 +224,13 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unuse
 		case 0xB5:
 			return (kbd_selector == -1) ? 0xFF : kbd_matrix[kbd_selector];
 		case 0xB6:
-			return mouse_read();
+			if (mouse_is_enabled())
+				return mouse_read();
+			if (kbd_selector >= 0 && kbd_selector <= 4)
+				return ((kbd_matrix[10] >> kbd_selector) & 1);
+			if (kbd_selector >= 5 && kbd_selector <= 9)
+				return ((kbd_matrix[10] >> (kbd_selector - 5)) & 1);
+			return 0xFF;
 		case 0xFE:
 			return zxemu_read_ula(IO16_HI_BYTE(port16));
 	}
