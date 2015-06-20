@@ -26,6 +26,7 @@ static SDL_Texture  *sdl_tex = NULL;
 static int warn_for_mouse_grab = 1;
 Uint32 sdl_winid;
 static int win_xsize, win_ysize, resize_counter = 0, win_size_changed = 0;
+static int screenshot_index = 0;
 
 
 
@@ -85,9 +86,12 @@ void screen_set_fullscreen ( int state )
 	is_fullscreen = state;
 	if (state) {
 		SDL_GetWindowSize(sdl_win, &win_xsize, &win_ysize);
-		SDL_SetWindowFullscreen(sdl_win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		if (SDL_SetWindowFullscreen(sdl_win, SDL_WINDOW_FULLSCREEN_DESKTOP)) {
+			ERROR_WINDOW("Cannot enter fullscreen: %s", SDL_GetError());
+			is_fullscreen = 0;
+		} else
+			fprintf(stderr, "UI: entering full screen mode\n");
 		SDL_RaiseWindow(sdl_win);
-		fprintf(stderr, "UI: entering full screen mode\n");
 	} else {
 		SDL_SetWindowFullscreen(sdl_win, 0);
 		SDL_SetWindowSize(sdl_win, win_xsize, win_ysize); // see the comment below
@@ -134,27 +138,41 @@ void screen_present_frame (Uint32 *ep_pixels)
 
 
 
-int screen_shot ( Uint32 *ep_pixels )
+int screen_shot ( Uint32 *ep_pixels, const char *directory, const char *filename )
 {
+	char fn[PATH_MAX + 1], *p;
 	Uint8 *pix = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 2 * 3);
 	int a;
 	if (pix == NULL) {
 		ERROR_WINDOW("Not enough memory for taking a screenshot :(");
 		return 1;
 	}
+	if (directory)
+		strcpy(fn, directory);
+	else
+		*fn = 0;
+	p = strchr(filename, '%');
+	if (p) {
+		a = strlen(fn);
+		memcpy(fn + a, filename, p - filename);
+		sprintf(fn + a + (p - filename), "%d", screenshot_index);
+		strcat(fn, p + 1);
+		screenshot_index++;
+	} else
+		strcat(fn, filename);
 	for (a = 0; a < SCREEN_HEIGHT * SCREEN_WIDTH; a++) {
 		int d = (a / SCREEN_WIDTH) * SCREEN_WIDTH * 6 + (a % SCREEN_WIDTH) * 3;
 		pix[d + 0] = pix[d + 0 + SCREEN_WIDTH * 3] = (ep_pixels[a] >> 16) & 0xFF;
 		pix[d + 1] = pix[d + 1 + SCREEN_WIDTH * 3] = (ep_pixels[a] >> 8) & 0xFF;
 		pix[d + 2] = pix[d + 2 + SCREEN_WIDTH * 3] = ep_pixels[a] & 0xFF;
 	}
-	if (lodepng_encode24_file("screenshot.png", (unsigned char*)pix, SCREEN_WIDTH, SCREEN_HEIGHT * 2)) {
+	if (lodepng_encode24_file(fn, (unsigned char*)pix, SCREEN_WIDTH, SCREEN_HEIGHT * 2)) {
 		free(pix);
 		ERROR_WINDOW("LodePNG screenshot taking error");
 		return 0;
 	} else {
 		free(pix);
-		INFO_WINDOW("Screenshot has been saved.");
+		INFO_WINDOW("Screenshot has been saved:\n%s", fn);
 		return 1;
 	}
 }

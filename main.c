@@ -232,7 +232,7 @@ void emu_one_frame(int rasters, int frameksip)
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_F9 && e.key.state == SDL_PRESSED) {
 						if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1) running = 0;
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_F10 && e.key.state == SDL_PRESSED)
-						screen_shot(ep_pixels);
+						screen_shot(ep_pixels, current_directory, "screenshot-%.png");
 					else if (e.key.keysym.scancode == SDL_SCANCODE_PAUSE && e.key.state == SDL_PRESSED) {
 						if (e.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
 							ep_clear_ram();
