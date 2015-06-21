@@ -50,6 +50,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define SDCARD_IMG_FN "sdcard.img"
 #define PRINT_OUT_FN "print.out"
 
+
+void osd_notification ( const char *s );
+#define OSD(...) do { \
+	char _buf_for_win_msg_[4096]; \
+	sprintf(_buf_for_win_msg_, __VA_ARGS__); \
+	fprintf(stderr, "OSD: %s\n", _buf_for_win_msg_); \
+	osd_notification(_buf_for_win_msg_); \
+} while(0)
+
 int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
 #define _REPORT_WINDOW_(sdlflag, str, ...) do { \
 	char _buf_for_win_msg_[4096]; \

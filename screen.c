@@ -22,15 +22,97 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 int is_fullscreen = 0;
 SDL_Window   *sdl_win = NULL;
 static SDL_Renderer *sdl_ren = NULL;
-static SDL_Texture  *sdl_tex = NULL;
+static SDL_Texture  *sdl_tex = NULL, *sdl_osdtex = NULL;
 static int warn_for_mouse_grab = 1;
 Uint32 sdl_winid;
 static int win_xsize, win_ysize, resize_counter = 0, win_size_changed = 0;
 static int screenshot_index = 0;
+static Uint32 *osd_pixels = NULL;
+static int osd_on = 0, osd_fade = 0;
 
+#define OSD_FADE_START 300
+#define OSD_FADE_STOP    0x80
+#define OSD_FADE_DEC    3
 
 
 #include "app_icon.c"
+
+extern const Uint16 font_16x16[];
+
+
+static void _osd_set_alpha ( int alpha )
+{
+	if (alpha > 0xFF)
+		alpha = 0xFF;
+	SDL_SetTextureAlphaMod(sdl_osdtex, alpha);
+}
+
+
+void osd_clear ( void )
+{
+	memset(osd_pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * 4);
+}
+
+
+void osd_update ( void )
+{
+	if (osd_pixels)
+		SDL_UpdateTexture(sdl_osdtex, NULL, osd_pixels, SCREEN_WIDTH * sizeof (Uint32));
+}
+
+
+void osd_write_char ( int x, int y, char ch )
+{
+	int row;
+	const Uint16 *s = font_16x16 + ((ch - 32) << 4);
+	Uint32 *d = osd_pixels + y * SCREEN_WIDTH + x;
+	for (row = 0; row < 16; row++) {
+		Uint16 mask = 0x8000;
+		do {
+			*(d++) = *s & mask ? 0xFFFFFFFFU : 0xFF0000FFU;
+			mask >>= 1;
+		} while (mask);
+		s++;
+		d += SCREEN_WIDTH - 16;
+	}
+}
+
+
+void osd_write_string ( int x, int y, const char *s )
+{
+	while (*s) {
+		osd_write_char(x, y, *s);
+		s++;
+		x += 16;
+	}
+}
+
+
+void osd_write_string_centered ( int y, const char *s )
+{
+	do {
+		char *p = strchr(s, '\n');
+		int n = p ? (p++) - s : strlen(s);
+		int x = (SCREEN_WIDTH >> 1) - (n << 3);
+		while (n) {
+			osd_write_char(x, y, *(s++));
+			x += 16;
+			n--;
+		}
+		y += 24;
+		s = p;
+	} while (s);
+}
+
+
+void osd_notification ( const char *s )
+{
+	osd_clear();
+	osd_write_string_centered(100, s);
+	osd_update();
+	osd_on = 1;
+	osd_fade = OSD_FADE_START;
+}
 
 
 void screen_grab ( SDL_bool state )
@@ -38,7 +120,8 @@ void screen_grab ( SDL_bool state )
 	if (warn_for_mouse_grab) {
 		INFO_WINDOW("Clicking in emulator window causes to enter BoxSoft mouse emulation mode.\nThis will try to grab your mouse pointer. To exit, press key ESC.\nYou won't get this notice next time within this session of Xep128");
 		warn_for_mouse_grab = 0;
-	}
+	} else if (state == SDL_TRUE)
+		OSD("Mouse grab\nPress ESC to leave.");
 	printf("GRAB: %d\n", state);
 	SDL_SetRelativeMouseMode(state);
 	SDL_SetWindowGrab(sdl_win, state);
@@ -85,17 +168,19 @@ void screen_set_fullscreen ( int state )
 	if (is_fullscreen == state) return;
 	is_fullscreen = state;
 	if (state) {
-		SDL_GetWindowSize(sdl_win, &win_xsize, &win_ysize);
+		SDL_GetWindowSize(sdl_win, &win_xsize, &win_ysize); // save window size, it seems there are some problems with leaving fullscreen then
 		if (SDL_SetWindowFullscreen(sdl_win, SDL_WINDOW_FULLSCREEN_DESKTOP)) {
 			ERROR_WINDOW("Cannot enter fullscreen: %s", SDL_GetError());
 			is_fullscreen = 0;
-		} else
+		} else {
 			fprintf(stderr, "UI: entering full screen mode\n");
+			OSD("Full screen");
+		}
 		SDL_RaiseWindow(sdl_win);
 	} else {
 		SDL_SetWindowFullscreen(sdl_win, 0);
-		SDL_SetWindowSize(sdl_win, win_xsize, win_ysize); // see the comment below
-		SDL_RaiseWindow(sdl_win);
+		SDL_SetWindowSize(sdl_win, win_xsize, win_ysize); // restore window size saved on entering fullscreen, there can be some bugs ...
+		SDL_RaiseWindow(sdl_win); // also I had problems with having the window behind other windows on exit fullscreen. Make sure to raise the window
 		fprintf(stderr, "UI: leaving full screen mode\n");
 	}
 }
@@ -115,29 +200,24 @@ void screen_present_frame (Uint32 *ep_pixels)
 	SDL_UpdateTexture(sdl_tex, NULL, ep_pixels, SCREEN_WIDTH * sizeof (Uint32));
 	SDL_RenderClear(sdl_ren);
 	SDL_RenderCopy(sdl_ren, sdl_tex, NULL, NULL);
-#if 0
 	if (osd_on && sdl_osdtex != NULL)
-		SDL_RenderCopy(sdl_ren, sdl_osdtex, &screenrect, &osdrect);
+		SDL_RenderCopy(sdl_ren, sdl_osdtex, NULL, NULL);
 	else
 		osd_fade = 0;
-#endif
 	SDL_RenderPresent(sdl_ren);
-#if 0
-	if (osd_fade > 0) {	// OSD / fade mode
-		osd_fade--;
-		if (osd_fade > 0) {
+	if (osd_fade > OSD_FADE_STOP) {	// OSD / fade mode
+		osd_fade -= OSD_FADE_DEC;
+		if (osd_fade > OSD_FADE_STOP) {
 			_osd_set_alpha(osd_fade);
-			int a;
-			for (a = 0; a < SCREEN_WIDTH * SCREEN_HEIGHT * 4; a += 4)
-				osd_pixels[a] = osd_fade;
-		} else
+		} else {
 			osd_on = 0; // faded off, switch OSD texture rendering off
+			fprintf(stderr, "OSD: turned off on fading out\n");
+		}
 	}
-#endif
 }
 
 
-
+// TODO: use libpng in Linux, smaller binary (on windows I wouldn't introduce another DLL dependency though ...)
 int screen_shot ( Uint32 *ep_pixels, const char *directory, const char *filename )
 {
 	char fn[PATH_MAX + 1], *p;
@@ -151,7 +231,7 @@ int screen_shot ( Uint32 *ep_pixels, const char *directory, const char *filename
 		strcpy(fn, directory);
 	else
 		*fn = 0;
-	p = strchr(filename, '%');
+	p = strchr(filename, '*');
 	if (p) {
 		a = strlen(fn);
 		memcpy(fn + a, filename, p - filename);
@@ -172,7 +252,7 @@ int screen_shot ( Uint32 *ep_pixels, const char *directory, const char *filename
 		return 0;
 	} else {
 		free(pix);
-		INFO_WINDOW("Screenshot has been saved:\n%s", fn);
+		OSD("Screenshot:\n%s", fn + strlen(directory));
 		return 1;
 	}
 }
@@ -220,6 +300,19 @@ int screen_init ( void )
 		ERROR_WINDOW("Cannot create SDL texture: %s", SDL_GetError());
 		return 1;
 	}
+	osd_pixels = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 4);
+	if (osd_pixels != NULL) {
+		sdl_osdtex = SDL_CreateTexture(sdl_ren, SCREEN_FORMAT, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+		if (sdl_osdtex == NULL) {
+			ERROR_WINDOW("Cannot create texture for OSD rendering, OSD won't work: %s", SDL_GetError());
+			free(osd_pixels);
+			osd_pixels = NULL;
+		} else {
+			if (SDL_SetTextureBlendMode(sdl_osdtex, SDL_BLENDMODE_BLEND))
+				ERROR_WINDOW("Warning, SDL BLEND mode cannot be used for OSD, there can be fade out problems.\n%s", SDL_GetError());
+		}
+	} else
+		ERROR_WINDOW("Not enough memory for OSD pixel buffer. OSD won't work");
         sdl_winid = SDL_GetWindowID(sdl_win);
 	fprintf(stderr, "SDL: everything seems to be OK ...\n");
 	return 0;
