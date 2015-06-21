@@ -21,10 +21,18 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 static int _mouse_dx, _mouse_dy, _mouse_grab = 0;
 static Uint8 _mouse_data_byte, _mouse_data_half, _mouse_last_shift, _mouse_read_state, _mouse_button_state;
 static int _mouse_pulse = 0; // try to detect SymbOS or other simllar tests
+static int _mouse_wait_warn = 1;
 
 
 int mouse_is_enabled ( void )
 {
+	if (!_mouse_grab && _mouse_pulse) {
+		if (_mouse_wait_warn) {
+			OSD("App may wait for mouse\nClick for grabbing");
+			_mouse_wait_warn = 0;
+			warn_for_mouse_grab = 0;
+		}
+	}
 	return _mouse_grab || _mouse_pulse;
 }
 
@@ -196,9 +204,10 @@ void mouse_check_data_shift(Uint8 val)
 void emu_kbd(SDL_Keysym sym, int press)
 {
 	int a = 0;
-	if (_mouse_grab && sym.scancode == SDL_SCANCODE_ESCAPE) {
+	if (_mouse_grab && sym.scancode == SDL_SCANCODE_ESCAPE && press) {
 		_mouse_grab = 0;
 		screen_grab(SDL_FALSE);
+		return; // do not forward ESC press, it's only leave mouse grab mode now!
 	}
 	printf("KEY: scan=%d sym=%d press=%d\n", sym.scancode, sym.sym, press);
 	while (keytable[a][0] != -1)

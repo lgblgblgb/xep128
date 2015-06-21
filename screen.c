@@ -23,7 +23,7 @@ int is_fullscreen = 0;
 SDL_Window   *sdl_win = NULL;
 static SDL_Renderer *sdl_ren = NULL;
 static SDL_Texture  *sdl_tex = NULL, *sdl_osdtex = NULL;
-static int warn_for_mouse_grab = 1;
+int warn_for_mouse_grab = 1;
 Uint32 sdl_winid;
 static int win_xsize, win_ysize, resize_counter = 0, win_size_changed = 0;
 static int screenshot_index = 0;

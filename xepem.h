@@ -220,6 +220,6 @@ extern SDL_Window *sdl_win;
 extern int is_fullscreen;
 void osd_disable ( void );
 void osd_notification ( const char *s );
+extern int warn_for_mouse_grab;
 
 #endif
-
