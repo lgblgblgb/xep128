@@ -11,8 +11,7 @@ SD card cartridge emulation:
 
 EXDOS/WD:
 
-	* Not implemented at all (though SD card is a better solution
-	  for me)
+	* Not implemented at all (though SD card is a better solution for me)
 	* if it works ever: add sound as emulated drive noise :)
 
 Dave:
@@ -53,12 +52,12 @@ Emulator:
 	* Command/log window maybe? With another SDL window, thus platform independent
 	* ... OR native dialogs on specific host OS, at least file browser when needed (?)
 	* network installer for ROM images, maybe SD card image as well?
-	* system directory on host OS, to read ROMs, config, whatever
+	* [DONE] system directory on host OS, to read ROMs, config, whatever
 	* ability to configure emulator, save/load configuration?
 	* ep128emu "fileio" like stuff to load/save single files
 	* Xep ROM clean-up, almost useless currently (maybe it should implement the fileio stuff)
 	* configurable keyboard? positional/symbolic mapping, switchable?
-	* maybe: OSD, if something import happens (mouse grab starts, full screen entered, whatever), also for FPS/speed display if requested?
+	* [DONE] maybe: OSD, if something import happens (mouse grab starts, full screen entered, whatever)
 	* video and/or audio recording mode maybe?
 	* scripting in command window?
 	* disassembler etc? (in command window?)
@@ -72,7 +71,7 @@ Host OS / target:
 
 Network emulation:
 
-	* Wiznet W5300 emulation, partial stuff with host TCP/IP, not raw level! emulate DHCP etc answer though
+	* [STARTED] Wiznet W5300 emulation, partial stuff with host TCP/IP, not raw level! emulate DHCP etc answer though
 
 ZX Spectrum emulator card:
 
@@ -91,10 +90,10 @@ Other hardware emulation:
 
 SDL:
 
-	* [PENDING] screenshot, into "usable" PNG
+	* [DONE] screenshot, into "usable" PNG
 	  [DONE] with lodepng [TODO] use libpng in Linux
-	* [PENDING] fullscreen mode
-	* [PENDING] window resizing ability for custom "zoom" factor
+	* [DONE] fullscreen mode
+	* [DONE] window resizing ability for custom "zoom" factor
 	* check possible hardware acceleration, better performance, etc (?)
 	* [PENDING] like the previous: check if Render/texture is better than surface?
 	* joystick input with SDL functions?

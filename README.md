@@ -215,10 +215,10 @@ Just to mention some problems with Xep128:
 JSep (a JavaScript based Enterprise-128 emulator, also written by myself) was
 great source for Xep128. Enteprise-128 forever forum is an essential site,
 people there helped a lot (especially with JSep), I would mention IstvanV -
-IstvanV has the greap ep128emu emulator which may help me too -  and Zozosoft.
-LibZ80ex is the Z80 emulator used in Xep128 (not written by me!).
-FUSE Spectrum emulator is important: it seems Z80Ex contains some code from
-FUSE, also they have wiznet w5100 emulation which is similar to the w5300
-so it can help me somewhat. LodePNG (not written by me!) project is used
-to create PNG screenshots. It has been somewhat modified to exclude C++
-parts and some defaults though.
+he has the great ep128emu emulator - and Zozosoft. LibZ80ex is the Z80
+emulator used in Xep128 (not written by me!). FUSE Spectrum emulator is
+important: it seems Z80Ex contains some code from FUSE, also they have
+wiznet w5100 emulation which is similar to the w5300 so it can help me
+somewhat. LodePNG (not written by me!) project is used to create PNG
+screenshots. It has been somewhat modified to exclude C++ parts and some
+defaults though.
