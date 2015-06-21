@@ -32,6 +32,9 @@ static const Uint8 _xep_rom[] = {
 #include "xep_rom.hex"
 };
 
+static const int _cpu_speeds[4] = { 4000000, 6000000, 7120000, 10000000 };
+static int _cpu_speed_index = 0;
+
 
 
 static void shutdown_sdl(void)
@@ -237,6 +240,10 @@ void emu_one_frame(int rasters, int frameksip)
 						if (e.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
 							ep_clear_ram();
 						ep_reset();
+					} else if (e.key.keysym.scancode == SDL_SCANCODE_PAGEDOWN && e.key.state == SDL_PRESSED && _cpu_speed_index) {
+						set_cpu_clock(_cpu_speeds[-- _cpu_speed_index]);
+					} else if (e.key.keysym.scancode == SDL_SCANCODE_PAGEUP && e.key.state == SDL_PRESSED && _cpu_speed_index < 3) {
+						set_cpu_clock(_cpu_speeds[++ _cpu_speed_index]);
 					} else
 						emu_kbd(e.key.keysym, e.key.state == SDL_PRESSED);
 				} else
@@ -294,6 +301,7 @@ int set_cpu_clock ( int hz )
 	CPU_CLOCK = hz;
 	SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK;
 	fprintf(stderr, "CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
+	OSD("CPU speed: %.2f MHz", hz / 1000000.0);
 	return hz;
 }
 
@@ -365,6 +373,7 @@ int main (int argc, char *argv[])
 	//printf("CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
 	set_cpu_clock(DEFAULT_CPU_CLOCK);
 	emu_timekeeping_start();
+	osd_disable();
 	while (running) {
 		int t, nts = 0;
 #if 0

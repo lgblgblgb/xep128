@@ -48,6 +48,12 @@ static void _osd_set_alpha ( int alpha )
 }
 
 
+void osd_disable ( void )
+{
+	osd_on = 0;
+}
+
+
 void osd_clear ( void )
 {
 	memset(osd_pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * 4);

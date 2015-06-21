@@ -51,7 +51,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define PRINT_OUT_FN "print.out"
 
 
-void osd_notification ( const char *s );
 #define OSD(...) do { \
 	char _buf_for_win_msg_[4096]; \
 	sprintf(_buf_for_win_msg_, __VA_ARGS__); \
@@ -219,6 +218,8 @@ int screen_init ( void );
 extern Uint32 sdl_winid;
 extern SDL_Window *sdl_win;
 extern int is_fullscreen;
+void osd_disable ( void );
+void osd_notification ( const char *s );
 
 #endif
 
