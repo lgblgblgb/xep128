@@ -61,6 +61,7 @@ Emulator:
 	* video and/or audio recording mode maybe?
 	* scripting in command window?
 	* disassembler etc? (in command window?)
+	* more precise timing: on Windows/MinGW there are issues (time resolution) with the "emulated" gettimeofday() call
 
 Host OS / target:
 

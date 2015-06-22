@@ -220,6 +220,10 @@ extern SDL_Window *sdl_win;
 extern int is_fullscreen;
 void osd_disable ( void );
 void osd_notification ( const char *s );
+void osd_replay ( int fade );
 extern int warn_for_mouse_grab;
+#define OSD_FADE_START 300
+#define OSD_FADE_STOP    0x80
+#define OSD_FADE_DEC    3
 
 #endif

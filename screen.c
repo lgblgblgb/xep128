@@ -30,11 +30,6 @@ static int screenshot_index = 0;
 static Uint32 *osd_pixels = NULL;
 static int osd_on = 0, osd_fade = 0;
 
-#define OSD_FADE_START 300
-#define OSD_FADE_STOP    0x80
-#define OSD_FADE_DEC    3
-
-
 #include "app_icon.c"
 
 extern const Uint16 font_16x16[];
@@ -118,6 +113,14 @@ void osd_notification ( const char *s )
 	osd_update();
 	osd_on = 1;
 	osd_fade = OSD_FADE_START;
+}
+
+
+void osd_replay ( int fade )
+{
+	osd_on = 1;
+	_osd_set_alpha(0xFF);
+	osd_fade = fade;
 }
 
 

@@ -244,9 +244,11 @@ void emu_one_frame(int rasters, int frameksip)
 						set_cpu_clock(_cpu_speeds[-- _cpu_speed_index]);
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_PAGEUP && e.key.state == SDL_PRESSED && _cpu_speed_index < 3) {
 						set_cpu_clock(_cpu_speeds[++ _cpu_speed_index]);
+					} else if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
+						osd_replay(e.key.state == SDL_PRESSED ? 0 : OSD_FADE_START);
 					} else
 						emu_kbd(e.key.keysym, e.key.state == SDL_PRESSED);
-				} else
+				} else if (e.key.repeat == 0)
 					fprintf(stderr, "NOT HANDLED KEY EVENT: repeat = %d windowid = %d [our win = %d]\n", e.key.repeat, e.key.windowID, sdl_winid);
 				break;
 			case SDL_MOUSEMOTION:
