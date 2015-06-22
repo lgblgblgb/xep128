@@ -266,8 +266,7 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
 				break;
 		}
 		buttons[messageboxdata.numbuttons].text = items;
-		buttons[messageboxdata.numbuttons].buttonid = messageboxdata.numbuttons;
-		messageboxdata.numbuttons++;
+		buttons[messageboxdata.numbuttons].buttonid = messageboxdata.numbuttons++;
 		if (p == NULL) break;
 		*p = 0;
 		items = p + 1;

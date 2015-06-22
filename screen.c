@@ -120,6 +120,8 @@ void osd_replay ( int fade )
 {
 	osd_on = 1;
 	_osd_set_alpha(0xFF);
+	osd_write_string_centered(70, "*** REPLAY ***");
+	osd_update();
 	osd_fade = fade;
 }
 
