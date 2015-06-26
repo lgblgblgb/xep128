@@ -6,11 +6,33 @@ There is no single copyright/etc on files in this directory, this
 can mean anything ... unless the license is not stated inside the file
 itself.
 
+Makefile
+
+  You can use command 'make' with UNIX-like OSes to compile the
+  included test sources. This implies you have sjasm 0.42c
+  installed. Avoid 'make test' as it would use paths private
+  to my own system!
+
+irclet.asm
+
+  A very primitive iRC "client" to test my w5300 emulation. Note:
+  currently it's unknown if it works with a real w5300 though. Not
+  even ready in Xep128 :) It's not a very comfortable iRC client,
+  IP parameters are hard-wired (MAC address, IP, gateway, even
+  iRC server IP address), and slow (EXOS functions used to print).
+  It's simply not suitable for daily usage.
+
+w5300-ep.md
+
+  My own notes on w5300, focusing on the behaviour used by
+  the furute (?) EP+w5300 project. It can be useful, as w5300
+  specification is though nice, it's quite long, and some parts
+  are not so much interesting for the first steps. Or even for
+  further steps ...
+
 z180test.asm
 
   z180test is a quirky Z180 behaviour tester written by me for
   Enteprise-128 equipped with Z180 CPU instead of Z80. It's used
   to test the result on my emulator and compared with a real
   EP/Z180 (thanks, Zozo!).
-
-
