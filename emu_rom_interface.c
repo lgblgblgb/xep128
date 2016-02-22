@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -147,9 +147,9 @@ static const struct commands_st commands[] = {
 	{ NULL,		NULL, NULL }
 };
 
-extern const char *BUILDINFO_ON; //  = "lgb@vega on Linux 3.19.0-15-generic";
-extern const char *BUILDINFO_AT; //  = "Thu, 04 Jun 2015 22:56:28 +0200";
-extern const char *BUILDINFO_GIT; // = "62ecfa47df1223524a0600db68d79c4e60832b9f";
+extern const char *BUILDINFO_ON;
+extern const char *BUILDINFO_AT;
+extern const char *BUILDINFO_GIT;
 
 
 static void cmd_help ( void ) {
@@ -216,7 +216,7 @@ static void xep_exos_command_trap ( void )
 		case 3: // EXOS help
 			if (b == 0) {
 				sprintf(COBUF, "%s", SHORT_HELP);
-				SET_C(0); //SET_C(0);
+				//SET_C(0); //SET_C(0);  // THESE ARE NOT NEEDED: FIXME why :help command hangs?!
 			} else if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
 				cmd_help();
 				SET_A(0);

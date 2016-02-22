@@ -3,7 +3,7 @@ Xep128 is an Enterprise-128 (a Z80 based, 8 bit computer) emulator (uses SDL2
 and z80ex) with the main focus on emulating somewhat "exotic" hardware
 additions.
 
-Written by (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+Written by (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
 
 Xep128 main site: http://xep128.lgb.hu/
 Source repository: http://github.com/lgblgblgb/xep128

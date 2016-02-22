@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define WINDOW_TITLE "Xep128"
 #define VERSION "v0.1"
-#define COPYRIGHT "(C)2015 LGB Gabor Lenart"
+#define COPYRIGHT "(C)2015,2016 LGB Gabor Lenart"
 
 // more accurate :) from IstvanV
 #define NICK_SLOTS_PER_SEC 889846
