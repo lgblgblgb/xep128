@@ -34,7 +34,11 @@ static int cs0, cs1;
 static Uint8 status;
 
 static Uint8 sd_ram_ext[0x1C00]; // 7K of useful SRAM
-static Uint8 sd_rom_ext[0x10000]; // 64K (second 64K flash, can only be accessed within a 8K window)
+/* This is the SECOND 64K of the FLASH area, can be accessed only within the 8K "window"
+   The FIRST 64K of flash is structured this way:
+   * first 48K is accessed directly at segment 4,5,6, so it's part of the normal EP memory emulated
+   * the last 16K is CANNOT BE accessed  */
+static Uint8 sd_rom_ext[0x10000];
 
 static Uint8 cmd[6], cmd_index, _read_b, _write_b, _write_specified;
 static const Uint8 *ans_p;
@@ -282,6 +286,7 @@ static void _spi_shifting_with_sd_card ()
 
 
 
+/* You MUST be sure, that addr is in the range of 0-3FFF */
 Uint8 sdext_read_cart_p3 ( Uint16 addr )
 {
 	//return 0xFF;
@@ -294,7 +299,7 @@ Uint8 sdext_read_cart_p3 ( Uint16 addr )
 #ifdef DEBUG_SDEXT
 		printf("SDEXT: reading paged ROM, ROM offset = %04X, result = %02X\n", (addr + rom_page_ofs) & 0xFFFF, byte);
 #endif
-		//byte = 0xFF; // FUCK!
+		//byte = 0xFF; // Censored: I left an ugly word here as comment, sorry about that. Now it has been removed.
 		return byte;
 	}
 	if (addr < 0x3C00) {
@@ -349,6 +354,7 @@ Uint8 sdext_read_cart_p3 ( Uint16 addr )
 }
 
 
+/* You MUST be sure, that addr is in the range of 0-3FFF */
 void sdext_write_cart_p3 ( Uint16 addr, Uint8 data )
 {
 	//return;
@@ -375,16 +381,16 @@ void sdext_write_cart_p3 ( Uint16 addr, Uint8 data )
 			_spi_shifting_with_sd_card();
 			break;
 		case 1: // control register (bit7=CS0, bit6=CS1, bit5=clear change card signal
-#ifdef DEBUG_SDEXT
-			printf("SDEXT: REGIO: W: control register to %02X\n", data);
-#endif
 			if (data & 32) // clear change signal
 				status &= 255 - 32;
 			cs0 = data & 128;
 			cs1 = data & 64;
+#ifdef DEBUG_SDEXT
+			printf("SDEXT: REGIO: W: control register to %02X CS0=%d CS1=%d\n", data, cs0, cs1);
+#endif
 			break;
 		case 2: // ROM pager register
-			rom_page_ofs = data << 8;
+			rom_page_ofs = (data & 0xE0) << 8;	// only high 3 bits count
 #ifdef DEBUG_SDEXT
 			printf("SDEXT: REGIO: W: paging ROM to %02X\n", data);
 #endif
