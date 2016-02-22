@@ -158,12 +158,12 @@ void wd_exdos_reset ( void );
 #endif
 
 #ifdef CONFIG_SDEXT_SUPPORT
-extern int sdext_cp3m_usability;
-#define SDEXT_PHYSADDR_CART_P3_SELMASK_ON    0x1C000
-#define SDEXT_PHYSADDR_CART_P3_SELMASK_OFF         1
+extern int sdext_cart_enabler;
+#define SDEXT_CART_ENABLER_ON    0x10000
+#define SDEXT_CART_ENABLER_OFF         1
 void sdext_init ( void );
-Uint8 sdext_read_cart_p3 ( Uint16 addr );
-void sdext_write_cart_p3 ( Uint16 addr, Uint8 data );
+Uint8 sdext_read_cart ( Uint16 addr );
+void sdext_write_cart ( Uint16 addr, Uint8 data );
 void sdext_clear_ram(void);
 #endif
 

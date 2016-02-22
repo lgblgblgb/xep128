@@ -127,8 +127,8 @@ static Z80EX_BYTE _mread(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, int m1_state,
 	if (mem_ws_all || (m1_state && mem_ws_m1))
 		z80ex_w_states(z80, 1);
 #ifdef CONFIG_SDEXT_SUPPORT
-	if ((phys & 0x3FC000) == sdext_cp3m_usability)
-		return sdext_read_cart_p3(addr & 0x3FFF);
+	if ((phys & 0x3F0000) == sdext_cart_enabler)
+		return sdext_read_cart(phys & 0xFFFF);
 	else
 #endif
 		return memory[phys];
@@ -154,8 +154,8 @@ static void      _mwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, Z80EX_BYTE va
 	if (phys >= ram_start)
 		memory[phys] = value;
 #ifdef CONFIG_SDEXT_SUPPORT
-	else if ((phys & 0x3FC000) == sdext_cp3m_usability)
-		sdext_write_cart_p3(addr & 0x3FFF, value);
+	else if ((phys & 0x3F0000) == sdext_cart_enabler)
+		sdext_write_cart(phys & 0xFFFF, value);
 #endif
 	else
 		printf("WRITE to NON-decoded memory area %08X\n", phys);

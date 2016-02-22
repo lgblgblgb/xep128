@@ -24,10 +24,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 
 #ifdef CONFIG_SDEXT_SUPPORT
+#define DEBUG_SDEXT
 
 static const char *sdext_rom_signature = "SDEXT";
 
-int sdext_cp3m_usability = SDEXT_PHYSADDR_CART_P3_SELMASK_OFF;
+int sdext_cart_enabler = SDEXT_CART_ENABLER_OFF;
 char sdimg_path[PATH_MAX + 1];
 static int rom_page_ofs;
 static int is_hs_read;
@@ -35,12 +36,13 @@ static Uint8 _spi_last_w;
 static int cs0, cs1;
 static Uint8 status;
 
-static Uint8 sd_ram_ext[0x1C00]; // 7K of useful SRAM
-/* This is the SECOND 64K of the FLASH area, can be accessed only within the 8K "window"
-   The FIRST 64K of flash is structured this way:
+static Uint8 sd_ram_ext[7 * 1024]; // 7K of useful SRAM
+/* This is the SECOND 64K of the FLASH area, can be accessed only within the 8K "window": */
+static Uint8  sd_rom_ext[0x10000];
+/* The FIRST 64K of flash (thus the name "low") is structured this way:
    * first 48K is accessed directly at segment 4,5,6, so it's part of the normal EP memory emulated
    * the last 16K is CANNOT BE accessed  */
-static Uint8 sd_rom_ext[0x10000];
+static Uint8 *sd_rom_ext_low = memory + 4 * 0x4000;
 
 static Uint8 cmd[6], cmd_index, _read_b, _write_b, _write_specified;
 static const Uint8 *ans_p;
@@ -143,8 +145,8 @@ void sdext_init ( void )
 		sdf = NULL;
 		printf("SDEXT: init: REFUSE: no SD-card cartridge ROM code found in loaded ROM set.\n");
 		return;
-	} else
-		printf("SDEXT: init: cool, SD-card cartridge ROM code seems to be found in loaded ROM set, enabling SD card hardware emulation ...\n");
+	}
+	printf("SDEXT: init: cool, SD-card cartridge ROM code seems to be found in loaded ROM set, enabling SD card hardware emulation ...\n");
 	sdf = open_emu_file(SDCARD_IMG_FN, "rb", sdimg_path);
 	if (sdf == NULL) {
 		WARNING_WINDOW("SD card image file \"%s\" cannot be open: %s. You can use Xep128 but SD card access won't work!", sdimg_path, ERRSTR());
@@ -153,7 +155,7 @@ void sdext_init ( void )
 	memset(sd_rom_ext, 0xFF, 0x10000);
 	memcpy(sd_rom_ext, memory + 7 * 0x4000, 0x4000); // copy ROM image 16K to the extended area (the FLASH.ROM I have 8K is used only though)
 	sdext_clear_ram();
-	sdext_cp3m_usability = SDEXT_PHYSADDR_CART_P3_SELMASK_ON; // turn emulation on
+	sdext_cart_enabler = SDEXT_CART_ENABLER_ON; // turn emulation on
 	rom_page_ofs = 0;
 	is_hs_read = 0;
 	cmd_index = 0;
@@ -164,7 +166,7 @@ void sdext_init ( void )
 	_read_b = 0;
 	_write_b = 0xFF;
 	_spi_last_w = 0xFF;
-	printf("SDEXT: init\n");
+	printf("SDEXT: init %p %p\n", sd_rom_ext_low, memory + 4 * 0x4000);
 }
 
 
@@ -303,38 +305,38 @@ static void _spi_shifting_with_sd_card ()
 
 
 
+/* We expects all 4-7 seg reads/writes to be handled, as for re-flashing emu etc will need it!
+   Otherwise only segment 7 would be enough. */
 
 
 
-/* Warning:
- * Some resources mention addresses like 0xFC00 for the I/O area.
- * Here, I mean addresses within segment 7 only, so it becomes 0x3C00 ...
- */
-
-
-
-/* You MUST be sure, that addr is in the range of 0-3FFF */
-Uint8 sdext_read_cart_p3 ( Uint16 addr )
+Uint8 sdext_read_cart ( Uint16 addr )
 {
-	//return 0xFF;
 #ifdef DEBUG_SDEXT
 	int pc = z80ex_get_reg(z80, regPC);
-	printf("SDEXT: read P3 @ %04X [CPU: seg=%02X, pc=%04X]\n", addr, ports[0xB0 | (pc >> 14)], pc);
+	printf("SDEXT: read cart @ %04X [CPU: seg=%02X, pc=%04X]\n", addr, ports[0xB0 | (pc >> 14)], pc);
 #endif
-	if (addr < 0x2000) {
-		Uint8 byte = sd_rom_ext[(rom_page_ofs + addr) & 0xFFFF];
+	if (addr < 0xC000) {
 #ifdef DEBUG_SDEXT
-		printf("SDEXT: reading paged ROM, ROM offset = %04X, result = %02X\n", (addr + rom_page_ofs) & 0xFFFF, byte);
+		printf("SDEXT: reading base ROM, ROM offset = %04X, result = %02X\n", addr, sd_rom_ext_low[addr]);
+#endif
+		return sd_rom_ext_low[addr];	// reading segments 4-6 ...
+	}
+	if (addr < 0xE000) {
+		Uint8 byte = sd_rom_ext[rom_page_ofs + (addr & 0x1FFF)];
+#ifdef DEBUG_SDEXT
+		printf("SDEXT: reading paged ROM, ROM offset = %04X, result = %02X\n", rom_page_ofs + (addr & 0x1FFF), byte);
 #endif
 		//byte = 0xFF; // Censored: I left an ugly word here as comment, sorry about that. Now it has been removed.
 		return byte;
 	}
-	if (addr < 0x3C00) {
+	if (addr < 0xFC00) {
 #ifdef DEBUG_SDEXT
-		printf("SDEXT: reading RAM at offset %04X\n", addr - 0x2000);
+		printf("SDEXT: reading RAM at offset %04X\n", addr - 0xE000);
 #endif
-		return sd_ram_ext[addr - 0x2000];
-	} if (is_hs_read) {
+		return sd_ram_ext[addr - 0xE000];
+	}
+	if (is_hs_read) {
 		// in HS-read (high speed read) mode, all the 0x3C00-0x3FFF acts as data _read_ register (but not for _write_!!!)
 		// also, there is a fundamental difference compared to "normal" read: each reads triggers SPI shifting in HS mode, but not in regular mode, there only write does that!
 		Uint8 old = _read_b; // HS-read initiates an SPI shift, but the result (AFAIK) is the previous state, as shifting needs time!
@@ -381,20 +383,19 @@ Uint8 sdext_read_cart_p3 ( Uint16 addr )
 }
 
 
-/* You MUST be sure, that addr is in the range of 0-3FFF */
-void sdext_write_cart_p3 ( Uint16 addr, Uint8 data )
+void sdext_write_cart ( Uint16 addr, Uint8 data )
 {
-	//return;
 #ifdef DEBUG_SDEXT
 	int pc = z80ex_get_reg(z80, regPC);
-	printf("SDEXT: write P3 @ %04X with %02X [CPU: seg=%02X, pc=%04X]\n", addr, data, ports[0xB0 | (pc >> 14)], pc);
+	printf("SDEXT: write cart @ %04X with %02X [CPU: seg=%02X, pc=%04X]\n", addr, data, ports[0xB0 | (pc >> 14)], pc);
 #endif
-	if (addr < 0x2000) return;	// pageable ROM (8K), do not overwrite [reflash is currently not supported]
-	if (addr < 0x3C00) {		// SDEXT's RAM (7K), writable
+	if (addr < 0xC000) return;	// segments 4-6, do not overwrite [reflash is currently not supported]
+	if (addr < 0xE000) return;	// pageable ROM (8K), do not overwrite [reflash is currently not supported]
+	if (addr < 0xFC00) {		// SDEXT's RAM (7K), writable
 #ifdef DEBUG_SDEXT
-		printf("SDEXT: writing RAM at offset %04X\n", addr - 0x2000);
+		printf("SDEXT: writing RAM at offset %04X\n", addr - 0xE000);
 #endif
-		sd_ram_ext[addr - 0x2000] = data;
+		sd_ram_ext[addr - 0xE000] = data;
 		return;
 	}
 	// rest 1K is the (memory mapped) I/O area

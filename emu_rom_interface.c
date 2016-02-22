@@ -214,9 +214,10 @@ static void xep_exos_command_trap ( void )
 			}
 			break;
 		case 3: // EXOS help
-			if (b == 0)
+			if (b == 0) {
 				sprintf(COBUF, "%s", SHORT_HELP);
-			else if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
+				SET_C(0); //SET_C(0);
+			} else if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
 				cmd_help();
 				SET_A(0);
 				SET_C(0);
