@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #ifdef CONFIG_SDEXT_SUPPORT
 
+static const char *sdext_rom_signature = "SDEXT";
+
 int sdext_cp3m_usability = SDEXT_PHYSADDR_CART_P3_SELMASK_OFF;
 char sdimg_path[PATH_MAX + 1];
 static int rom_page_ofs;
@@ -112,12 +114,37 @@ void sdext_clear_ram(void)
 }
 
 
+
+static int sdext_detect_rom ( void )
+{
+	Uint8 *p = memory + 7 * 0x4000;
+	Uint8 *p2 = p + 0x2000 - strlen(sdext_rom_signature);
+	if (memcmp(p, "EXOS_ROM", 8))
+		return 1;	// No EXOS_ROM header
+	for (; p < p2; p++ ) {
+		if (!memcmp(p, sdext_rom_signature, strlen(sdext_rom_signature)))
+			return 0;	// found our extra ID
+	}
+	return 1;	// our ID cannot be found
+}
+
+
+
 /* SDEXT emulation currently excepts the cartridge area (segments 4-7) to be filled
  * with the FLASH ROM content. Even segment 7, which will be copied to the second 64K "hidden"
  * and pagable flash area of the SD cartridge. Currently, there is no support for the full
  * sized SDEXT flash image */
 void sdext_init ( void )
 {
+	/* try to detect SDEXT ROM extension and only turn on emulation if it exists */
+	if (sdext_detect_rom()) {
+		WARNING_WINDOW("No SD-card cartridge ROM code found in loaded ROM set. SD card hardware emulation has been disabled!");
+		*sdimg_path = 0;
+		sdf = NULL;
+		printf("SDEXT: init: REFUSE: no SD-card cartridge ROM code found in loaded ROM set.\n");
+		return;
+	} else
+		printf("SDEXT: init: cool, SD-card cartridge ROM code seems to be found in loaded ROM set, enabling SD card hardware emulation ...\n");
 	sdf = open_emu_file(SDCARD_IMG_FN, "rb", sdimg_path);
 	if (sdf == NULL) {
 		WARNING_WINDOW("SD card image file \"%s\" cannot be open: %s. You can use Xep128 but SD card access won't work!", sdimg_path, ERRSTR());
