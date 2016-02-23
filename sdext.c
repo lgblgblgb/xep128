@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 
 #ifdef CONFIG_SDEXT_SUPPORT
-#define DEBUG_SDEXT
+//#define DEBUG_SDEXT
 
 static const char *sdext_rom_signature = "SDEXT";
 
