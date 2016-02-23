@@ -27,7 +27,7 @@ struct commands_st {
 static char buffer[256];
 static char *carg;
 
-static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 ROM)\r\n";
+static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 EMU)\r\n";
 
 #define COBUF ((char*)(memory + xep_rom_addr + 0x3802))
 #define SET_A(v) z80ex_set_reg(z80, regAF, (z80ex_get_reg(z80, regAF) & 0xFF) | ((v) << 8))

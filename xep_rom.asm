@@ -29,11 +29,16 @@ ENDMACRO
 
 
 rom_main_entry_point:
-	DB	0xED, 0xBC	; ED trap for the emulator, it may modify A, C
+	; The following invalid ED opcode is handled by the "ED trap" of the CPU emulator in Xep128
+	; The trap handler itself will check EXOS action code, register values, and may modify
+	; registers C and/or A as well. Also, it can pass data through the ROm area :) from 0xF8000
+	DB	0xED, 0xBC
+	; Let save registers may be used by the check to print anything and/or print stuff
+	; This also includes the possibly already modified A/C by the ED trap above!
 	PUSH	AF
 	PUSH	BC
 	PUSH	DE
-	LD	DE, 0xF800 ; the ED trap modifies memory from here
+	LD	DE, 0xF800	; the ED trap modifies memory from here
 	LD	A, (DE)
 	LD	C, A
 	INC	DE
