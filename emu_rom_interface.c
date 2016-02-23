@@ -173,6 +173,7 @@ static void xep_exos_command_trap ( void )
 	c = z80ex_get_reg(z80, regBC) & 0xFF;
 	b = z80ex_get_reg(z80, regBC) >> 8;
 	de = z80ex_get_reg(z80, regDE);
+	printf("XEP: TRAP: C=%02Xh, B=%02Xh, DE=%04Xh\n", c, b, de);
 	switch (c) {
 		case 2: // EXOS command
 			if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
@@ -216,7 +217,7 @@ static void xep_exos_command_trap ( void )
 		case 3: // EXOS help
 			if (b == 0) {
 				sprintf(COBUF, "%s", SHORT_HELP);
-				//SET_C(0); //SET_C(0);  // THESE ARE NOT NEEDED: FIXME why :help command hangs?!
+				SET_A(0);
 			} else if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
 				cmd_help();
 				SET_A(0);
@@ -239,6 +240,7 @@ static void xep_exos_command_trap ( void )
 
 void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 {
+	printf("XEP: ROM trap at PC=%04Xh OPC=%02Xh\n", pc, opcode);
 	switch (opcode) {
 		case 0xBC:
 			xep_exos_command_trap();
