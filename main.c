@@ -112,6 +112,7 @@ static int load_roms ( const char *basename, char *path )
 		ERROR_WINDOW("ROM image \"%s\" size is not multiple of 0x4000 bytes.", path);
 		return -1;
 	}
+	printf("ROM: ROM-set is loaded, %06Xh bytes (%d Kbytes), segments 00-%02Xh\n", ret, ret >> 10, (ret >> 14) - 1);
 	return ret;
 }
 
