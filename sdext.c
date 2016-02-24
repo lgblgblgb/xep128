@@ -16,15 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-
-//	http://elm-chan.org/docs/mmc/mmc_e.html
-//	http://www.mikroe.com/downloads/get/1624/microsd_card_spec.pdf
-//	http://users.ece.utexas.edu/~valvano/EE345M/SD_Physical_Layer_Spec.pdf
+/* General SD information:
+	http://elm-chan.org/docs/mmc/mmc_e.html
+	http://www.mikroe.com/downloads/get/1624/microsd_card_spec.pdf
+	http://users.ece.utexas.edu/~valvano/EE345M/SD_Physical_Layer_Spec.pdf
+   Flash IC used (AM29F400BT) on the cartridge:
+	http://www.mouser.com/ds/2/380/spansion%20inc_am29f400b_eol_21505e8-329620.pdf
+*/
 
 #include "xepem.h"
 
 #ifdef CONFIG_SDEXT_SUPPORT
-//#define DEBUG_SDEXT
+#define DEBUG_SDEXT
+#define CONFIG_SDEXT_FLASH
 
 static const char *sdext_rom_signature = "SDEXT";
 
@@ -36,13 +40,18 @@ static Uint8 _spi_last_w;
 static int cs0, cs1;
 static Uint8 status;
 
-static Uint8 sd_ram_ext[7 * 1024]; // 7K of useful SRAM
-/* This is the SECOND 64K of the FLASH area, can be accessed only within the 8K "window": */
-static Uint8  sd_rom_ext[0x10000];
-/* The FIRST 64K of flash (thus the name "low") is structured this way:
+static Uint8 sd_ram_ext[7 * 1024]; // 7K of accessible SRAM
+/* The FIRST 64K of flash (sector 0) is structured this way:
    * first 48K is accessed directly at segment 4,5,6, so it's part of the normal EP memory emulated
-   * the last 16K is CANNOT BE accessed  */
-static Uint8 *sd_rom_ext_low = memory + 4 * 0x4000;
+   * the last 16K is CANNOT BE accessed at all from EP
+   It's part of the main memory array at the given offset, see flash[0][addr] below
+   The SECOND 64K of flash (sector 1) is stored in sd_rom_ext (see below), it's flash[1][addr] */
+static Uint8 sd_rom_ext[0x10000];
+static Uint8 *flash[2] = { memory + 0x10000, sd_rom_ext };
+
+static int flash_wr_protect = 0;
+static int flash_bus_cycle = 0;
+static int flash_command = 0;
 
 static Uint8 cmd[6], cmd_index, _read_b, _write_b, _write_specified;
 static const Uint8 *ans_p;
@@ -153,9 +162,11 @@ void sdext_init ( void )
 		*sdimg_path = 0;
 	}
 	memset(sd_rom_ext, 0xFF, 0x10000);
-	memcpy(sd_rom_ext, memory + 7 * 0x4000, 0x4000); // copy ROM image 16K to the extended area (the FLASH.ROM I have 8K is used only though)
+	/* Copy ROM image of 16K to the second 64K of the cartridge flash. Currently only 8K is used.
+           It's possible to use 64K the ROM set image used by Xep128 can only hold 16K this way, though. */
+	memcpy(sd_rom_ext, memory + 7 * 0x4000, 0x4000);
 	sdext_clear_ram();
-	sdext_cart_enabler = SDEXT_CART_ENABLER_ON; // turn emulation on
+	sdext_cart_enabler = SDEXT_CART_ENABLER_ON;	// turn emulation on
 	rom_page_ofs = 0;
 	is_hs_read = 0;
 	cmd_index = 0;
@@ -166,7 +177,7 @@ void sdext_init ( void )
 	_read_b = 0;
 	_write_b = 0xFF;
 	_spi_last_w = 0xFF;
-	printf("SDEXT: init %p %p\n", sd_rom_ext_low, memory + 4 * 0x4000);
+	printf("SDEXT: init end\n");
 }
 
 
@@ -305,10 +316,152 @@ static void _spi_shifting_with_sd_card ()
 
 
 
+static void flash_erase ( int sector )	// erase sectors 0 or 1, or both if -1 is given!
+{
+	if (sector < 1) {
+		memset(flash[0], 0xFF, 0xC000);		// erase sector 0, it's only 48K accessible on SD/EP so it does not matter, real flash would be 64K here too
+		printf("SDEXT: FLASH: erasing sector 0!\n");
+		WARNING_WINDOW("Erasing flash sector 0! You can safely ignore this warning.");
+	}
+	if (abs(sector) == 1) {
+		memset(flash[1], 0xFF, 0x10000);	// erase sector 1
+		printf("SDEXT: FLASH: erasing sector 1!\n");
+		WARNING_WINDOW("Erasing flash sector 1! You can safely ignore this warning.");
+	}
+}
+
+
+// flash programming allows only 1->0 on data bits, erase must be executed for 0->1
+#define FLASH_PROGRAM_BYTE(sector, addr, data) flash[sector][addr] &= (data)
+
+
+static Uint8 flash_rd_bus_op ( int sector, Uint16 addr )
+{
+
+	//if (flash_status_polling > -1)
+	//	return flash_status_polling;
+//	if (flash_data_mode)
+		return flash[sector][addr];
+#if 0
+	if (base)
+		return sd_rom_ext[addr];	// reading from second flash sector
+	else
+		return sd_rom_ext_low[addr];	// reading from first flash sector
+#endif
+}
+
+
+static void flash_cmd_return ( void )
+{
+	flash_bus_cycle = 0;
+	flash_command = 0;
+}
+
+
+static int flash_warn_programming = 1;
+static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
+{
+	int idaddr = addr & 0x3FFF;
+	printf("SDEXT: FLASH: WR OP: sector %d addr %04Xh data %02Xh flash-bus-cycle %d flash-command %02Xh\n", sector, addr, data, flash_bus_cycle, flash_command);
+	if (flash_wr_protect)
+		return;	// write protection on flash, do not accept any write bus op
+	if (flash_command == 0x90)
+		flash_bus_cycle = 0;	// autoselect mode does not have wr cycles more (only rd)
+	switch (flash_bus_cycle) {
+		case 0:
+			flash_command = 0;	// invalidate command
+			if (data == 0xB0 || data == 0x30) {
+				//WARNING_WINDOW("SDEXT FLASH erase suspend/resume (cmd %02Xh) is not emulated yet :-(", data);
+				return; // well, erase suspend/resume is currently not supported :-(
+			}
+			if (data == 0xF0) return; // reset command
+			if (idaddr != 0xAAA || data != 0xAA) return; // invalid cmd seq
+			flash_bus_cycle = 1;
+			return;
+		case 1:
+			if (idaddr != 0x555 || data != 0x55) { // invalid cmd seq
+				flash_bus_cycle = 0;
+				return;
+			}
+			flash_bus_cycle = 2;
+			return;
+		case 2:
+			if (idaddr != 0xAAA) {
+				flash_bus_cycle = 0; // invalid cmd seq
+				return;
+			}
+			if (data != 0x90 && data != 0x80 && data != 0xA0) {
+				flash_bus_cycle = 0; // invalid cmd seq
+				return;
+			}
+			flash_command = data;
+			flash_bus_cycle = 3;
+			return;
+		case 3:
+			if (flash_command == 0xA0) {	// program command!!!!
+				// flash programming allows only 1->0 on data bits, erase must be executed for 0->1
+				Uint8 oldbyte = flash[sector][addr];
+				Uint8 newbyte = oldbyte & data;
+				flash[sector][addr] = newbyte;
+				printf("SDEXT: FLASH: programming: sector %d address %04Xh data-req %02Xh, result %02Xh->%02Xh\n", sector, addr, data, oldbyte, newbyte);
+				if (flash_warn_programming) {
+					WARNING_WINDOW("Flash programming detected! There will be no further warnings on more bytes.\nYou can safely ignore this warning.");
+					flash_warn_programming = 0;
+				}
+				flash_command = 0; // end of command
+				flash_bus_cycle = 0;
+				return;
+			}
+			// only flash command 0x80 can be left, 0x90 handled before "switch", 0xA0 just before ...
+			if (idaddr != 0xAAA || data != 0xAA) { // invalid cmd seq
+				flash_command = 0;
+				flash_bus_cycle = 0;
+				return;
+			}
+			flash_bus_cycle = 4;
+			return;
+		case 4:	// only flash command 0x80 can get this far ...
+			if (idaddr != 0x555 || data != 0x55) { // invalid cmd seq
+				flash_command = 0;
+				flash_bus_cycle = 0;
+				return;
+			}
+			flash_bus_cycle = 5;
+			return;
+		case 5:	// only flash command 0x80 can get this far ...
+			if (idaddr == 0xAAA && data == 0x10) {	// CHIP ERASE!!!!
+				flash_erase(-1);
+			} else if (data == 0x30) {
+				flash_erase(sector);
+			}
+			flash_bus_cycle = 0; // end of erase command?
+			flash_command = 0;
+			return;
+		default:
+			ERROR_WINDOW("Invalid SDEXT FLASH bus cycle #%d on WR", flash_bus_cycle);
+			exit(1);
+			break;
+	}
+
+
+#if 0
+	if (flash_cmd_seq == 0 && data == 0xF0) {	// command "reset"
+		flash_data_mode = 1;
+		return flash_to_data_mode();
+		if (data == 0xB0 || data == 0x30)
+	}
+
+#endif
+
+	//int flashaddr = base | addr;
+	// currently nothing ...
+//	printf("SDEXT: FLASH: not supported yet ...\n");
+}
+
+
+
 /* We expects all 4-7 seg reads/writes to be handled, as for re-flashing emu etc will need it!
-   Otherwise only segment 7 would be enough. */
-
-
+   Otherwise only segment 7 would be enough if flash is not emulated other than only "some kind of ROM". */
 
 Uint8 sdext_read_cart ( Uint16 addr )
 {
@@ -317,24 +470,27 @@ Uint8 sdext_read_cart ( Uint16 addr )
 	printf("SDEXT: read cart @ %04X [CPU: seg=%02X, pc=%04X]\n", addr, ports[0xB0 | (pc >> 14)], pc);
 #endif
 	if (addr < 0xC000) {
+		Uint8 byte = flash_rd_bus_op(0, addr);
 #ifdef DEBUG_SDEXT
-		printf("SDEXT: reading base ROM, ROM offset = %04X, result = %02X\n", addr, sd_rom_ext_low[addr]);
+		printf("SDEXT: reading base ROM, ROM offset = %04X, result = %02X\n", addr, byte);
 #endif
-		return sd_rom_ext_low[addr];	// reading segments 4-6 ...
+		return byte;
 	}
 	if (addr < 0xE000) {
-		Uint8 byte = sd_rom_ext[rom_page_ofs + (addr & 0x1FFF)];
+		Uint8 byte;
+		addr = rom_page_ofs + (addr & 0x1FFF);
+		byte = flash_rd_bus_op(1, addr);
 #ifdef DEBUG_SDEXT
-		printf("SDEXT: reading paged ROM, ROM offset = %04X, result = %02X\n", rom_page_ofs + (addr & 0x1FFF), byte);
+		printf("SDEXT: reading paged ROM, ROM offset = %04X, result = %02X\n", addr, byte);
 #endif
-		//byte = 0xFF; // Censored: I left an ugly word here as comment, sorry about that. Now it has been removed.
 		return byte;
 	}
 	if (addr < 0xFC00) {
+		addr -= 0xE000;
 #ifdef DEBUG_SDEXT
-		printf("SDEXT: reading RAM at offset %04X\n", addr - 0xE000);
+		printf("SDEXT: reading RAM at offset %04X, result = %02X\n", addr, sd_ram_ext[addr]);
 #endif
-		return sd_ram_ext[addr - 0xE000];
+		return sd_ram_ext[addr];
 	}
 	if (is_hs_read) {
 		// in HS-read (high speed read) mode, all the 0x3C00-0x3FFF acts as data _read_ register (but not for _write_!!!)
@@ -389,13 +545,20 @@ void sdext_write_cart ( Uint16 addr, Uint8 data )
 	int pc = z80ex_get_reg(z80, regPC);
 	printf("SDEXT: write cart @ %04X with %02X [CPU: seg=%02X, pc=%04X]\n", addr, data, ports[0xB0 | (pc >> 14)], pc);
 #endif
-	if (addr < 0xC000) return;	// segments 4-6, do not overwrite [reflash is currently not supported]
-	if (addr < 0xE000) return;	// pageable ROM (8K), do not overwrite [reflash is currently not supported]
+	if (addr < 0xC000) {		// segments 4-6, call flash WR emulation
+		flash_wr_bus_op(0, addr, data);
+		return;
+	}
+	if (addr < 0xE000) {		// pageable ROM (8K), call flash WR emulation
+		flash_wr_bus_op(1, (addr & 0x1FFF) + rom_page_ofs, data);
+		return;
+	}
 	if (addr < 0xFC00) {		// SDEXT's RAM (7K), writable
+		addr -= 0xE000;
 #ifdef DEBUG_SDEXT
-		printf("SDEXT: writing RAM at offset %04X\n", addr - 0xE000);
+		printf("SDEXT: writing RAM at offset %04X\n", addr);
 #endif
-		sd_ram_ext[addr - 0xE000] = data;
+		sd_ram_ext[addr] = data;
 		return;
 	}
 	// rest 1K is the (memory mapped) I/O area
