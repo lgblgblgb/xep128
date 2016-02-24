@@ -93,30 +93,8 @@ static const Uint8 _read_ocr_answer[] = { // no data token, nor CRC! (technicall
 	// the OCR itself
 	0x80, 0xFF, 0x80, 0x00
 };
-#if 0
-static const Uint8 _read_sector_answer_faked[] = { // FAKE, we read the same for all CMD17 commands!
-	0xFF, // wait a bit
-	0xFE, // data token
-	// the read block itself
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,	
-	0, 0 // CRC bytes
-};
-#endif
-
-
-
 
 #define ADD_ANS(ans) { ans_p = (ans); ans_index = 0; ans_size = sizeof(ans); }
-
-
-
 
 
 void sdext_clear_ram(void)
@@ -292,17 +270,6 @@ static void _spi_shifting_with_sd_card ()
 #endif
 				fseek(sdf, _offset, SEEK_SET);
 				_block_read();
-				/*
-				fseek(sdf, (cmd[1] << 24) | (cmd[2] << 16) | (cmd[3] << 8) | cmd[4], SEEK_SET);
-				_buffer[0] = 0xFF; // wait a bit
-				_buffer[1] = 0xFE; // data token
-				printf("SDEXT: REGIO: fread retval = %d\n", fread(_buffer + 2, 1, 512, sdf));
-				_buffer[512 + 2] = 0; // CRC
-				_buffer[512 + 3] = 0; // CRC
-				ans_p = _buffer;
-				ans_index = 0;
-				ans_size = 512 + 4;
-				*/
 				if (cmd[0] == 18) ans_callback = _block_read; // in case of CMD18, continue multiple sectors, register callback for that!
 				_read_b = 0; // R1
 			}
@@ -331,30 +298,34 @@ static void flash_erase ( int sector )	// erase sectors 0 or 1, or both if -1 is
 }
 
 
-// flash programming allows only 1->0 on data bits, erase must be executed for 0->1
-#define FLASH_PROGRAM_BYTE(sector, addr, data) flash[sector][addr] &= (data)
-
 
 static Uint8 flash_rd_bus_op ( int sector, Uint16 addr )
 {
-
-	//if (flash_status_polling > -1)
-	//	return flash_status_polling;
-//	if (flash_data_mode)
-		return flash[sector][addr];
-#if 0
-	if (base)
-		return sd_rom_ext[addr];	// reading from second flash sector
+	Uint8 byte;
+	if (flash_command == 0x90)
+		switch (addr & 0xFF) {
+			case 0x00:
+				byte = 1;	// manufacturer ID
+				printf("SDEXT: FLASH: cmd 0x90 get manufacturer ID, result = %02Xh\n", byte);
+				break;
+			case 0x02:
+				byte = 0x23;	// device ID, top boot block
+				printf("SDEXT: FLASH: cmd 0x90 get device ID, result = %02Xh\n", byte);
+				break;
+			case 0x04:
+				byte = 0;	// sector protect status, etc?
+				printf("SDEXT: FLASH: cmd 0x90 get sector protect status, result = %02Xh\n", byte);
+				break;
+			default:
+				byte = flash[sector][addr];	// not sure what to do in case of non-valid query "code"
+				printf("SDEXT: FLASH: cmd 0x90 unknown info requested (%d), accesssing flash content instead.\n", addr & 0xFF);
+				break;
+		}
 	else
-		return sd_rom_ext_low[addr];	// reading from first flash sector
-#endif
-}
-
-
-static void flash_cmd_return ( void )
-{
-	flash_bus_cycle = 0;
+		byte = flash[sector][addr];
 	flash_command = 0;
+	flash_bus_cycle = 0;
+	return byte;
 }
 
 
@@ -362,24 +333,32 @@ static int flash_warn_programming = 1;
 static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 {
 	int idaddr = addr & 0x3FFF;
+	if (flash_command == 0x90)
+		flash_bus_cycle = 0;    // autoselect mode does not have wr cycles more (only rd)
 	printf("SDEXT: FLASH: WR OP: sector %d addr %04Xh data %02Xh flash-bus-cycle %d flash-command %02Xh\n", sector, addr, data, flash_bus_cycle, flash_command);
 	if (flash_wr_protect)
 		return;	// write protection on flash, do not accept any write bus op
-	if (flash_command == 0x90)
-		flash_bus_cycle = 0;	// autoselect mode does not have wr cycles more (only rd)
 	switch (flash_bus_cycle) {
 		case 0:
 			flash_command = 0;	// invalidate command
 			if (data == 0xB0 || data == 0x30) {
 				//WARNING_WINDOW("SDEXT FLASH erase suspend/resume (cmd %02Xh) is not emulated yet :-(", data);
+				printf("SDEXT: FLASH: erase suspend/resume is not yet supported, ignoring ...\n");
 				return; // well, erase suspend/resume is currently not supported :-(
 			}
-			if (data == 0xF0) return; // reset command
-			if (idaddr != 0xAAA || data != 0xAA) return; // invalid cmd seq
+			if (data == 0xF0) {
+				printf("SDEXT: FLASH: reset command\n");
+				return; // reset command
+			}
+			if (idaddr != 0xAAA || data != 0xAA) {
+				printf("SDEXT: FLASH: invalid command sequence at the beginning [bus_cycle=0]\n");
+				return; // invalid cmd seq
+			}
 			flash_bus_cycle = 1;
 			return;
 		case 1:
 			if (idaddr != 0x555 || data != 0x55) { // invalid cmd seq
+				printf("SDEXT: FLASH: invalid command sequence [bus_cycle=1]\n");
 				flash_bus_cycle = 0;
 				return;
 			}
@@ -387,10 +366,12 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 			return;
 		case 2:
 			if (idaddr != 0xAAA) {
+				printf("SDEXT: FLASH: invalid command sequence [bus_cycle=2]\n");
 				flash_bus_cycle = 0; // invalid cmd seq
 				return;
 			}
 			if (data != 0x90 && data != 0x80 && data != 0xA0) {
+				printf("SDEXT: FLASH: unknown command [bus_cycle=2]\n");
 				flash_bus_cycle = 0; // invalid cmd seq
 				return;
 			}
@@ -414,6 +395,7 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 			}
 			// only flash command 0x80 can be left, 0x90 handled before "switch", 0xA0 just before ...
 			if (idaddr != 0xAAA || data != 0xAA) { // invalid cmd seq
+				printf("SDEXT: FLASH: invalid command sequence [bus_cycle=3]\n");
 				flash_command = 0;
 				flash_bus_cycle = 0;
 				return;
@@ -422,6 +404,7 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 			return;
 		case 4:	// only flash command 0x80 can get this far ...
 			if (idaddr != 0x555 || data != 0x55) { // invalid cmd seq
+				printf("SDEXT: FLASH: invalid command sequence [bus_cycle=4]\n");
 				flash_command = 0;
 				flash_bus_cycle = 0;
 				return;
@@ -442,20 +425,6 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 			exit(1);
 			break;
 	}
-
-
-#if 0
-	if (flash_cmd_seq == 0 && data == 0xF0) {	// command "reset"
-		flash_data_mode = 1;
-		return flash_to_data_mode();
-		if (data == 0xB0 || data == 0x30)
-	}
-
-#endif
-
-	//int flashaddr = base | addr;
-	// currently nothing ...
-//	printf("SDEXT: FLASH: not supported yet ...\n");
 }
 
 
@@ -509,7 +478,6 @@ Uint8 sdext_read_cart ( Uint16 addr )
 				printf("SDEXT: REGIO: R: DATA: SPI data register regular read %02X\n", _read_b);
 #endif
 				return _read_b;
-				//printf("SDEXT: REGIO: R: SPI, result = %02X\n", a);
 			case 1: // status reg: bit7=wp1, bit6=insert, bit5=changed (insert/changed=1: some of the cards not inserted or changed)
 #ifdef DEBUG_SDEXT
 				printf("SDEXT: REGIO: R: status\n");
@@ -545,11 +513,11 @@ void sdext_write_cart ( Uint16 addr, Uint8 data )
 	int pc = z80ex_get_reg(z80, regPC);
 	printf("SDEXT: write cart @ %04X with %02X [CPU: seg=%02X, pc=%04X]\n", addr, data, ports[0xB0 | (pc >> 14)], pc);
 #endif
-	if (addr < 0xC000) {		// segments 4-6, call flash WR emulation
+	if (addr < 0xC000) {		// segments 4-6, call flash WR emulation (sector 0, last 16K cannot be accessed by the EP ever!)
 		flash_wr_bus_op(0, addr, data);
 		return;
 	}
-	if (addr < 0xE000) {		// pageable ROM (8K), call flash WR emulation
+	if (addr < 0xE000) {		// pageable ROM (8K), call flash WR emulation with the right flash sector (1) and address offset in flash within the sector
 		flash_wr_bus_op(1, (addr & 0x1FFF) + rom_page_ofs, data);
 		return;
 	}
