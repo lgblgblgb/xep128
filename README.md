@@ -15,10 +15,9 @@ Xep128 is licensed under the terms of GNU/GPL v2, for more information please
 read file LICENSE. You can find the source on github, see above.
 
 WARNING! Xep128 is in early alpha stage currently! It lacks many important
-features (no sound, not so precise nick emulation, no dave interrupts other
-than 1Hz and VINT from Nick, etc etc), and it's not comfortable to use, there
-is no configuration but a single built-in config. It will change later,
-hopefully.
+features (no sound, not so precise nick emulation, etc etc), and it's not
+comfortable to use, there is no configuration but a single built-in config.
+It will change later, hopefully.
 
 Currently it's mainly for Linux and/or UNIX-like systems, but since it's an SDL
 based project, it would be not that hard to port to Windows. There is some
@@ -207,7 +206,6 @@ Just to mention some problems with Xep128:
 * no precise Nick emulation
 * no slowdown of VRAM access, would be on a real machine
 * no sound
-* missing many features of Dave, including any interrupts than VINT and 1Hz
 * no joystick emulation yet
 
 # Credits
