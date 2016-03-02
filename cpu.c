@@ -354,7 +354,6 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 			break;
 		case 0xBF:
 			// Note: 16K/64K RAM config is not implemented!
-			//dave_set_clock((value & 2) ? DAVE_CLOCK_12MHZ : DAVE_CLOCK_8MHZ);
 			value &= 0xC;
 			if (value == 0) {
 				mem_ws_all = 1;
@@ -366,7 +365,7 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 				mem_ws_all = 0;
 				mem_ws_m1  = 0;
 			}
-			//dave_set_clock((value & 2) ? DAVE_CLOCK_12MHZ : DAVE_CLOCK_8MHZ);
+			dave_set_clock();
 			fprintf(stderr, "BF register is written -> W_ALL=%d W_M1=%d CLOCK=%dMhz\n", mem_ws_all, mem_ws_m1, (value & 2) ? 12 : 8);
 			break;
 		/* NICK registers */

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 static Uint32 *ep_pixels;
 
 int rom_size;
-int CPU_CLOCK;
+int CPU_CLOCK = DEFAULT_CPU_CLOCK;
 
 char *app_pref_path, *app_base_path;
 char current_directory[PATH_MAX + 1];
@@ -123,7 +123,8 @@ static int running;
 
 
 
-static int tstates_all = 0;
+//static int tstates_all = 0;
+static int cpu_cycles_for_dave_sync = 0;
 
 static double td_balancer = 0;
 
@@ -242,9 +243,9 @@ void emu_one_frame(int rasters, int frameksip)
 							ep_clear_ram();
 						ep_reset();
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_PAGEDOWN && e.key.state == SDL_PRESSED && _cpu_speed_index) {
-						set_cpu_clock(_cpu_speeds[-- _cpu_speed_index]);
+						set_cpu_clock_with_osd(_cpu_speeds[-- _cpu_speed_index]);
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_PAGEUP && e.key.state == SDL_PRESSED && _cpu_speed_index < 3) {
-						set_cpu_clock(_cpu_speeds[++ _cpu_speed_index]);
+						set_cpu_clock_with_osd(_cpu_speeds[++ _cpu_speed_index]);
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
 						osd_replay(e.key.state == SDL_PRESSED ? 0 : OSD_FADE_START);
 					} else
@@ -297,6 +298,7 @@ static double balancer;
 //static float SCALER = 0.2223;
 static double SCALER;
 
+
 int set_cpu_clock ( int hz )
 {
 	if (hz <  1000000) hz =  1000000;
@@ -304,6 +306,14 @@ int set_cpu_clock ( int hz )
 	CPU_CLOCK = hz;
 	SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK;
 	fprintf(stderr, "CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
+	dave_set_clock();
+	return hz;
+}
+
+
+int set_cpu_clock_with_osd ( int hz )
+{
+	hz = set_cpu_clock(hz);
 	OSD("CPU speed: %.2f MHz", hz / 1000000.0);
 	return hz;
 }
@@ -376,9 +386,9 @@ int main (int argc, char *argv[])
 	//printf("CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
 	set_cpu_clock(DEFAULT_CPU_CLOCK);
 	emu_timekeeping_start();
-	osd_disable();
+	//osd_disable();
 	while (running) {
-		int t, nts = 0;
+		int t;
 #if 0
 		char buffer[256];
 		int pc = z80ex_get_reg(z80, regPC);
@@ -402,15 +412,19 @@ int main (int argc, char *argv[])
 			t = 0;
 		if (!t)
 			t = z80ex_step(z80);
+		cpu_cycles_for_dave_sync += t;
+		//printf("DAVE: SYNC: CPU cycles = %d, Dave sync val = %d, limit = %d\n", t, cpu_cycles_for_dave_sync, cpu_cycles_per_dave_tick);
+		while (cpu_cycles_for_dave_sync >= cpu_cycles_per_dave_tick) {
+			dave_tick();
+			cpu_cycles_for_dave_sync -= cpu_cycles_per_dave_tick;
+		}
 		balancer += t * SCALER;
-		tstates_all += t;
+		//tstates_all += t;
 		//printf("%s [balance=%f t=%d]\n", buffer, balancer, t);
 		while (balancer >= 0.5) {
 			nick_render_slot();
 			balancer -= 1.0;
-			nts++;
 		}
-		dave_ticks(nts);
 		//printf("[balance=%f t=%d]\n", balancer, t);
 #if 0
 		if (!last_optype)
