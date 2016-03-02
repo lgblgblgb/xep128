@@ -42,4 +42,5 @@ buildinfo.c
 xep_rom.lst
 screenshot*.png
 .depend
+.*.swp
 
