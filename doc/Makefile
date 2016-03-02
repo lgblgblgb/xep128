@@ -1,4 +1,4 @@
-COMS	= z180test.com irclet.com
+COMS	= z180test.com irclet.com intfreq.com
 
 all: $(COMS)
 
