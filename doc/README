@@ -13,6 +13,13 @@ Makefile
   installed. Avoid 'make test' as it would use paths private
   to my own system!
 
+intfreq.asm
+
+  A test program used to messure B4 port level width on different
+  interrupt sources in meaningless units :) Only can be used to
+  compare the accuracy the emulation with a real EP or with a good
+  emulator, like ep128emu.
+
 irclet.asm
 
   A very primitive iRC "client" to test my w5300 emulation. Note:

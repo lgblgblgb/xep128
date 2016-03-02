@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
         ORG     $100
 	LD	SP, $100
 	CALL	main
-	JP	exit_to_basic.now
+	JP	exit_to_basic
 
 
 EXOS_FN_VIDEO:		DB 6, "VIDEO:"
@@ -35,9 +35,6 @@ EXOS_CH_KEYBOARD	= 2
 SCREEN_WIDTH		= 42
 SCREEN_HEIGHT		= 27
 COLOUR_BORDER		= 0
-
-W5300_IO		= $90
-
 
 MACRO EXOS n
 	RST     $30
@@ -75,28 +72,28 @@ print_inline_text:
 	JP	(HL)
 
 
-print_hex_word:           ; HL = hex word to print
-        PUSH    HL
-        LD      A, H
-        CALL    print_hex_byte
-        POP     HL
-        LD      A, L
-print_hex_byte:           ; A = byte to print
-        PUSH    AF
-        [4] RRA
-        CALL    print_hex_digit
-        POP     AF
+print_hex_word:		; HL = hex word to print
+	PUSH	HL
+	LD	A, H
+	CALL	print_hex_byte
+	POP	HL
+	LD	A, L
+print_hex_byte:		; A = byte to print
+	PUSH	AF
+	[4] RRA
+	CALL	print_hex_digit
+	POP	AF
 print_hex_digit:
-        AND     $0F
-        ADD     $90
-        DAA
-        ADC     $40
-        DAA
-        LD      B, A
+	AND	$0F
+	ADD	$90
+	DAA
+	ADC	$40
+	DAA
+	LD	B, A
 .exosch:
-        LD      A, EXOS_CH_VIDEO
-        EXOS    7
-        RET
+	LD	A, EXOS_CH_VIDEO
+	EXOS	7
+	RET
 print_space:
 	LD	B, $20
 	JR	print_hex_digit.exosch
@@ -153,53 +150,61 @@ exit_to_basic:
 ; **** MAIN ****
 
 
-TG0_COUNTER_VAL = 32000
-TG1_COUNTER_VAL = 64000
+; 12 bit counter values to be used as test for TG0 and TG1
+TG0_COUNTER_VAL = 4095
+TG1_COUNTER_VAL = 2047
 
 
 main:
 	CALL	exos_init_std
+	IPRINT  "Dave interrupt level sense testing for emulators (C)2016 LGB\r\nSome moments, please ...\r\n"
 	; Test 1Hz interrupt
-	IPRINT	"Timing of 1Hz interrupt: "
-	LD	B, 4
+	IPRINT	"\r\nTiming of 1Hz interrupt:              "
+	LD	BC, 4 * 256 + 0
 	CALL	run_test
 	; Test TG interrupt on 1KHz
-	IPRINT	"\r\nTiming of TG interrupt on 1KHz source: "
-	DI
-	LD	A, 0
-	OUT	($A7), A
-	LD	B, 1
+	IPRINT	"\r\nTiming of TG interrupt on 1KHz source:"
+	LD	BC, 1 * 256 + 0
 	CALL	run_test
 	; Test TG interrupt on 50Hz
-	IPRINT	"\r\nTiming of TG interrupt on 50Hz source: "
-	DI
-	LD	A, 32
-	OUT	($A7), A
-	LD	B, 1
+	IPRINT	"\r\nTiming of TG interrupt on 50Hz source:"
+	LD	BC, 1 * 256 + 32
 	CALL	run_test
 	; Test TG interrupt on TG-0
-	IPRINT	"\r\nTiming of TG interrupt on TG channel0: "
-	DI
-	LD	A, 64
-	OUT	($A7), A
-	LD	B, 1
+	IPRINT	"\r\nTiming of TG interrupt on TG channel0:"
+	LD	BC, 1 * 256 + 64
 	CALL	run_test
 	; Test TG interrupt on TG-1
-	IPRINT	"\r\nTiming of TG interrupt on TG channel1: "
-	DI
-	LD	A, 32+64
-	OUT	($A7), A
-	LD	B, 1
+	IPRINT	"\r\nTiming of TG interrupt on TG channel1:"
+	LD	BC, 1 * 256 + 32 + 64
 	CALL	run_test
 	; Just for fun, test video interrupt. This needs some special care though ...
-	IPRINT  "\r\nTiming of VINT/INT1 interrupt: "
-	LD	B, 16
+	IPRINT  "\r\nTiming of VINT/INT1 interrupt:        "
+	LD	BC, 16 * 256 + 0
+	DI			; special care of VINT, wait for well defined state ...
+.wait_vint1:
+	IN	A, ($B4)
+	AND	B
+	JR	NZ, .wait_vint1
 	CALL	run_test
-	JP	exit_to_basic
+	LD	BC, 16 * 256 + 0
+	DI
+.wait_vint2:
+	IN	A, ($B4)
+	AND	B
+	JR	Z, .wait_vint2
+	CALL	run_test
+	; And the good old exit ...
+	RET
+
+
+
 
 
 run_test:
 	DI
+	LD	A, C
+	OUT	($A7), A	; put TG interrupt source
 	; Prepare TG tests, set some osc freq for TG0 and TG1
         LD      A, TG0_COUNTER_VAL & $FF
         OUT     ($A0), A
@@ -216,6 +221,7 @@ run_test:
 	LD	A, $C
 	CALL	.run_test_one
 	EI
+	CALL	print_space
 	CALL	print_hex_word
 	CALL	print_space
 	POP	HL
@@ -236,8 +242,8 @@ run_test:
 	CP	C
 	JR	Z, .wait0	; wait for change of bit value to start the test
 .wait1:
-	INC	HL		;  6 cycles
-	[8] NOP			;  4 cycles * 8
+	INC	HL		;  6 cycles		; since we don't convert HL as result to cycles or anything, it's
+	[8] NOP			;  4 cycles * 8		; not so much important to count cycles anyway :-P
 	IN	A, ($B4)	; 11 cycles
 	AND	B		;  4 cycles
 	CP	C		;  4 cycles
