@@ -113,7 +113,7 @@ extern int z180_port_start;
 
 void dave_reset ( void );
 void dave_set_clock ( void );
-void dave_int1(int active);
+void dave_int1(int level);
 void dave_configure_interrupts ( Uint8 n );
 void dave_tick ( void );
 extern int cpu_cycles_per_dave_tick;

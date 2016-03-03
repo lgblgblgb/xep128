@@ -70,11 +70,9 @@ void dave_reset ( void )
 //static int dave_int1_last = 0;
 
 /* Called by Nick */
-void dave_int1(int active)
+void dave_int1(int level)
 {
-	//if (active == dave_int1_last) return;
-	//dave_int1_last = active;
-	if (active) {
+	if (level) {
 		dave_int_read |= 16; // set level
 	} else {
 		// the truth is here, if previous level was set (falling edge), and int1 is enabled, then set latch!

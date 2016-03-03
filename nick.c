@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ static int reload, vres;
 static int all_rasters;
 static int lpt_clk;
 static int vsync;
-static int vint;
+//static int vint;
 static int frameskip;
 static int lm, rm;
 static int vm, cm;
@@ -140,7 +140,7 @@ Uint32 *nick_init ( void )
 	nick_last_byte = 0xFF;
 	lpt_a = lpt_set;
 	slot = 0;
-	vint = 0;
+	//vint = 0;
 	frameskip = 0;
 	all_rasters = 0;
 	scanlines = 0;
@@ -565,6 +565,8 @@ void nick_render_slot ( void )
 		case 0:
 			max_scanlines = 256 - NICK_READ(lpt_a++);
 			a = NICK_READ(lpt_a++);
+			dave_int1(a & 128);
+#if 0
 			if ((a & 128) != vint) {
 				vint = a & 128;
 				dave_int1(!vint);
@@ -573,6 +575,7 @@ void nick_render_slot ( void )
 			//	if ((vint = a & 128))
 			//		dave_int1(); // "rising edge" of VINT bit in LPBs triggers Dave INT1
 			//dave_int1(a & 128);
+#endif
 			reload = a & 1;
 			vres = a & 16;
 			vm = (a >> 1) & 7;
