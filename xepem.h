@@ -229,4 +229,6 @@ extern int warn_for_mouse_grab;
 #define OSD_FADE_STOP    0x80
 #define OSD_FADE_DEC    3
 
+int keymap_resolve_event ( SDL_Keysym sym, int press, Uint8 *matrix );
+
 #endif

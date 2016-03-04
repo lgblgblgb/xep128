@@ -16,8 +16,8 @@ EXDOS/WD:
 
 Dave:
 
-	* missing TG interrupt source
-	* no audio at all
+	* Dave audio generation
+	* Dave audio D/A
 
 APU:
 
