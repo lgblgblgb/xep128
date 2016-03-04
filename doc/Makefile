@@ -6,7 +6,8 @@ all: $(COMS)
 	sjasm $< $@ || { rm -f $@ ; false; }
 
 test: $(COMS)
-	for a in $(COMS) ; do b=`echo $$a|sed 's/\.com$$//'|tr 'a-z' 'A-Z'` ; echo "$$a -> $$b" ; cp $$a /home/lgb/.ep128emu/files/$$b ; mcopy -o $$a m:XEP/$$b ; done
+	mcopy -i ../sdcard.img@@32256 -o $(COMS) ::/xep/
+	cp $(COMS) /home/lgb/.ep128emu/files/
 
 clean:
 	rm -f $(COMS) *.lst
