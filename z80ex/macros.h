@@ -11,181 +11,194 @@
 #ifndef _Z80EX_MACROS_H_INCLUDED
 #define _Z80EX_MACROS_H_INCLUDED
 
+
 /* Macros used for accessing the registers */
-#define A   cpu->af.b.h
-#define F   cpu->af.b.l
-#define AF  cpu->af.w
+#define A   z80ex.af.b.h
+#define F   z80ex.af.b.l
+#define AF  z80ex.af.w
 
-#define B   cpu->bc.b.h
-#define C   cpu->bc.b.l
-#define BC  cpu->bc.w
+#define B   z80ex.bc.b.h
+#define C   z80ex.bc.b.l
+#define BC  z80ex.bc.w
 
-#define D   cpu->de.b.h
-#define E   cpu->de.b.l
-#define DE  cpu->de.w
+#define D   z80ex.de.b.h
+#define E   z80ex.de.b.l
+#define DE  z80ex.de.w
 
-#define H   cpu->hl.b.h
-#define L   cpu->hl.b.l
-#define HL  cpu->hl.w
+#define H   z80ex.hl.b.h
+#define L   z80ex.hl.b.l
+#define HL  z80ex.hl.w
 
-#define A_  cpu->af_.b.h
-#define F_  cpu->af_.b.l
-#define AF_ cpu->af_.w
+#define A_  z80ex.af_.b.h
+#define F_  z80ex.af_.b.l
+#define AF_ z80ex.af_.w
 
-#define B_  cpu->bc_.b.h
-#define C_  cpu->bc_.b.l
-#define BC_ cpu->bc_.w
+#define B_  z80ex.bc_.b.h
+#define C_  z80ex.bc_.b.l
+#define BC_ z80ex.bc_.w
 
-#define D_  cpu->de_.b.h
-#define E_  cpu->de_.b.l
-#define DE_ cpu->de_.w
+#define D_  z80ex.de_.b.h
+#define E_  z80ex.de_.b.l
+#define DE_ z80ex.de_.w
 
-#define H_  cpu->hl_.b.h
-#define L_  cpu->hl_.b.l
-#define HL_ cpu->hl_.w
+#define H_  z80ex.hl_.b.h
+#define L_  z80ex.hl_.b.l
+#define HL_ z80ex.hl_.w
 
-#define IXH cpu->ix.b.h
-#define IXL cpu->ix.b.l
-#define IX  cpu->ix.w
+#define IXH z80ex.ix.b.h
+#define IXL z80ex.ix.b.l
+#define IX  z80ex.ix.w
 
-#define IYH cpu->iy.b.h
-#define IYL cpu->iy.b.l
-#define IY  cpu->iy.w
+#define IYH z80ex.iy.b.h
+#define IYL z80ex.iy.b.l
+#define IY  z80ex.iy.w
 
-#define SPH cpu->sp.b.h
-#define SPL cpu->sp.b.l
-#define SP  cpu->sp.w
+#define SPH z80ex.sp.b.h
+#define SPL z80ex.sp.b.l
+#define SP  z80ex.sp.w
 
-#define PCH cpu->pc.b.h
-#define PCL cpu->pc.b.l
-#define PC  cpu->pc.w
+#define PCH z80ex.pc.b.h
+#define PCL z80ex.pc.b.l
+#define PC  z80ex.pc.w
 
-#define I  cpu->i
-#define R  cpu->r
-#define R7 cpu->r7
+#define I  z80ex.i
+#define R  z80ex.r
+#define R7 z80ex.r7
 
-#define IFF1 cpu->iff1
-#define IFF2 cpu->iff2
-#define IM   cpu->im
+#define IFF1 z80ex.iff1
+#define IFF2 z80ex.iff2
+#define IM   z80ex.im
 
-#define MEMPTRh cpu->memptr.b.h
-#define MEMPTRl cpu->memptr.b.l
-#define MEMPTR cpu->memptr.w
-
+#define MEMPTRh z80ex.memptr.b.h
+#define MEMPTRl z80ex.memptr.b.l
+#define MEMPTR z80ex.memptr.w
 
 /* The flags */
 
-#define FLAG_C	0x01
-#define FLAG_N	0x02
-#define FLAG_P	0x04
-#define FLAG_V	FLAG_P
-#define FLAG_3	0x08
-#define FLAG_H	0x10
-#define FLAG_5	0x20
-#define FLAG_Z	0x40
-#define FLAG_S	0x80
+#define FLAG_C  0x01
+#define FLAG_N  0x02
+#define FLAG_P  0x04
+#define FLAG_V  FLAG_P
+#define FLAG_3  0x08
+#define FLAG_H  0x10
+#define FLAG_5  0x20
+#define FLAG_Z  0x40
+#define FLAG_S  0x80
 
 /*read opcode*/
-#define READ_OP_M1() (cpu->int_vector_req? cpu->intread_cb(cpu, cpu->intread_cb_user_data) : cpu->mread_cb(cpu, PC++, 1, cpu->mread_cb_user_data))
+#define READ_OP_M1() (z80ex.int_vector_req? z80ex_intread_cb() : z80ex_mread_cb(PC++, 1))
 
 /*read opcode argument*/
-#define READ_OP() (cpu->int_vector_req? cpu->intread_cb(cpu, cpu->intread_cb_user_data) : cpu->mread_cb(cpu, PC++, 0, cpu->mread_cb_user_data))
+#define READ_OP() (z80ex.int_vector_req? z80ex_intread_cb() : z80ex_mread_cb(PC++, 0))
 
 
 #ifndef Z80EX_OPSTEP_FAST_AND_ROUGH
 
+#ifdef Z80EX_TSTATE_CALLBACK
 /*wait until end of opcode-tstate given (to be used on opcode execution).*/
 #define T_WAIT_UNTIL(t_state) \
 { \
 	unsigned nn; \
-	if(cpu->tstate_cb == NULL) { \
-		if (t_state > cpu->op_tstate) { \
-			cpu->tstate += t_state - cpu->op_tstate; \
-			cpu->op_tstate = t_state; \
+	if(!z80ex.tstate_cb) { \
+		if (t_state > z80ex.op_tstate) { \
+			z80ex.tstate += t_state - z80ex.op_tstate; \
+			z80ex.op_tstate = t_state; \
 		} \
 	} \
 	else { \
-		for(nn=cpu->op_tstate;nn < t_state;nn++) { \
-			cpu->op_tstate++; \
-			cpu->tstate++; \
-			cpu->tstate_cb(cpu, cpu->tstate_cb_user_data); \
+		for(nn=z80ex.op_tstate;nn < t_state;nn++) { \
+			z80ex.op_tstate++; \
+			z80ex.tstate++; \
+			z80ex_tstate_cb(); \
 		} \
 	} \
 }
 
+#else
+#define T_WAIT_UNTIL(t_state) \
+	if (t_state > z80ex.op_tstate) { \
+		z80ex.tstate += t_state - z80ex.op_tstate; \
+		z80ex.op_tstate = t_state; \
+	}
+#endif
+
+#ifdef Z80EX_TSTATE_CALLBACK
 /*spend <amount> t-states (not affecting opcode-tstate counter,
 for using outside of certain opcode execution)*/
 #define TSTATES(amount) \
 {\
 	int nn;\
-	if(cpu->tstate_cb == NULL) { \
-		cpu->tstate += amount; \
+	if(!z80ex.tstate_cb) { \
+		z80ex.tstate += amount; \
 	} \
 	else { \
 		for(nn=0; nn < amount; nn++) { \
-			cpu->tstate++; \
-			cpu->tstate_cb(cpu, cpu->tstate_cb_user_data); \
+			z80ex.tstate++; \
+			z80ex_tstate_cb(); \
 		}\
 	} \
 }
+#else
+#define TSTATES(amount) z80ex.tstate += amount
+#endif
 
 /*read byte from memory*/
 #define READ_MEM(result, addr, t_state) \
 { \
 	T_WAIT_UNTIL(t_state); \
-	result=(cpu->mread_cb(cpu, (addr), 0, cpu->mread_cb_user_data)); \
+	result=(z80ex_mread_cb((addr), 0)); \
 }
 
 /*read byte from port*/
 #define READ_PORT(result, port, t_state) \
 { \
 	T_WAIT_UNTIL(t_state); \
-	result=(cpu->pread_cb(cpu, (port), cpu->pread_cb_user_data)); \
+	result=(z80ex_pread_cb((port))); \
 }
 
 /*write byte to memory*/
 #define WRITE_MEM(addr, vbyte, t_state) \
 { \
 	T_WAIT_UNTIL(t_state); \
-	cpu->mwrite_cb(cpu, addr, vbyte, cpu->mwrite_cb_user_data); \
+	z80ex_mwrite_cb(addr, vbyte); \
 }
 
 /*write byte to port*/
 #define WRITE_PORT(port, vbyte, t_state) \
 { \
 	T_WAIT_UNTIL(t_state); \
-	cpu->pwrite_cb(cpu, (port), vbyte, cpu->pwrite_cb_user_data); \
+	z80ex_pwrite_cb((port), vbyte); \
 }
 
 #else
 /*Z80EX_OPSTEP_FAST_AND_ROUGH*/
 
-#define T_WAIT_UNTIL(t_state) {cpu->tstate = t_state; cpu->op_tstate = t_state;} 
+#define T_WAIT_UNTIL(t_state) {z80ex.tstate = t_state; z80ex.op_tstate = t_state;} 
 
-#define TSTATES(amount) {cpu->tstate += amount;}
+#define TSTATES(amount) {z80ex.tstate += amount;}
 
 /*read byte from memory*/
 #define READ_MEM(result, addr, t_state) \
 { \
-	result=(cpu->mread_cb(cpu, (addr), 0, cpu->mread_cb_user_data)); \
+	result=(z80ex_mread_cb((addr), 0)); \
 }
 
 /*read byte from port*/
 #define READ_PORT(result, port, t_state) \
 { \
-	result=(cpu->pread_cb(cpu, (port), cpu->pread_cb_user_data)); \
+	result=(z80ex_pread_cb(cpu, (port))); \
 }
 
 /*write byte to memory*/
 #define WRITE_MEM(addr, vbyte, t_state) \
 { \
-	cpu->mwrite_cb(cpu, addr, vbyte, cpu->mwrite_cb_user_data); \
+	z80ex.mwrite_cb(addr, vbyte); \
 }
 
 /*write byte to port*/
 #define WRITE_PORT(port, vbyte, t_state) \
 { \
-	cpu->pwrite_cb(cpu, (port), vbyte, cpu->pwrite_cb_user_data); \
+	z80ex_pwrite_cb((port), vbyte); \
 }
 
 #endif
@@ -408,7 +421,7 @@ for using outside of certain opcode execution)*/
 
 #define POP(rp, rd1, rd2) \
 {\
-	regpair tmp; \
+	Z80EX_REGPAIR_T tmp; \
 	READ_MEM(tmp.b.l,SP++,rd1);\
 	READ_MEM(tmp.b.h,SP++,rd2);\
 	rp=tmp.w;\
@@ -417,7 +430,7 @@ for using outside of certain opcode execution)*/
 /*wr1=t-states before first byte, wr2=t-states before second*/
 #define PUSH(rp, wr1, wr2) \
 {\
-	regpair tmp; \
+	Z80EX_REGPAIR_T tmp; \
 	tmp.w=rp; \
 	WRITE_MEM(--SP, tmp.b.h, wr1); \
 	WRITE_MEM(--SP, tmp.b.l, wr2); \
@@ -566,7 +579,7 @@ for using outside of certain opcode execution)*/
 {\
 	A=(R&0x7f) | (R7&0x80);\
 	F = ( F & FLAG_C ) | sz53_table[A] | ( IFF2 ? FLAG_V : 0 );\
-	if (cpu->nmos) cpu->reset_PV_on_int=1;\
+	if (z80ex.nmos) z80ex.reset_PV_on_int=1;\
 }
 
 #define LD_R_A() \
@@ -578,7 +591,7 @@ for using outside of certain opcode execution)*/
 {\
 	A=I;\
 	F = ( F & FLAG_C ) | sz53_table[A] | ( IFF2 ? FLAG_V : 0 );\
-	if (cpu->nmos) cpu->reset_PV_on_int=1;\
+	if (z80ex.nmos) z80ex.reset_PV_on_int=1;\
 }
 
 #define NEG() \
@@ -592,7 +605,7 @@ for using outside of certain opcode execution)*/
 {\
 	IFF1=IFF2;\
 	RET(rd1, rd2);\
-	if(cpu->reti_cb != NULL) cpu->reti_cb(cpu, cpu->reti_cb_user_data); \
+	z80ex_reti_cb(); \
 }
 
 /*same as RETI, only opcode is different*/
@@ -994,7 +1007,7 @@ for using outside of certain opcode execution)*/
 
 #define HALT() \
 {\
-	cpu->halted=1;\
+	z80ex.halted=1;\
 	PC--;\
 }
 
@@ -1014,7 +1027,7 @@ for using outside of certain opcode execution)*/
 #define EI() \
 {\
 	IFF1 = IFF2 = 1;\
-	cpu->noint_once=1;\
+	z80ex.noint_once=1;\
 }
 
 #define SET(bit, val) \

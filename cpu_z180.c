@@ -37,7 +37,7 @@ static const Uint8 _z180_ports_default[0x40] = {
 
 
 /* A callback only used in Z180 mode */
-static void invalid_opcode (Z80EX_CONTEXT *unused_1, Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76, void *unused_2)
+void z80ex_z180_cb (Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76)
 {
 	z180_ports[0x34] = (z180_ports[0x34] & 0x3F) | itc76; // set ITC register up
 	fprintf(stderr, "Z180: setting ICT register to: %02Xh\n", z180_ports[0x34]);
@@ -62,7 +62,6 @@ void z180_internal_reset ( void )
 {
 	z180_port_start = 0;
 	memcpy(z180_ports, _z180_ports_default, 0x40);
-	z80ex_set_z180_callback(z80, invalid_opcode, NULL);
 	z180_incompatibility_reported = 0;
 	// z180_ports[0x34] = 0x39;	// ITC register
 	// z180_ports[0x3F] = 0x1F;	// ICR - I/O control register

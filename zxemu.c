@@ -37,7 +37,7 @@ void zxemu_write_ula ( Uint8 hiaddr, Uint8 data )
 	ports[0x43] = 0;		// ?? 9 = I/O kind of op
 	if (!zxemu_nmi())
 		fprintf(stderr, "ZXEMU: ULA write: no NMI (switched off)\n");
-	fprintf(stderr, "ZXEMU: writing ULA at %04Xh (data: %02Xh)\n", z80ex_get_reg(z80, regPC), data);
+	fprintf(stderr, "ZXEMU: writing ULA at %04Xh (data: %02Xh)\n", z80ex_get_reg(regPC), data);
 }
 
 
@@ -49,7 +49,7 @@ Uint8 zxemu_read_ula ( Uint8 hiaddr )
 	ports[0x43] = 0;
 	if (!zxemu_nmi())
 		fprintf(stderr, "ZXEMU: ULA read: no NMI (switched off)\n");
-	fprintf(stderr, "ZXEMU: reading ULA at %04Xh\n", z80ex_get_reg(z80, regPC));
+	fprintf(stderr, "ZXEMU: reading ULA at %04Xh\n", z80ex_get_reg(regPC));
 	return zxemu_on ? 0xBF : 0xFF;
 }
 

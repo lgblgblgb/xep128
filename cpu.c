@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
 
-Z80EX_CONTEXT *z80 = NULL;
+Z80EX_CONTEXT z80ex;
 static int memsegs[4];
 int ram_start;
 Uint8 memory[0x400000];
@@ -66,16 +66,16 @@ void set_ep_cpu ( int type )
 	cpu_type = type;
 	switch (type) {
 		case CPU_Z80:
-			z80ex_set_nmos(z80, 1);
-			z80ex_set_z180(z80, 0);
+			z80ex_set_nmos(1);
+			z80ex_set_z180(0);
 			break;
 		case CPU_Z80C:
-			z80ex_set_nmos(z80, 0);
-			z80ex_set_z180(z80, 0);
+			z80ex_set_nmos(0);
+			z80ex_set_z180(0);
 			break;
 		case CPU_Z180:
-			z80ex_set_nmos(z80, 0);
-			z80ex_set_z180(z80, 1);
+			z80ex_set_nmos(0);
+			z80ex_set_z180(1);
 			z180_port_start = 0;
 			break;
 		default:
@@ -83,8 +83,8 @@ void set_ep_cpu ( int type )
 			exit(1);
 	}
 	fprintf(stderr, "CPU: set to %s %s\n",
-		z80ex_get_z180(z80) ? "Z180" : "Z80",
-		z80ex_get_nmos(z80) ? "NMOS" : "CMOS"
+		z80ex_get_z180() ? "Z180" : "Z80",
+		z80ex_get_nmos() ? "NMOS" : "CMOS"
 	);
 }
 
@@ -119,13 +119,13 @@ void ep_clear_ram ( void )
 
 
 
-static Z80EX_BYTE _mread(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, int m1_state, void *unused_2) {
+Z80EX_BYTE z80ex_mread_cb(Z80EX_WORD addr, int m1_state) {
 	register int phys = memsegs[addr >> 14] + addr;
 	if (phys >= 0x3F0000) { // VRAM access, no "$BF port" wait states ever, BUT TODO: Nick CPU clock strechting ...
 		return memory[phys];
 	}
 	if (mem_ws_all || (m1_state && mem_ws_m1))
-		z80ex_w_states(z80, 1);
+		z80ex_w_states(1);
 #ifdef CONFIG_SDEXT_SUPPORT
 	if ((phys & 0x3F0000) == sdext_cart_enabler)
 		return sdext_read_cart(phys & 0xFFFF);
@@ -141,7 +141,7 @@ Uint8 read_cpu_byte ( Uint16 addr )
 }
 
 
-static void      _mwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, Z80EX_BYTE value, void *unused_2) {
+void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 	register int phys = memsegs[addr >> 14] + addr;
 	if (phys >= 0x3F0000) { // VRAM access, no "$BF port" wait states ever, BUT TODO: Nick CPU clock strechting ...
 		memory[phys] = value;
@@ -150,7 +150,7 @@ static void      _mwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, Z80EX_BYTE va
 		return;
 	}
 	if (mem_ws_all) 
-		z80ex_w_states(z80, 1);
+		z80ex_w_states(1);
 	if (phys >= ram_start)
 		memory[phys] = value;
 #ifdef CONFIG_SDEXT_SUPPORT
@@ -163,7 +163,7 @@ static void      _mwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD addr, Z80EX_BYTE va
 
 
 
-static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unused_2) {
+Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 	Uint8 port;
 	if (cpu_type == CPU_Z180 && (port16 & 0xFFC0) == z180_port_start) {
 		if (z180_port_start == 0x80) {
@@ -242,7 +242,7 @@ static Z80EX_BYTE _pread(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, void *unuse
 
 
 
-static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value, void *unused_2) {
+void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 	Z80EX_BYTE old_value;
 	Uint8 port;
 	if (cpu_type == CPU_Z180 && (port16 & 0xFFC0) == z180_port_start) {
@@ -390,21 +390,23 @@ static void _pwrite(Z80EX_CONTEXT *unused_1, Z80EX_WORD port16, Z80EX_BYTE value
 	}
 }
 
-void port_write ( Z80EX_WORD port, Z80EX_BYTE value )
+void UNUSED_port_write ( Z80EX_WORD port, Z80EX_BYTE value )
 {
-	_pwrite(z80, port, value, NULL);
+	//_pwrite(port, value);
 }
 
 
-static Z80EX_BYTE _iread(Z80EX_CONTEXT *unused_1, void *unused_2) {
+Z80EX_BYTE z80ex_intread_cb( void ) {
 	return 0xFF; // hmmm.
 }
 
 
+void z80ex_reti_cb ( void ) {
+}
 
-static int ed_unknown_opc(Z80EX_CONTEXT *unused_1, Z80EX_BYTE opcode, void *unused_2)
+int z80ex_ed_cb(Z80EX_BYTE opcode)
 {
-	int pc = z80ex_get_reg(z80, regPC);
+	int pc = z80ex_get_reg(regPC);
 	if (pc >= 0xC000 && ports[0xB3] == xep_rom_seg) {
 		xep_rom_trap(pc, opcode);
 		return 1; // handled in XEP
@@ -444,38 +446,24 @@ int z80_dasm(char *buffer, Uint16 pc, int seg)
 
 int z80_reset ( void )
 {
-	if (z80 == NULL) {
-		z80 = z80ex_create(
-			_mread,  NULL,
-			_mwrite, NULL,
-			_pread,  NULL,
-			_pwrite, NULL,
-			_iread,  NULL
-		);
-		if (z80 == NULL) {
-			fprintf(stderr, "Cannot create CPU emulation!\n");
-			return 1;
-		}
-		printf("Z80: emulation has been created.\n");
-		memset(ports, 0xFF, 0x100);
-		ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
-		z80ex_set_ed_callback(z80, ed_unknown_opc, NULL);
-		set_ep_cpu(CPU_Z80);
-	}
-	z80ex_reset(z80);
+	memset(ports, 0xFF, 0x100);
+	ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
+	//z80ex_set_ed_callback(ed_unknown_opc, NULL);
+	set_ep_cpu(CPU_Z80);
+	z80ex_reset();
 	z180_internal_reset();
 	srand((unsigned int)time(NULL));
-	z80ex_set_reg(z80, regAF,  rand() & 0xFFFF);
-	z80ex_set_reg(z80, regBC,  rand() & 0xFFFF);
-	z80ex_set_reg(z80, regDE,  rand() & 0xFFFF);
-	z80ex_set_reg(z80, regHL,  rand() & 0xFFFF);
-	z80ex_set_reg(z80, regIX,  rand() & 0xFFFF);
-	z80ex_set_reg(z80, regIY,  rand() & 0xFFFF);
-	z80ex_set_reg(z80, regSP,  rand() & 0xFFFF);
-	z80ex_set_reg(z80, regAF_, rand() & 0xFFFF);
-	z80ex_set_reg(z80, regBC_, rand() & 0xFFFF);
-	z80ex_set_reg(z80, regDE_, rand() & 0xFFFF);
-	z80ex_set_reg(z80, regHL_, rand() & 0xFFFF);
+	z80ex_set_reg(regAF,  rand() & 0xFFFF);
+	z80ex_set_reg(regBC,  rand() & 0xFFFF);
+	z80ex_set_reg(regDE,  rand() & 0xFFFF);
+	z80ex_set_reg(regHL,  rand() & 0xFFFF);
+	z80ex_set_reg(regIX,  rand() & 0xFFFF);
+	z80ex_set_reg(regIY,  rand() & 0xFFFF);
+	z80ex_set_reg(regSP,  rand() & 0xFFFF);
+	z80ex_set_reg(regAF_, rand() & 0xFFFF);
+	z80ex_set_reg(regBC_, rand() & 0xFFFF);
+	z80ex_set_reg(regDE_, rand() & 0xFFFF);
+	z80ex_set_reg(regHL_, rand() & 0xFFFF);
 	printf("Z80: reset\n");
 	return 0;
 }

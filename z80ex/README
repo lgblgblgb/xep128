@@ -30,6 +30,11 @@ Modifications compared to the original source distribution:
   with non-zero value, it means the caller want it handle, thus
   it's not invalid opcode (not even in Z180 mode)
 
+* Pointer passed Z80 context is removed for performance reasons
+
+* No callback set functions, using direct function calls, which
+  should be provided by the application
+
 Now back to the original README, thanks for your patience:
 
 Z80Ex

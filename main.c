@@ -352,6 +352,7 @@ int main (int argc, char *argv[])
 		return 1;
 	if (screen_init())
 		return 1;
+	z80ex_init();
 	if (z80_reset()) {
 		ERROR_WINDOW("Cannot initialize Z80 emulation. Probably not enough free memory?");
 		return 1;
@@ -398,20 +399,20 @@ int main (int argc, char *argv[])
 		z80_dasm(buffer, pc, -1);
 #endif
 		if (nmi_pending) {
-			t = z80ex_nmi(z80);
+			t = z80ex_nmi();
 			fprintf(stderr, "NMI: %d\n", t);
 			if (t)
 				nmi_pending = 0;
 		} else
 			t = 0;
 		if ((t == 0) && (dave_int_read & 0xAA)) {
-			t = z80ex_int(z80);
+			t = z80ex_int();
 			if (t)
 				printf("CPU: int and accepted = %d\n", t);
 		} else
 			t = 0;
 		if (!t)
-			t = z80ex_step(z80);
+			t = z80ex_step();
 		cpu_cycles_for_dave_sync += t;
 		//printf("DAVE: SYNC: CPU cycles = %d, Dave sync val = %d, limit = %d\n", t, cpu_cycles_for_dave_sync, cpu_cycles_per_dave_tick);
 		while (cpu_cycles_for_dave_sync >= cpu_cycles_per_dave_tick) {

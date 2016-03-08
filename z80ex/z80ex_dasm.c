@@ -10,7 +10,9 @@
  
 #include <stdlib.h>
 #include <string.h>
+#ifndef __USE_ISOC99
 #define __USE_ISOC99
+#endif
 #include <stdio.h>
 #include <stdarg.h>
  
@@ -37,7 +39,7 @@ static const char *formats[] = {
 
 #define STMP_SIZE 100
 
-LIB_EXPORT int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int *t_states2,
+int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int *t_states2,
 	z80ex_dasm_readbyte_cb readbyte_cb, Z80EX_WORD addr, void *user_data)
 {
 	Z80EX_BYTE opc=0, next=0, disp_u=0;

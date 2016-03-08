@@ -30,8 +30,8 @@ static char *carg;
 static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 EMU)\r\n";
 
 #define COBUF ((char*)(memory + xep_rom_addr + 0x3802))
-#define SET_A(v) z80ex_set_reg(z80, regAF, (z80ex_get_reg(z80, regAF) & 0xFF) | ((v) << 8))
-#define SET_C(v) z80ex_set_reg(z80, regBC, (z80ex_get_reg(z80, regBC) & 0xFF00) | (v))
+#define SET_A(v) z80ex_set_reg(regAF, (z80ex_get_reg(regAF) & 0xFF) | ((v) << 8))
+#define SET_C(v) z80ex_set_reg(regBC, (z80ex_get_reg(regBC) & 0xFF00) | (v))
 
 static const char *_dave_ws_descrs[4] = {
 	"all", "M1", "no", "no"
@@ -84,8 +84,8 @@ static void cmd_cpu ( void ) {
 	}
 	sprintf(COBUF, "%sCPU : %s %s @ %.2fMHz\r\n",
 		buf,
-		z80ex_get_z180(z80) ? "Z180" : "Z80",
-		z80ex_get_nmos(z80) ? "NMOS" : "CMOS",
+		z80ex_get_z180() ? "Z180" : "Z80",
+		z80ex_get_nmos() ? "NMOS" : "CMOS",
 		CPU_CLOCK / 1000000.0
 	);
 }
@@ -170,9 +170,9 @@ static void xep_exos_command_trap ( void )
 	Uint8 c, b;
 	Uint16 de;
 	*COBUF = 0; // no ans by def
-	c = z80ex_get_reg(z80, regBC) & 0xFF;
-	b = z80ex_get_reg(z80, regBC) >> 8;
-	de = z80ex_get_reg(z80, regDE);
+	c = z80ex_get_reg(regBC) & 0xFF;
+	b = z80ex_get_reg(regBC) >> 8;
+	de = z80ex_get_reg(regDE);
 	printf("XEP: TRAP: C=%02Xh, B=%02Xh, DE=%04Xh\n", c, b, de);
 	switch (c) {
 		case 2: // EXOS command
