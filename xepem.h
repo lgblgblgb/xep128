@@ -111,6 +111,10 @@ void z180_port_write ( Uint8 port, Uint8 value );
 Uint8 z180_port_read ( Uint8 port );
 extern int z180_port_start;
 
+void audio_init ( int enable );
+void audio_start ( void );
+void audio_stop ( void );
+void audio_close ( void );
 void dave_reset ( void );
 void dave_set_clock ( void );
 void dave_int1(int level);

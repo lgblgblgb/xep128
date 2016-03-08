@@ -39,6 +39,7 @@ static int _cpu_speed_index = 0;
 
 static void shutdown_sdl(void)
 {
+	audio_close();
 	printer_close();
 #ifdef CONFIG_W5300_SUPPORT
 	w5300_shutdown();
@@ -354,6 +355,7 @@ int main (int argc, char *argv[])
 		return 1;
 	if (screen_init())
 		return 1;
+	audio_init(0);
 	z80ex_init();
 	set_ep_cpu(CPU_Z80);
 	ep_pixels = nick_init();
@@ -386,6 +388,7 @@ int main (int argc, char *argv[])
 	//printf("CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
 	set_cpu_clock(DEFAULT_CPU_CLOCK);
 	emu_timekeeping_start();
+	audio_start();
 	//osd_disable();
 	while (running) {
 		int t;

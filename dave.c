@@ -28,7 +28,61 @@ static int _state_tg0, _state_tg1, _state_tg2;
 int kbd_selector;
 int cpu_cycles_per_dave_tick;
 
+static SDL_AudioDeviceID audio = 0;
+static SDL_AudioSpec audio_spec;
 
+
+
+static void audio_callback(void *userdata, Uint8 *stream, int len)
+{
+	while (len)
+		stream[len] = len--;
+}
+
+
+void audio_start ( void )
+{
+	if (audio)
+		SDL_PauseAudioDevice(audio, 0);
+}
+
+void audio_stop ( void )
+{
+	if (audio)
+		SDL_PauseAudioDevice(audio, 1);
+}
+
+void audio_close ( void )
+{
+	audio_stop();
+	if (audio)
+		SDL_CloseAudioDevice(audio);
+	audio = 0;
+}
+
+
+void audio_init ( int enable )
+{
+	SDL_AudioSpec want;
+	if (!enable) return;
+	SDL_memset(&want, 0, sizeof(want));
+	want.freq = 31250;
+	want.format = AUDIO_S8;
+	want.channels = 2;
+	want.samples = 4096;
+	want.callback = audio_callback;
+	want.userdata = NULL;
+	audio = SDL_OpenAudioDevice(NULL, 0, &want, &audio_spec, 0);
+	if (!audio)
+		ERROR_WINDOW("Cannot initiailze audio: %s\n", SDL_GetError());
+	else if (want.freq != audio_spec.freq || want.format != audio_spec.format || want.channels != audio_spec.channels) {
+		audio_close();
+		ERROR_WINDOW("Bad audio parameters (w/h freq=%d/%d, fmt=%d/%d, chans=%d/%d, smpls=%d/%d, cannot use sound",
+			want.freq, audio_spec.freq, want.format, audio_spec.format, want.channels, audio_spec.channels, want.samples, audio_spec.samples
+		);
+	} else
+		audio_stop();	// still stopped ... must be audio_start()'ed by the caller
+}
 
 
 void dave_set_clock ( void )

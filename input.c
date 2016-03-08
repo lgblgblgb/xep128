@@ -133,9 +133,11 @@ int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
         int mg = _mouse_grab, r;
         kbd_matrix_reset();
         mouse_reset_button();
+	audio_stop();
 	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
 	r = SDL_ShowSimpleMessageBox(sdlflag, "Xep128", msg, sdl_win);
 	if (mg == SDL_TRUE) screen_grab(mg);
+	audio_start();
 	return r;
 }
 
@@ -171,7 +173,8 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
 				break;
 		}
 		buttons[messageboxdata.numbuttons].text = items;
-		buttons[messageboxdata.numbuttons].buttonid = messageboxdata.numbuttons++;
+		buttons[messageboxdata.numbuttons].buttonid = messageboxdata.numbuttons;
+		messageboxdata.numbuttons++;
 		if (p == NULL) break;
 		*p = 0;
 		items = p + 1;
@@ -179,8 +182,10 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
 	/* win grab, kbd/mouse emu reset etc before the window! */
 	kbd_matrix_reset();
 	mouse_reset_button();
+	audio_stop();
 	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
 	SDL_ShowMessageBox(&messageboxdata, &buttonid);
 	if (mg == SDL_TRUE) screen_grab(mg);
+	audio_start();
 	return buttonid;
 }
