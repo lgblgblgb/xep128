@@ -435,8 +435,7 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 Uint8 sdext_read_cart ( Uint16 addr )
 {
 #ifdef DEBUG_SDEXT
-	int pc = z80ex_get_reg(regPC);
-	printf("SDEXT: read cart @ %04X [CPU: seg=%02X, pc=%04X]\n", addr, ports[0xB0 | (pc >> 14)], pc);
+	printf("SDEXT: read cart @ %04X [CPU: seg=%02X, pc=%04X]\n", addr, ports[0xB0 | (Z80_PC >> 14)], Z80_PC);
 #endif
 	if (addr < 0xC000) {
 		Uint8 byte = flash_rd_bus_op(0, addr);
@@ -510,8 +509,7 @@ Uint8 sdext_read_cart ( Uint16 addr )
 void sdext_write_cart ( Uint16 addr, Uint8 data )
 {
 #ifdef DEBUG_SDEXT
-	int pc = z80ex_get_reg(regPC);
-	printf("SDEXT: write cart @ %04X with %02X [CPU: seg=%02X, pc=%04X]\n", addr, data, ports[0xB0 | (pc >> 14)], pc);
+	printf("SDEXT: write cart @ %04X with %02X [CPU: seg=%02X, pc=%04X]\n", addr, data, ports[0xB0 | (Z80_PC >> 14)], Z80_PC);
 #endif
 	if (addr < 0xC000) {		// segments 4-6, call flash WR emulation (sector 0, last 16K cannot be accessed by the EP ever!)
 		flash_wr_bus_op(0, addr, data);

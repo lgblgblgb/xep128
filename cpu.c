@@ -32,35 +32,6 @@ int cpu_type;
 
 
 
-#if 0
-void set_ep_memseg(int seg, int val)
-{
-	if (seg < 0 || seg > 255 || val <0 || val > 255) {
-		fprintf(stderr, "FATAL: invalid seg (%d) and/or val (%d) in set_ep_memseg()\n", seg, val);
-		exit(1);
-	}
-	memsegs[seg] = (val << 14) - (seg << 14);
-}
-#endif
-
-
-#if 0
-int search_xep_rom ( void )
-{
-	int a;
-	for (a = 0; a < rom_size; a += 0x4000) {
-		if (!memcmp(memory + a, "EXOS_ROM", 8) && !memcmp(memory + a + 13, "[XepROM]", 8)) {
-			xep_rom_seg = a >> 14;
-			fprintf(stderr, "Found XEP ROM at %06Xh (seg %02Xh)\n", a, xep_rom_seg);
-			return xep_rom_seg;
-		}
-	}
-	fprintf(stderr, "XEP ROM cannot be found :(\n");
-	return -1;
-}
-#endif
-
-
 void set_ep_cpu ( int type )
 {
 	cpu_type = type;
@@ -390,11 +361,6 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 	}
 }
 
-void UNUSED_port_write ( Z80EX_WORD port, Z80EX_BYTE value )
-{
-	//_pwrite(port, value);
-}
-
 
 Z80EX_BYTE z80ex_intread_cb( void ) {
 	return 0xFF; // hmmm.
@@ -406,9 +372,8 @@ void z80ex_reti_cb ( void ) {
 
 int z80ex_ed_cb(Z80EX_BYTE opcode)
 {
-	int pc = z80ex_get_reg(regPC);
-	if (pc >= 0xC000 && ports[0xB3] == xep_rom_seg) {
-		xep_rom_trap(pc, opcode);
+	if (Z80_PC >= 0xC000 && ports[0xB3] == xep_rom_seg) {
+		xep_rom_trap(Z80_PC, opcode);
 		return 1; // handled in XEP
 	}
 	return 0; // unhandled ED op!
@@ -444,28 +409,26 @@ int z80_dasm(char *buffer, Uint16 pc, int seg)
 
 
 
-int z80_reset ( void )
+void z80_reset ( void )
 {
 	memset(ports, 0xFF, 0x100);
 	ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
-	//z80ex_set_ed_callback(ed_unknown_opc, NULL);
 	set_ep_cpu(CPU_Z80);
 	z80ex_reset();
 	z180_internal_reset();
 	srand((unsigned int)time(NULL));
-	z80ex_set_reg(regAF,  rand() & 0xFFFF);
-	z80ex_set_reg(regBC,  rand() & 0xFFFF);
-	z80ex_set_reg(regDE,  rand() & 0xFFFF);
-	z80ex_set_reg(regHL,  rand() & 0xFFFF);
-	z80ex_set_reg(regIX,  rand() & 0xFFFF);
-	z80ex_set_reg(regIY,  rand() & 0xFFFF);
-	z80ex_set_reg(regSP,  rand() & 0xFFFF);
-	z80ex_set_reg(regAF_, rand() & 0xFFFF);
-	z80ex_set_reg(regBC_, rand() & 0xFFFF);
-	z80ex_set_reg(regDE_, rand() & 0xFFFF);
-	z80ex_set_reg(regHL_, rand() & 0xFFFF);
+	Z80_AF	= rand() & 0xFFFF;
+	Z80_BC	= rand() & 0xFFFF;
+	Z80_DE	= rand() & 0xFFFF;
+	Z80_HL	= rand() & 0xFFFF;
+	Z80_IX	= rand() & 0xFFFF;
+	Z80_IY	= rand() & 0xFFFF;
+	Z80_SP	= rand() & 0xFFFF;
+	Z80_AF_	= rand() & 0xFFFF;
+	Z80_BC_	= rand() & 0xFFFF;
+	Z80_DE_	= rand() & 0xFFFF;
+	Z80_HL_	= rand() & 0xFFFF;
 	printf("Z80: reset\n");
-	return 0;
 }
 
 

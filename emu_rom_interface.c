@@ -30,8 +30,6 @@ static char *carg;
 static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 EMU)\r\n";
 
 #define COBUF ((char*)(memory + xep_rom_addr + 0x3802))
-#define SET_A(v) z80ex_set_reg(regAF, (z80ex_get_reg(regAF) & 0xFF) | ((v) << 8))
-#define SET_C(v) z80ex_set_reg(regBC, (z80ex_get_reg(regBC) & 0xFF00) | (v))
 
 static const char *_dave_ws_descrs[4] = {
 	"all", "M1", "no", "no"
@@ -167,12 +165,9 @@ static void cmd_help ( void ) {
 
 static void xep_exos_command_trap ( void )
 {
-	Uint8 c, b;
-	Uint16 de;
+	Uint8 c = Z80_C, b = Z80_B;
+	Uint16 de = Z80_DE;
 	*COBUF = 0; // no ans by def
-	c = z80ex_get_reg(regBC) & 0xFF;
-	b = z80ex_get_reg(regBC) >> 8;
-	de = z80ex_get_reg(regDE);
 	printf("XEP: TRAP: C=%02Xh, B=%02Xh, DE=%04Xh\n", c, b, de);
 	switch (c) {
 		case 2: // EXOS command
@@ -210,18 +205,18 @@ static void xep_exos_command_trap ( void )
 					if (c)
 						sprintf(COBUF, "XEP: sub-command \"%s\" is unknown\r\n", buffer);
 				}
-				SET_A(0);
-				SET_C(0);
+				Z80_A = 0;
+				Z80_C = 0;
 			}
 			break;
 		case 3: // EXOS help
 			if (b == 0) {
 				sprintf(COBUF, "%s", SHORT_HELP);
-				SET_A(0);
+				Z80_A = 0;
 			} else if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
 				cmd_help();
-				SET_A(0);
-				SET_C(0);
+				Z80_A = 0;
+				Z80_C = 0;
 			}
 			break;
 	}

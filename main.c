@@ -353,10 +353,6 @@ int main (int argc, char *argv[])
 	if (screen_init())
 		return 1;
 	z80ex_init();
-	if (z80_reset()) {
-		ERROR_WINDOW("Cannot initialize Z80 emulation. Probably not enough free memory?");
-		return 1;
-	}
 	ep_pixels = nick_init();
 	if (ep_pixels == NULL)
 		return 1;

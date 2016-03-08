@@ -94,7 +94,7 @@ extern int CPU_CLOCK;
 int set_ep_ramsize(int kbytes);
 int set_cpu_clock ( int hz );
 int set_cpu_clock_with_osd ( int hz );
-int z80_reset ( void );
+void z80_reset ( void );
 void ep_reset ( void );
 void ep_clear_ram ( void );
 extern int rom_size, xep_rom_seg, xep_rom_addr, ram_start;

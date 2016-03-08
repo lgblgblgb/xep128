@@ -33,11 +33,6 @@ typedef void (*z80ex_opcode_fn) (void);
 #include "opcodes/opcodes_fdcb.c"
 #include "z180ex.c"
 
-/*#define DOQUOTE(x) #x
-#define TOSTRING(x) DOQUOTE(x)*/
-
-
-
 /* do one opcode (instruction or prefix) */
 int z80ex_step(void)
 {
@@ -336,62 +331,6 @@ void z80ex_next_t_state(void)
 	z80ex.tstate++;
 	z80ex.op_tstate++;
 }
-
-Z80EX_WORD z80ex_get_reg(Z80_REG_T reg)
-{
-	switch (reg) {
-		case regAF: return(AF);
-		case regBC: return(BC);
-		case regDE: return(DE);
-		case regHL: return(HL);
-		case regAF_: return(AF_);
-		case regBC_: return(BC_);
-		case regDE_: return(DE_);
-		case regHL_: return(HL_);
-		case regIX: return(IX);
-		case regIY: return(IY);
-		case regPC: return(PC);
-		case regSP: return(SP);
-		case regI: return(I);
-		case regR: return(R);
-		case regR7: return(R7);	
-		case regIM: return(IM);
-		case regIFF1: return(IFF1);
-		case regIFF2: return(IFF2);
-	}
-	return 0;
-}
-
-void z80ex_set_reg(Z80_REG_T reg, Z80EX_WORD value)
-{
-	switch (reg) {
-		case regAF: AF = value; return;
-		case regBC: BC = value; return;
-		case regDE: DE = value; return;
-		case regHL: HL = value; return;
-		case regAF_: AF_ = value; return;
-		case regBC_: BC_ = value; return;
-		case regDE_: DE_ = value; return;
-		case regHL_: HL_ = value; return;
-		case regIX: IX = value; return;
-		case regIY: IY = value; return;
-		case regPC: PC = value; return;
-		case regSP: SP = value; return;
-		case regI: I = (value & 0xff); return;
-		case regR: R = (value & 0xff); return;
-		case regR7: R7 = (value & 0xff); return;
-		case regIM:
-			switch (value & 0x03) {
-				case 0: IM = IM0; return;
-				case 1: IM = IM1; return;
-				case 2: IM = IM2; return;
-			}
-		case regIFF1: IFF1 = (value & 0x01); return;
-		case regIFF2: IFF2 = (value & 0x01); return;
-	}
-}
-
-
 
 /*int z80ex_get_noint_once(Z80EX_CONTEXT *cpu)
 {

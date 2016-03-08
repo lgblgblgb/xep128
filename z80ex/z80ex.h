@@ -46,84 +46,79 @@ typedef union {
 
 typedef enum { IM0 = 0, IM1 = 1, IM2 = 2 } IM_MODE;
 
-/* Macros used for accessing the registers */
-#if 0
-#define A   z80ex.af.b.h
-#define F   z80ex.af.b.l
-#define AF  z80ex.af.w
+/* Macros used for accessing the registers
+   This is the "external" set for the application.
+   Internally, z80ex uses its own ones from macros.h
+   but it would collide with some other stuff because
+   of being too generic names ...  */
 
-#define B   z80ex.bc.b.h
-#define C   z80ex.bc.b.l
-#define BC  z80ex.bc.w
+#define Z80_A   z80ex.af.b.h
+#define Z80_F   z80ex.af.b.l
+#define Z80_AF  z80ex.af.w
 
-#define D   z80ex.de.b.h
-#define E   z80ex.de.b.l
-#define DE  z80ex.de.w
+#define Z80_B   z80ex.bc.b.h
+#define Z80_C   z80ex.bc.b.l
+#define Z80_BC  z80ex.bc.w
 
-#define H   z80ex.hl.b.h
-#define L   z80ex.hl.b.l
-#define HL  z80ex.hl.w
+#define Z80_D   z80ex.de.b.h
+#define Z80_E   z80ex.de.b.l
+#define Z80_DE  z80ex.de.w
 
-#define A_  z80ex.af_.b.h
-#define F_  z80ex.af_.b.l
-#define AF_ z80ex.af_.w
+#define Z80_H   z80ex.hl.b.h
+#define Z80_L   z80ex.hl.b.l
+#define Z80_HL  z80ex.hl.w
 
-#define B_  z80ex.bc_.b.h
-#define C_  z80ex.bc_.b.l
-#define BC_ z80ex.bc_.w
+#define Z80_A_  z80ex.af_.b.h
+#define Z80_F_  z80ex.af_.b.l
+#define Z80_AF_ z80ex.af_.w
 
-#define D_  z80ex.de_.b.h
-#define E_  z80ex.de_.b.l
-#define DE_ z80ex.de_.w
+#define Z80_B_  z80ex.bc_.b.h
+#define Z80_C_  z80ex.bc_.b.l
+#define Z80_BC_ z80ex.bc_.w
 
-#define H_  z80ex.hl_.b.h
-#define L_  z80ex.hl_.b.l
-#define HL_ z80ex.hl_.w
+#define Z80_D_  z80ex.de_.b.h
+#define Z80_E_  z80ex.de_.b.l
+#define Z80_DE_ z80ex.de_.w
 
-#define IXH z80ex.ix.b.h
-#define IXL z80ex.ix.b.l
-#define IX  z80ex.ix.w
+#define Z80_H_  z80ex.hl_.b.h
+#define Z80_L_  z80ex.hl_.b.l
+#define Z80_HL_ z80ex.hl_.w
 
-#define IYH z80ex.iy.b.h
-#define IYL z80ex.iy.b.l
-#define IY  z80ex.iy.w
+#define Z80_IXH z80ex.ix.b.h
+#define Z80_IXL z80ex.ix.b.l
+#define Z80_IX  z80ex.ix.w
 
-#define SPH z80ex.sp.b.h
-#define SPL z80ex.sp.b.l
-#define SP  z80ex.sp.w
+#define Z80_IYH z80ex.iy.b.h
+#define Z80_IYL z80ex.iy.b.l
+#define Z80_IY  z80ex.iy.w
 
-#define PCH z80ex.pc.b.h
-#define PCL z80ex.pc.b.l
-#define PC  z80ex.pc.w
+#define Z80_SPH z80ex.sp.b.h
+#define Z80_SPL z80ex.sp.b.l
+#define Z80_SP  z80ex.sp.w
 
-#define I  z80ex.i
-#define R  z80ex.r
-#define R7 z80ex.r7
+#define Z80_PCH z80ex.pc.b.h
+#define Z80_PCL z80ex.pc.b.l
+#define Z80_PC  z80ex.pc.w
 
-#define IFF1 z80ex.iff1
-#define IFF2 z80ex.iff2
-#define IM   z80ex.im
+#define Z80_I  z80ex.i
+#define Z80_R  z80ex.r
+#define Z80_R7 z80ex.r7
 
-#define MEMPTRh z80ex.memptr.b.h
-#define MEMPTRl z80ex.memptr.b.l
-#define MEMPTR z80ex.memptr.w
-
+#define Z80_IFF1 z80ex.iff1
+#define Z80_IFF2 z80ex.iff2
+#define Z80_IM   z80ex.im
 
 /* The flags */
 
-#define FLAG_C	0x01
-#define FLAG_N	0x02
-#define FLAG_P	0x04
-#define FLAG_V	FLAG_P
-#define FLAG_3	0x08
-#define FLAG_H	0x10
-#define FLAG_5	0x20
-#define FLAG_Z	0x40
-#define FLAG_S	0x80
-#endif
-
-
-typedef enum {regAF,regBC,regDE,regHL,regAF_,regBC_,regDE_,regHL_,regIX,regIY,regPC,regSP,regI,regR,regR7,regIM/*0,1 or 2*/,regIFF1,regIFF2} Z80_REG_T;
+#define Z80_FLAG_C	0x01
+#define Z80_FLAG_N	0x02
+#define Z80_FLAG_P	0x04
+#define Z80_FLAG_V	Z80_FLAG_P
+#define Z80_FLAG_3	0x08
+#define Z80_FLAG_H	0x10
+#define Z80_FLAG_5	0x20
+#define Z80_FLAG_Z	0x40
+#define Z80_FLAG_S	0x80
 
 struct _z80_cpu_context {
 	Z80EX_REGPAIR_T af,bc,de,hl;
@@ -147,24 +142,6 @@ struct _z80_cpu_context {
 	char int_vector_req; /*opcode must be fetched from IO device? (int vector read)*/
 	Z80EX_BYTE prefix;
 	
-	/*callbacks*/
-#if 0
-	z80ex_tstate_cb tstate_cb;
-	void *tstate_cb_user_data;
-	z80ex_pread_cb pread_cb;
-	void *pread_cb_user_data;
-	z80ex_pwrite_cb pwrite_cb;
-	void *pwrite_cb_user_data;
-	z80ex_mread_cb mread_cb;
-	void *mread_cb_user_data;
-	z80ex_mwrite_cb	mwrite_cb;
-	void *mwrite_cb_user_data;
-	z80ex_intread_cb intread_cb;
-	void *intread_cb_user_data;
-	z80ex_reti_cb reti_cb;
-	void *reti_cb_user_data;
-#endif
-
 #ifdef Z80EX_TSTATE_CALLBACK
 	int tstate_cb;  /* use tstate callback? */
 #endif
@@ -205,8 +182,6 @@ int z80ex_ed_cb (Z80EX_BYTE opcode);
 void z80ex_z180_cb (Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76);
 #endif
 
-
-
 /*create and initialize CPU*/
 extern void z80ex_init(void);
 
@@ -240,15 +215,8 @@ extern void z80ex_reset(void);
 
 extern void z80ex_init(void);
 
-/*get register value*/
-extern Z80EX_WORD z80ex_get_reg(Z80_REG_T reg);
-
-/*set register value (for 1-byte registers lower byte of <value> will be used)*/
-extern void z80ex_set_reg(Z80_REG_T reg, Z80EX_WORD value);
-
 /*returns 1 if CPU doing HALT instruction now*/
 #define z80ex_doing_halt() z80ex.halted
-
 
 /*when called from callbacks, returns current T-state of the executing opcode (instruction or prefix),
 else returns T-states taken by last opcode executed*/
