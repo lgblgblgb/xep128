@@ -186,7 +186,6 @@ extern int zxemu_on, nmi_pending;
 #define IO16_HI_BYTE(port16) (((ports[(((port16) >> 14) & 3) | 0xB0] & 3) << 6) | (((port16) >> 8) & 0x3F))
 
 extern Uint8 memory[0x400000];
-extern Z80EX_CONTEXT *z80;
 extern Uint8 ports[0x100];
 extern Uint8 dave_int_read;
 extern Uint8 kbd_matrix[16];

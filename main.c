@@ -239,8 +239,10 @@ void emu_one_frame(int rasters, int frameksip)
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_F10 && e.key.state == SDL_PRESSED)
 						screen_shot(ep_pixels, current_directory, "screenshot-*.png");
 					else if (e.key.keysym.scancode == SDL_SCANCODE_PAUSE && e.key.state == SDL_PRESSED) {
-						if (e.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
+						if (e.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT)) {
+							zxemu_on = 0;
 							ep_clear_ram();
+						}
 						ep_reset();
 					} else if (e.key.keysym.scancode == SDL_SCANCODE_PAGEDOWN && e.key.state == SDL_PRESSED && _cpu_speed_index) {
 						set_cpu_clock_with_osd(_cpu_speeds[-- _cpu_speed_index]);
@@ -353,6 +355,7 @@ int main (int argc, char *argv[])
 	if (screen_init())
 		return 1;
 	z80ex_init();
+	set_ep_cpu(CPU_Z80);
 	ep_pixels = nick_init();
 	if (ep_pixels == NULL)
 		return 1;

@@ -1,6 +1,7 @@
 Z180 emulation:
 
-	* [PENDING] clean up the mess, use Z80Ex style context not fixed global stuff
+	* [DONE] z80ex is modofied to avoid "complicated" concept of "context"
+	  (which is nice as abstraction but not so nice for performance, etc)
 	* [PENDING] implement all Z180 extra ops
 	* double check non-functional Z80 undocumented ops on Z180
 

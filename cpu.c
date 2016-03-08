@@ -413,7 +413,7 @@ void z80_reset ( void )
 {
 	memset(ports, 0xFF, 0x100);
 	ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
-	set_ep_cpu(CPU_Z80);
+	//set_ep_cpu(CPU_Z80);
 	z80ex_reset();
 	z180_internal_reset();
 	srand((unsigned int)time(NULL));
