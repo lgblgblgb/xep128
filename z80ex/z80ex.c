@@ -2,7 +2,7 @@
  * Z80Ex, ZILoG Z80 CPU emulator.
  *
  * by Pigmaker57 aka boo_boo [pigmaker57@kahoh57.info]
- * modified by Gabor Lenart aka LGB: partial quirky z180 and ED callback support
+ * modified by Gabor Lenart LGB [lgblgblgb@gmail.com] for Xep128
  *
  * contains some code from the FUSE project (http://fuse-emulator.sourceforge.net)
  * Released under GNU GPL v2
@@ -177,30 +177,6 @@ void z80ex_init ( void )
 	z80ex.z180 = 0;
 #endif
 }
-
-
-#ifdef Z80EX_Z180_SUPPORT
-int  z80ex_get_z180(void)
-{
-	return z80ex.z180;
-}
-void z80ex_set_z180(int z180)
-{
-	z80ex.z180 = z180;
-	z80ex.internal_int_disable = 0;
-}
-#endif
-
-void z80ex_set_nmos(int nmos)
-{
-	z80ex.nmos = nmos;
-}
-
-int z80ex_get_nmos(void)
-{
-	return z80ex.nmos;
-}
-
 
 /*non-maskable interrupt*/
 int z80ex_nmi(void)

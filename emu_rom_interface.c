@@ -82,8 +82,8 @@ static void cmd_cpu ( void ) {
 	}
 	sprintf(COBUF, "%sCPU : %s %s @ %.2fMHz\r\n",
 		buf,
-		z80ex_get_z180() ? "Z180" : "Z80",
-		z80ex_get_nmos() ? "NMOS" : "CMOS",
+		z80ex.z180 ? "Z180" : "Z80",
+		z80ex.nmos ? "NMOS" : "CMOS",
 		CPU_CLOCK / 1000000.0
 	);
 }

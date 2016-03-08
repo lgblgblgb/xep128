@@ -2,6 +2,7 @@
  * Z80Ex, ZILoG Z80 CPU emulator.
  *
  * by Pigmaker57 aka boo_boo [pigmaker57@kahoh57.info]
+ * modified by Gabor Lenart LGB [lgblgblgb@gmail.com] for Xep128
  *
  * contains some code from the FUSE project (http://fuse-emulator.sourceforge.net)
  * Released under GNU GPL v2
@@ -191,15 +192,6 @@ extern int z80ex_step(void);
 /*returns type of the last opcode, processed with z80ex_step.
 type will be 0 for complete instruction, or dd/fd/cb/ed for opcode prefix.*/
 #define z80ex_last_op_type() z80ex.prefix
-
-
-extern void z80ex_set_nmos(int nmos);
-extern int  z80ex_get_nmos(void);
-
-#ifdef Z80EX_Z180_SUPPORT
-extern int  z80ex_get_z180(void);
-extern void z80ex_set_z180(int z180);
-#endif
 
 /*maskable interrupt*/
 /*returns number of T-states if interrupt was accepted, otherwise 0*/

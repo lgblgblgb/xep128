@@ -28,25 +28,24 @@ static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
 int xep_rom_seg = -1;
 int xep_rom_addr;
-int cpu_type;
 
 
 
 void set_ep_cpu ( int type )
 {
-	cpu_type = type;
+	z80ex.internal_int_disable = 0;
 	switch (type) {
 		case CPU_Z80:
-			z80ex_set_nmos(1);
-			z80ex_set_z180(0);
+			z80ex.nmos = 1;
+			z80ex.z180 = 0;
 			break;
 		case CPU_Z80C:
-			z80ex_set_nmos(0);
-			z80ex_set_z180(0);
+			z80ex.nmos = 0;
+			z80ex.z180 = 0;
 			break;
 		case CPU_Z180:
-			z80ex_set_nmos(0);
-			z80ex_set_z180(1);
+			z80ex.nmos = 0;
+			z80ex.z180 = 1;
 			z180_port_start = 0;
 			break;
 		default:
@@ -54,8 +53,8 @@ void set_ep_cpu ( int type )
 			exit(1);
 	}
 	fprintf(stderr, "CPU: set to %s %s\n",
-		z80ex_get_z180() ? "Z180" : "Z80",
-		z80ex_get_nmos() ? "NMOS" : "CMOS"
+		z80ex.z180 ? "Z180" : "Z80",
+		z80ex.nmos ? "NMOS" : "CMOS"
 	);
 }
 
@@ -136,7 +135,7 @@ void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 
 Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 	Uint8 port;
-	if (cpu_type == CPU_Z180 && (port16 & 0xFFC0) == z180_port_start) {
+	if (z80ex.z180 && (port16 & 0xFFC0) == z180_port_start) {
 		if (z180_port_start == 0x80) {
 			ERROR_WINDOW("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
 			exit(1);
@@ -216,7 +215,7 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 	Z80EX_BYTE old_value;
 	Uint8 port;
-	if (cpu_type == CPU_Z180 && (port16 & 0xFFC0) == z180_port_start) {
+	if (z80ex.z180 && (port16 & 0xFFC0) == z180_port_start) {
 		if (z180_port_start == 0x80) {
 			ERROR_WINDOW("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
 			exit(1);

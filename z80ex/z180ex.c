@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
    Additional quirky Z180 emulation for Z80Ex. You should read
@@ -38,15 +38,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
 
-/*static void z180_op_ED_0x04(Z80EX_CONTEXT *cpu) {
-	TST(B);
-	WAIT_UNTIL(ezermilliard);
-}*/
-
-
 static void z180_trap ( void ) {
-	RST(0x00, /*wr*/5,8);
-	/* TODO: execution time, whatever?! */
+	opcodes_base[0xC7]();	/* = RST 0 */
 }
 
 static const z80ex_opcode_fn trapping ( Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76 ) {
