@@ -22,7 +22,7 @@ Dave:
 
 APU:
 
-	* port JSep code from JavaScript
+	* [DONE] port JSep code from JavaScript
 	* check correctness
 	* maybe rewrite a closer level emulation, bit precesion with the real APU
 	* Wild idea: custom API (FPGA EP ...) with more features, and IS-BASIC numeric format support

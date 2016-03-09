@@ -30,6 +30,9 @@ int xep_rom_seg = -1;
 int xep_rom_addr;
 
 
+// TODO: this should be written ... it's called when VRAM access, or $80...$8F I/O ports are accessed
+#define nick_clock_align()
+
 
 void set_ep_cpu ( int type )
 {
@@ -92,6 +95,7 @@ void ep_clear_ram ( void )
 Z80EX_BYTE z80ex_mread_cb(Z80EX_WORD addr, int m1_state) {
 	register int phys = memsegs[addr >> 14] + addr;
 	if (phys >= 0x3F0000) { // VRAM access, no "$BF port" wait states ever, BUT TODO: Nick CPU clock strechting ...
+		nick_clock_align();
 		return memory[phys];
 	}
 	if (mem_ws_all || (m1_state && mem_ws_m1))
@@ -114,6 +118,7 @@ Uint8 read_cpu_byte ( Uint16 addr )
 void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 	register int phys = memsegs[addr >> 14] + addr;
 	if (phys >= 0x3F0000) { // VRAM access, no "$BF port" wait states ever, BUT TODO: Nick CPU clock strechting ...
+		nick_clock_align();
 		memory[phys] = value;
 		if (zxemu_on && phys >= 0x3f9800 && phys <= 0x3f9aff)
 			zxemu_attribute_memory_write(phys & 0xFFFF, value);
@@ -190,6 +195,7 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 		/* NICK registers */
 		case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
 		case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F:
+			nick_clock_align();
 			return nick_get_last_byte();
 		/* DAVE registers */
 		case 0xB0: case 0xB1: case 0xB2: case 0xB3:
@@ -295,6 +301,7 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 			rtc_write_reg(value);
 			break;
 
+		/* DAVE audio etc related registers */
 		case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
 		case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
 			break;
@@ -352,17 +359,22 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 			break;
 		/* NICK registers */
 		case 0x80: case 0x84: case 0x88: case 0x8C:
+			nick_clock_align();
 			nick_set_bias(value);
 			break;
 		case 0x81: case 0x85: case 0x89: case 0x8D:
+			nick_clock_align();
 			nick_set_border(value);
 			break;
 		case 0x82: case 0x86: case 0x8A: case 0x8E:
+			nick_clock_align();
 			nick_set_lptl(value);
 			break;
 		case 0x83: case 0x87: case 0x8B: case 0x8F:
+			nick_clock_align();
 			nick_set_lpth(value);
 			break;
+		/* ZXemu card */
 		case 0xFE:
 			zxemu_write_ula(IO16_HI_BYTE(port16), value);
 			break;
