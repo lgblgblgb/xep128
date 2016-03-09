@@ -179,6 +179,11 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 			fprintf(stderr, "ZXEMU: reading port %02Xh\n", port);
 			return ports[port];
 
+		case 0x50:
+			return apu_read_data();
+		case 0x51:
+			return apu_read_status();
+
 		/* RTC registers */
 		case 0x7F:
 			return rtc_read_reg();
@@ -273,6 +278,13 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 				zxemu_on = value & 128;
 				fprintf(stderr, "ZXEMU: emulation is turned %s.\n", zxemu_on ? "ON" : "OFF");
 			}
+			break;
+
+		case 0x50:
+			apu_write_data(value);
+			break;
+		case 0x51:
+			apu_write_command(value);
 			break;
 
 		/* RTC registers */
@@ -437,6 +449,7 @@ void ep_reset ( void )
 	dave_reset();
 	rtc_reset();
 	mouse_reset();
+	apu_reset();
 #ifdef CONFIG_EXDOS_SUPPORT
 	wd_exdos_reset();
 #endif

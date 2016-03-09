@@ -41,6 +41,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 // more accurate :) from IstvanV
 #define NICK_SLOTS_PER_SEC 889846
 #define DEFAULT_CPU_CLOCK 4000000
+#define APU_CLOCK 2500000
 
 #define CONFIG_SDEXT_SUPPORT
 #define CONFIG_W5300_SUPPORT
@@ -212,6 +213,14 @@ Uint8 w5300_read_idm_ar0 ( void );
 Uint8 w5300_read_idm_ar1 ( void );
 Uint8 w5300_read_idm_dr0 ( void );
 Uint8 w5300_read_idm_dr1 ( void );
+
+/* apu.c */
+
+Uint8 apu_read_data ( void );
+Uint8 apu_read_status ( void );
+void apu_write_data ( Uint8 value );
+void apu_write_command ( Uint8 value );
+void apu_reset ( void );
 
 /* screen.c */
 

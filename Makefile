@@ -10,11 +10,11 @@ DEBUG	=
 CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\"
 ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_ED_TRAPPING_SUPPORT $(DEBUG)
 CPPFLAGS= -Iz80ex -I.
-LDFLAGS	= $(shell sdl2-config --libs) $(DEBUG)
+LDFLAGS	= $(shell sdl2-config --libs) -lm $(DEBUG)
 LIBS	=
 INCS	= xepem.h
 LINSRCS	=
-SRCS	= $(LINSRCS) lodepng.c screen.c font_16x16.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c keyboard_mapping.c
+SRCS	= $(LINSRCS) lodepng.c screen.c font_16x16.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c apu.c keyboard_mapping.c
 OBJS	= $(SRCS:.c=.o)
 PRG	= xep128
 PRG_EXE	= xep128.exe
