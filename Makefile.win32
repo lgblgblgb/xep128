@@ -6,12 +6,10 @@ CC	= i686-w64-mingw32-gcc
 DEBUG	=
 CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --cflags) $(DEBUG)
 CPPFLAGS= -Iz80ex -I.
-ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_ED_TRAPPING_SUPPORT $(DEBUG)
+ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -DWORDS_LITTLE_ENDIAN -DZ80EX_ED_TRAPPING_SUPPORT -DZ80EX_Z180_SUPPORT $(DEBUG)
 #LDFLAGS= -Wl,-Bstatic $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --libs) -Wl,-Bdynamic $(DEBUG)
 LDFLAGS	= $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --libs) $(DEBUG)
-#LIBS	= -lz80ex -lz80ex_dasm
 LIBS	= 
-#LIBS	= -Wl,-Bstatic -lz80ex -lz80ex_dasm -Wl,-Bdynamic
 
 INCS	= xepem.h
 WINSRCS	=
@@ -33,9 +31,9 @@ all:
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 z80ex/z180ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
-	$(CC) $(ZCFLAGS) -DZ80EX_Z180_SUPPORT -c -o $@ z80ex/z80ex.c
+	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex.c
 z80ex/z180ex_dasm-$(ARCH).o: z80ex/z80ex_dasm.c $(ZDEPS)
-	$(CC) $(ZCFLAGS) -DZ80EX_Z180_SUPPORT -c -o $@ z80ex/z80ex_dasm.c
+	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex_dasm.c
 z80ex/z80ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex.c
 z80ex/z80ex_dasm-$(ARCH).o: z80ex/z80ex_dasm.c $(ZDEPS)

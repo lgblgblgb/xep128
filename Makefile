@@ -8,7 +8,7 @@ DATADIR	= $(PREFIX)/lib/xep128
 CC	= gcc
 DEBUG	=
 CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\"
-ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -Iz80ex/include -DWORDS_LITTLE_ENDIAN -DZ80EX_ED_TRAPPING_SUPPORT $(DEBUG)
+ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -DWORDS_LITTLE_ENDIAN -DZ80EX_ED_TRAPPING_SUPPORT -DZ80EX_Z180_SUPPORT $(DEBUG)
 CPPFLAGS= -Iz80ex -I.
 LDFLAGS	= $(shell sdl2-config --libs) -lm $(DEBUG)
 LIBS	=
@@ -39,9 +39,9 @@ all:
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 z80ex/z180ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
-	$(CC) $(ZCFLAGS) -DZ80EX_Z180_SUPPORT -c -o $@ z80ex/z80ex.c
+	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex.c
 z80ex/z180ex_dasm-$(ARCH).o: z80ex/z80ex_dasm.c $(ZDEPS)
-	$(CC) $(ZCFLAGS) -DZ80EX_Z180_SUPPORT -c -o $@ z80ex/z80ex_dasm.c
+	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex_dasm.c
 z80ex/z80ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex.c
 z80ex/z80ex_dasm-$(ARCH).o: z80ex/z80ex_dasm.c $(ZDEPS)
