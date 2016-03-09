@@ -35,6 +35,26 @@ Modifications compared to the original source distribution:
 * No callback set functions, using direct function calls, which
   should be provided by the application
 
+Important stuffs that can be defined:
+
+Z80EX_TSTATE_CALLBACK
+	Call function on each T-states, can be switched on/off
+	run-time.
+Z80EX_TSTATE_CALLBACK_ALWAYS
+	Always call function on each T-states
+
+Without Z80EX_TSTATE_CALLBACK and Z80EX_TSTATE_CALLBACK_ALWAYS
+there will be no support for T-state callback compiled in!
+
+Z80EX_ED_TRAPPING_SUPPORT
+	Call function on invalid ED opcodes
+Z80EX_Z180_SUPPORT
+	Ability to have run-time switchable Z180 support
+	(very limited, still Z80 timing, just some Z180
+	opcodes and banned "undocumented" Z80 ones removed)
+
+---------------------------------------------------------
+
 Now back to the original README, thanks for your patience:
 
 Z80Ex

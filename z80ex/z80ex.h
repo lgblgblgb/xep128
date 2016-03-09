@@ -13,10 +13,13 @@
 #define _Z80EX_H_INCLUDED
 
 #ifdef Z80EX_TSTATE_CALLBACK_ALWAYS
-#define IS_TSTATE_CB 1
-#define Z80EX_TSTATE_CALLBACK
+#	define IS_TSTATE_CB 1
+#	define Z80EX_TSTATE_CALLBACK
 #else
-#define IS_TSTATE_CB z80ex.tstate_cb
+#	define IS_TSTATE_CB z80ex.tstate_cb
+#	ifdef Z80EX_TSTATE_CALLBACK
+#		define Z80EX_HAVE_TSTATE_CB_VAR
+#	endif
 #endif
 
 #if defined(__SYMBIAN32__)
@@ -150,7 +153,7 @@ struct _z80_cpu_context {
 	char int_vector_req; /*opcode must be fetched from IO device? (int vector read)*/
 	Z80EX_BYTE prefix;
 	
-#ifdef Z80EX_TSTATE_CALLBACK
+#ifdef Z80EX_HAVE_TSTATE_CB_VAR
 	int tstate_cb;  /* use tstate callback? */
 #endif
 	

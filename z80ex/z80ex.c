@@ -169,7 +169,7 @@ void z80ex_init ( void )
 	z80ex_reset();
 	
 	z80ex.nmos = 1;
-#ifdef Z80EX_TSTATE_CALLBACK
+#ifdef Z80EX_HAVE_TSTATE_CB_VAR
 	z80ex.tstate_cb = 0;
 #endif
 #ifdef Z80EX_Z180_SUPPORT
