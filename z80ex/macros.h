@@ -100,7 +100,7 @@
 #define T_WAIT_UNTIL(t_state) \
 { \
 	unsigned nn; \
-	if(!z80ex.tstate_cb) { \
+	if(!IS_TSTATE_CB) { \
 		if (t_state > z80ex.op_tstate) { \
 			z80ex.tstate += t_state - z80ex.op_tstate; \
 			z80ex.op_tstate = t_state; \
@@ -129,7 +129,7 @@ for using outside of certain opcode execution)*/
 #define TSTATES(amount) \
 {\
 	int nn;\
-	if(!z80ex.tstate_cb) { \
+	if(!IS_TSTATE_CB) { \
 		z80ex.tstate += amount; \
 	} \
 	else { \

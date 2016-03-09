@@ -12,6 +12,13 @@
 #ifndef _Z80EX_H_INCLUDED
 #define _Z80EX_H_INCLUDED
 
+#ifdef Z80EX_TSTATE_CALLBACK_ALWAYS
+#define IS_TSTATE_CB 1
+#define Z80EX_TSTATE_CALLBACK
+#else
+#define IS_TSTATE_CB z80ex.tstate_cb
+#endif
+
 #if defined(__SYMBIAN32__)
 typedef unsigned char Z80EX_BYTE;
 typedef signed char Z80EX_SIGNED_BYTE;

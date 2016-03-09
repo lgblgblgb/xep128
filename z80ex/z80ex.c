@@ -302,7 +302,7 @@ void z80ex_w_states(unsigned w_states)
 void z80ex_next_t_state(void)
 {
 #ifdef Z80EX_TSTATE_CALLBACK
-	if (!z80ex.tstate_cb) z80ex_tstate_cb();
+	if (IS_TSTATE_CB) z80ex_tstate_cb();
 #endif
 	z80ex.tstate++;
 	z80ex.op_tstate++;
