@@ -30,13 +30,58 @@ int cpu_cycles_per_dave_tick;
 
 static SDL_AudioDeviceID audio = 0;
 static SDL_AudioSpec audio_spec;
+#define AUDIO_BUFFER_SIZE 0x4000
+static Uint8 audio_buffer[AUDIO_BUFFER_SIZE];
+static Uint8 *audio_buffer_r = audio_buffer;
+static Uint8 *audio_buffer_w = audio_buffer;
+static int dave_ticks_per_sample_counter = 0;
+static int dave_ticks_per_sample = 6;
 
+
+
+static void dave_render_audio_sample ( void )
+{
+	int left, right;
+	/* TODO: missing noise channel, polynom counters/ops, modulation, etc */
+	if (ports[0xA7] &  8)
+		left  = (ports[0xA8] & 63) << 2;	// left ch is in D/A mode
+	else {						// left ch is in "normal" mode
+		left  = _state_tg0 * (ports[0xA8] & 63) +
+			_state_tg1 * (ports[0xA9] & 63) +
+			_state_tg2 * (ports[0xAA] & 63);
+	}
+	if (ports[0xA7] & 16)
+		right = (ports[0xAC] & 63) << 2;	// right ch is in D/A mode
+	else {						// right ch is in "normal" mode
+		right = _state_tg0 * (ports[0xAC] & 63) +
+			_state_tg1 * (ports[0xAD] & 63) +
+			_state_tg2 * (ports[0xAE] & 63);
+	}
+	/* store sample now! */
+	//daveAudioBufferLRec[daveAudioBufferWPos] = left  / 126 - 1;
+	//daveAudioBufferRRec[daveAudioBufferWPos] = right / 126 - 1;
+	//daveAudioBufferWPos = (daveAudioBufferWPos + 1) & SOUND_BUFFER_SIZE_MASK;
+	//while (audio_buffer_r == audio_buffer_w && audio) ; // just consume CPU, yack ...
+	*(audio_buffer_w++) = left  ;
+	*(audio_buffer_w++) = right ;
+	if (audio_buffer_w == audio_buffer + AUDIO_BUFFER_SIZE)
+		audio_buffer_w = audio_buffer;
+}
 
 
 static void audio_callback(void *userdata, Uint8 *stream, int len)
 {
-	while (len)
-		stream[len] = len--;
+	while (len--) {
+		if (audio_buffer_r == audio_buffer_w) {
+			//*(stream++) = 0;
+			*(stream++) = 0;
+		} else {
+			//*(stream++) = *(audio_buffer_r++);
+			*(stream++) = *(audio_buffer_r++);
+			if (audio_buffer_r == audio_buffer + AUDIO_BUFFER_SIZE)
+				audio_buffer_r = audio_buffer;
+		}
+	}
 }
 
 
@@ -66,8 +111,8 @@ void audio_init ( int enable )
 	SDL_AudioSpec want;
 	if (!enable) return;
 	SDL_memset(&want, 0, sizeof(want));
-	want.freq = 31250;
-	want.format = AUDIO_S8;
+	want.freq = 41666;
+	want.format = AUDIO_U8;
 	want.channels = 2;
 	want.samples = 4096;
 	want.callback = audio_callback;
@@ -89,10 +134,13 @@ void dave_set_clock ( void )
 {
 	// FIXME maybe: Currently, it's assumed that Dave and CPU has fixed relation about clock
 	//double turbo_rate = (double)CPU_CLOCK / (double)DEFAULT_CPU_CLOCK;
-	if (ports[0xBF] & 2)
+	if (ports[0xBF] & 2) {
 		cpu_cycles_per_dave_tick = 24; // 12MHz (??)
-	else
+		dave_ticks_per_sample = 4;
+	} else {
 		cpu_cycles_per_dave_tick = 16; // 8MHz  (??)
+		dave_ticks_per_sample = 6;
+	}
 	//printf("DAVE: CLOCK: assumming %dMHz input, CPU clock divisor is %d, CPU cycles per Dave tick is %d\n", (ports[0xBF] & 2) ? 12 : 8, CPU_CLOCK / cpu_cycles_per_dave_tick, cpu_cycles_per_dave_tick);
 }
 
@@ -207,6 +255,13 @@ void dave_tick ( void )
 			dave_int_read |= 8; // set latch, if 1Hz int source is enabled
 		dave_int_read ^= 4; // negate 1Hz interrupt level bit (actually the freq is 0.5Hz, but int is generated on each edge, thus 1Hz)
 		//printf("DAVE: 1HZ interrupt level: %d\n", dave_int_read & 4);
+	}
+	// SOUND
+	if (audio) {
+		if ((--dave_ticks_per_sample_counter) < 0) {
+			dave_render_audio_sample();
+			dave_ticks_per_sample_counter = dave_ticks_per_sample - 1;
+		}
 	}
 }
 
