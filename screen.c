@@ -17,7 +17,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
+#ifdef USE_LODEPNG
 #include "lodepng.h"
+#else
+#include "png.h"
+#endif
 
 int is_fullscreen = 0;
 SDL_Window   *sdl_win = NULL;
@@ -260,11 +264,11 @@ int screen_shot ( Uint32 *ep_pixels, const char *directory, const char *filename
 	if (lodepng_encode24_file(fn, (unsigned char*)pix, SCREEN_WIDTH, SCREEN_HEIGHT * 2)) {
 		free(pix);
 		ERROR_WINDOW("LodePNG screenshot taking error");
-		return 0;
+		return 1;
 	} else {
 		free(pix);
 		OSD("Screenshot:\n%s", fn + strlen(directory));
-		return 1;
+		return 0;
 	}
 }
 

@@ -27,6 +27,10 @@ freely, subject to the following restrictions:
 The manual and changelog are in the header file "lodepng.h"
 */
 
+
+#include "xepem.h"
+#ifdef USE_LODEPNG
+
 #include "lodepng.h"
 
 #include <stdio.h>
@@ -5906,4 +5910,7 @@ const char* lodepng_error_text(unsigned code)
   return "unknown error code";
 }
 #endif /*LODEPNG_COMPILE_ERROR_TEXT*/
+
+
+#endif
 

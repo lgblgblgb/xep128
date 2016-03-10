@@ -38,6 +38,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define VERSION "v0.1"
 #define COPYRIGHT "(C)2015,2016 LGB Gabor Lenart"
 
+#define USE_LODEPNG
+
 // more accurate :) from IstvanV
 #define NICK_SLOTS_PER_SEC 889846
 #define DEFAULT_CPU_CLOCK 4000000
