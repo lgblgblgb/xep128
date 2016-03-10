@@ -133,6 +133,22 @@ static void cmd_exit ( void )
 }
 
 
+static void cmd_entermice ( void )
+{
+	switch (*carg) {
+		case '0':
+		case '1':
+			mouse_entermice(*carg - '0');
+			break;
+		case 0:
+			break;
+		default:
+			sprintf(COBUF, "*** Give 0 or 1 to set/clear EnterMice mode, or no parameter for query.\r\n");
+			return;
+	}
+	sprintf(COBUF, "Mouse mode is %s\r\n", mouse_entermice(-1) ? "EnterMice" : "BoxSoft");
+}
+
 
 static void cmd_help ( void );
 
@@ -140,6 +156,7 @@ static const struct commands_st commands[] = {
 	{ "cpu",	"Set/query CPU type/clock", cmd_cpu },
 	{ "ram",        "Set RAM size/report", cmd_ram },
 	{ "emu",	"Emulation info", cmd_emu },
+	{ "emice",	"Set on/off and query entermice mode", cmd_entermice },
 	{ "help",	"This help screen", cmd_help },
 	{ "exit",	"Exit Xep128", cmd_exit },
 	{ NULL,		NULL, NULL }

@@ -371,6 +371,7 @@ int main (int argc, char *argv[])
 	fprintf(stderr, "XEP ROM segment will be %02Xh @ %06Xh\n", xep_rom_seg, xep_rom_addr);
 	rom_size += 0x4000;
 	set_ep_ramsize(1024);
+	mouse_entermice(0);	// 1=Entermice protocol (8 nibbles), 0=boxsoft (4 nibbles), also different lines
 	ep_reset();
 	kbd_matrix_reset();
 #ifdef CONFIG_SDEXT_SUPPORT

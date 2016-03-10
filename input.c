@@ -22,6 +22,7 @@ static int _mouse_dx, _mouse_dy, _mouse_grab = 0;
 static Uint8 _mouse_data_byte, _mouse_data_half, _mouse_last_shift, _mouse_read_state, _mouse_button_state;
 static int _mouse_pulse = 0; // try to detect SymbOS or other simllar tests
 static int _mouse_wait_warn = 1;
+static int _mouse_entermice = 0;
 
 
 int mouse_is_enabled ( void )
@@ -83,9 +84,9 @@ void mouse_reset(void)
 
 Uint8 mouse_read(void)
 {
-	Uint8 data = _mouse_button_state ? 0 : 4;
+	Uint8 data = _mouse_button_state ? 0 : (_mouse_entermice ? 2 : 4);
 	if (kbd_selector > 0 && kbd_selector < 5)
-		data |= (_mouse_data_half >> (kbd_selector - 1)) & 1;
+		data |= (_mouse_data_half >> (kbd_selector - 1)) & (_mouse_entermice ? 2 : 1);
 	_mouse_pulse = 0;
 	return data;
 }
@@ -113,8 +114,19 @@ void mouse_check_data_shift(Uint8 val)
 		case 3:
 			_mouse_data_half = _mouse_data_byte & 15;
 			break;
+		default:
+			_mouse_data_half = 0;					// for EnterMice, having 8 nibbles, but 0 for the last four ones
+			break;
 	}
-	_mouse_read_state = (_mouse_read_state + 1) & 3;
+	_mouse_read_state = (_mouse_read_state + 1) & (_mouse_entermice ? 7 : 3);	// 4 or 8 nibble protocol
+}
+
+
+int mouse_entermice ( int entermice )
+{
+	if (entermice >= 0)
+		_mouse_entermice = entermice;
+	return _mouse_entermice;
 }
 
 
