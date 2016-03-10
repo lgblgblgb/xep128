@@ -150,9 +150,17 @@ static void cmd_entermice ( void )
 }
 
 
+static void cmd_audio ( void )
+{
+	audio_init(1);	// NOTE: later it shouldn't be here!
+	audio_start();
+}
+
+
 static void cmd_help ( void );
 
 static const struct commands_st commands[] = {
+	{ "audio",	"Tries to turn lame audio emulation", cmd_audio },
 	{ "cpu",	"Set/query CPU type/clock", cmd_cpu },
 	{ "ram",        "Set RAM size/report", cmd_ram },
 	{ "emu",	"Emulation info", cmd_emu },
