@@ -105,7 +105,9 @@ static void cmd_emu ( void )
 {
 	char buf[1024];
 	SDL_version sdlver_c, sdlver_l;
+#ifdef _WIN32
 	int siz = sizeof buffer;
+#endif
 	SDL_VERSION(&sdlver_c);
 	SDL_GetVersion(&sdlver_l);
 #ifdef _WIN32
@@ -193,6 +195,16 @@ static void cmd_help ( void ) {
 }
 
 
+static int exos_cmd_name_match ( const char *that, Uint16 addr )
+{
+	if (strlen(that) != Z80_B) return 0;
+	while (*that)
+		if (*(that++) != read_cpu_byte(addr++))
+			return 0;
+	return 1;
+}
+
+
 static void xep_exos_command_trap ( void )
 {
 	Uint8 c = Z80_C, b = Z80_B;
@@ -201,7 +213,7 @@ static void xep_exos_command_trap ( void )
 	printf("XEP: TRAP: C=%02Xh, B=%02Xh, DE=%04Xh\n", c, b, de);
 	switch (c) {
 		case 2: // EXOS command
-			if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
+			if (exos_cmd_name_match("XEP", de + 1)) {
 				char *p = buffer;
 				b = read_cpu_byte(de) - 3;
 				de += 4;
@@ -243,7 +255,7 @@ static void xep_exos_command_trap ( void )
 			if (b == 0) {
 				sprintf(COBUF, "%s", SHORT_HELP);
 				Z80_A = 0;
-			} else if (b == 3 && read_cpu_byte(de + 1) == 'X' && read_cpu_byte(de + 2) == 'E' && read_cpu_byte(de + 3) == 'P') {
+			} else if (exos_cmd_name_match("XEP", de + 1)) {
 				cmd_help();
 				Z80_A = 0;
 				Z80_C = 0;
