@@ -43,7 +43,7 @@ static Uint8 nick_last_byte;
 static int reload, vres;
 static int all_rasters;
 static int lpt_clk;
-static int vsync;
+int vsync;
 //static int vint;
 static int frameskip;
 static int lm, rm;

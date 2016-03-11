@@ -200,6 +200,7 @@ extern int primo_nmi_enabled, primo_on;
 void primo_write_io ( Uint8 port, Uint8 data );
 Uint8 primo_read_io ( Uint8 port );
 void primo_switch ( Uint8 data );
+void primo_emulator_execute ( void );
 
 extern Uint8 memory[0x400000];
 extern Uint8 ports[0x100];

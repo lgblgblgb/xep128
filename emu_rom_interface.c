@@ -174,6 +174,7 @@ static const struct commands_st commands[] = {
 	{ "emice",	"Set on/off and query entermice mode", cmd_entermice },
 	{ "help",	"This help screen", cmd_help },
 	{ "exit",	"Exit Xep128", cmd_exit },
+	{ "primo",	"Primo emulation", primo_emulator_execute },
 	{ NULL,		NULL, NULL }
 };
 
