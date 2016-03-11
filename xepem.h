@@ -93,6 +93,8 @@ extern char current_directory[PATH_MAX + 1];
 extern char rom_path[PATH_MAX + 1];
 extern char sdimg_path[PATH_MAX + 1];
 
+void xep_rom_install ( int offset );
+
 extern int CPU_CLOCK;
 int set_ep_ramsize(int kbytes);
 int set_cpu_clock ( int hz );
@@ -191,7 +193,13 @@ void zxemu_write_ula ( Uint8 hiaddr, Uint8 data );
 Uint8 zxemu_read_ula ( Uint8 hiaddr );
 void zxemu_attribute_memory_write ( Uint16 address, Uint8 data );
 extern int zxemu_on, nmi_pending;
+void zxemu_switch ( Uint8 data );
 #define IO16_HI_BYTE(port16) (((ports[(((port16) >> 14) & 3) | 0xB0] & 3) << 6) | (((port16) >> 8) & 0x3F))
+
+extern int primo_nmi_enabled, primo_on;
+void primo_write_io ( Uint8 port, Uint8 data );
+Uint8 primo_read_io ( Uint8 port );
+void primo_switch ( Uint8 data );
 
 extern Uint8 memory[0x400000];
 extern Uint8 ports[0x100];

@@ -181,6 +181,8 @@ void dave_int1(int level)
 		if ((dave_int_read & 16) && (dave_int_write & 16)) {
 			printf("DAVE/VINT: LACTH is set!\n");
 			dave_int_read |= 32; // set latch
+			if (primo_on)
+				nmi_pending = primo_nmi_enabled;
 		}
 		dave_int_read &= 239; // reset level
 	}

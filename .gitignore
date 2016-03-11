@@ -40,6 +40,7 @@ www
 xep128-win32.zip
 buildinfo.c
 xep_rom.lst
+xep_rom_syms.h
 screenshot*.png
 .depend
 .*.swp

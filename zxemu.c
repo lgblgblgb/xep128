@@ -19,7 +19,21 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 
 int zxemu_on = 0;
-int nmi_pending = 0;
+
+
+
+
+void zxemu_switch ( Uint8 data )
+{
+	data &= 128;
+	if (data == zxemu_on)
+		return;
+	zxemu_on = data;
+	fprintf(stderr, "ZXEMU: emulation is turned %s.\n", zxemu_on ? "ON" : "OFF");
+	if (zxemu_on)
+		primo_switch(0);
+        nmi_pending = 0;
+}
 
 
 static int zxemu_nmi ( void )

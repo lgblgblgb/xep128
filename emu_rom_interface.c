@@ -18,6 +18,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
 
+static const Uint8 xep_rom_image[] = {
+#include "xep_rom.hex"
+};
+#include "xep_rom_syms.h"
+
 struct commands_st {
 	const char *cmd;
 	const char *help;
@@ -269,5 +274,12 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 			ERROR_WINDOW("FATAL: Unknown ED-trap opcode in XEP ROM: PC=%04Xh ED_OP=%02Xh", pc, opcode);
 			exit(1);
 	}
+}
+
+
+void xep_rom_install ( int offset )
+{
+        memset(memory + offset, 0, 0x4000);
+        memcpy(memory + offset, xep_rom_image, sizeof xep_rom_image);
 }
 

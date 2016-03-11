@@ -14,7 +14,7 @@ LDFLAGS	= $(shell sdl2-config --libs) -lm $(DEBUG)
 LIBS	=
 INCS	= xepem.h
 LINSRCS	=
-SRCS	= $(LINSRCS) lodepng.c screen.c font_16x16.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c emu_rom_interface.c w5300.c apu.c keyboard_mapping.c
+SRCS	= $(LINSRCS) lodepng.c screen.c font_16x16.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c primoemu.c emu_rom_interface.c w5300.c apu.c keyboard_mapping.c
 OBJS	= $(SRCS:.c=.o)
 PRG	= xep128
 PRG_EXE	= xep128.exe
@@ -54,10 +54,15 @@ ztest:	z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o z80ex/z80ex-$(ARCH).o 
 ui-gtk.o: ui-gtk.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(shell pkg-config --cflags gtk+-3.0) $< -o $@
 
-main.o: xep_rom.hex app_icon.c
+screen.o: app_icon.c
+
+emu_rom_interface.o: xep_rom_syms.h xep_rom.hex
 
 xep_rom.rom: xep_rom.asm
-	sjasm xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom ; false; }
+	sjasm -s xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom xep_rom.lst xep_rom.sym ; false; }
+
+xep_rom_syms.h: xep_rom.sym
+	awk '$$1 ~ /xepsym_[^:. ]+:/ { gsub(":$$","",$$1); gsub("h$$","",$$3); print "#define " $$1 " 0x" $$3 }' xep_rom.sym > xep_rom_syms.h
 
 xep_rom.hex: xep_rom.rom
 	od -A n -t x1 -v xep_rom.rom | sed 's/ /,0x/g;s/^,/ /;s/$$/,/' > xep_rom.hex
@@ -114,7 +119,7 @@ zclean:
 	rm -f z80ex/*.o
 
 clean:
-	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst .depend
+	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h .depend
 	$(MAKE) -C rom clean
 
 distclean:
@@ -137,6 +142,7 @@ dep:
 
 depend:
 	$(MAKE) xep_rom.hex
+	$(MAKE) xep_rom_syms.h
 	$(CC) -MM $(CFLAGS) $(CPPFLAGS) $(SRCS) > .depend
 
 .PHONY: all clean distclean strip commit win32 publish data install ztest zclean dep depend

@@ -1,0 +1,2 @@
+rom_main_entry_point: equ 0000C00Dh
+rom_main_entry_point.no_print: equ 0000C022h

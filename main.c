@@ -28,10 +28,6 @@ char *app_pref_path, *app_base_path;
 char current_directory[PATH_MAX + 1];
 char rom_path[PATH_MAX + 1];
 
-static const Uint8 _xep_rom[] = {
-#include "xep_rom.hex"
-};
-
 static const int _cpu_speeds[4] = { 4000000, 6000000, 7120000, 10000000 };
 static int _cpu_speed_index = 0;
 
@@ -326,7 +322,7 @@ int set_cpu_clock_with_osd ( int hz )
 static int get_sys_dirs ( const char *path )
 {
 	fprintf(stderr, "Program path: %s\n", path);
-	fprintf(stderr, "XEP ROM size: %d\n", sizeof _xep_rom);
+	//fprintf(stderr, "XEP ROM size: %d\n", sizeof _xep_rom);
 	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
 	app_base_path = SDL_GetBasePath();
 	if (app_pref_path == NULL) app_pref_path = SDL_strdup("?");
@@ -364,8 +360,9 @@ int main (int argc, char *argv[])
 	rom_size = load_roms(COMBINED_ROM_FN, rom_path);
 	if (rom_size <= 0)
 		return 1;
-	memset(memory + rom_size, 0, 0x4000);
-	memcpy(memory + rom_size, _xep_rom, sizeof _xep_rom);
+	xep_rom_install(rom_size);
+	//memset(memory + rom_size, 0, 0x4000);
+	//memcpy(memory + rom_size, _xep_rom, sizeof _xep_rom);
 	xep_rom_seg = rom_size >> 14;
 	xep_rom_addr = rom_size;
 	fprintf(stderr, "XEP ROM segment will be %02Xh @ %06Xh\n", xep_rom_seg, xep_rom_addr);

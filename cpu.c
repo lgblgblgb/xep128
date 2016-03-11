@@ -28,6 +28,7 @@ static int used_mem_segments[0x100];
 static int mem_ws_all, mem_ws_m1;
 int xep_rom_seg = -1;
 int xep_rom_addr;
+int nmi_pending = 0;
 
 
 // TODO: this should be written ... it's called when VRAM access, or $80...$8F I/O ports are accessed
@@ -148,6 +149,8 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 		return z180_port_read(port16 & 0x3F);
 	}
 	port = port16 & 0xFF;
+	if (port < primo_on)
+		return primo_read_io(port);
 	//printf("IO: READ: IN (%02Xh)\n", port);
 	switch (port) {
 #ifdef CONFIG_W5300_SUPPORT
@@ -235,6 +238,8 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 		return;
 	}
 	port = port16 & 0xFF;
+	if (port < primo_on)
+		return primo_write_io(port, value);
 	old_value = ports[port];
 	ports[port] = value;
 	//printf("IO: WRITE: OUT (%02Xh),%02Xh\n", port, value);
@@ -280,10 +285,10 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 			break;
 
 		case 0x44:
-			if (zxemu_on != (value & 128)) {
-				zxemu_on = value & 128;
-				fprintf(stderr, "ZXEMU: emulation is turned %s.\n", zxemu_on ? "ON" : "OFF");
-			}
+			zxemu_switch(value);
+			break;
+		case 0x45:
+			primo_switch(value);
 			break;
 
 		case 0x50:
@@ -465,5 +470,7 @@ void ep_reset ( void )
 #ifdef CONFIG_EXDOS_SUPPORT
 	wd_exdos_reset();
 #endif
+	primo_switch(0);
+	nmi_pending = 0;
 }
 
