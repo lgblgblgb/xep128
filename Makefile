@@ -97,7 +97,7 @@ $(PRG): .depend $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(INC
 	$(MAKE) buildinfo.o
 	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(LDFLAGS) $(LIBS)
 
-win32:	$(DLL) xep_rom.hex
+win32:	$(DLL) xep_rom.hex xep_rom_syms.h
 	@echo "*** BUILDING FOR WINDOWS ***"
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.c
