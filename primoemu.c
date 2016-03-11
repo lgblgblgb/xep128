@@ -24,6 +24,74 @@ int primo_nmi_enabled = 0;
 
 extern int vsync;
 
+// translates EP keyboard matrix  positions into Primo scan keys, indexed by primo scan keys
+const Uint8 primo_key_trans[] = {
+	0x22,		// scan 0 Y
+	0x73,		// scan 1 UP-ARROW
+	0x15,		// scan 2 S
+	0x07,		// scan 3 SHIFT
+	0x25,		// scan 4 E
+	0xFF,		// scan 5 UPPER
+	0x26,		// scan 6 W
+	0x17,		// scan 7 CTR
+	0x13,		// scan 8 D
+	0x35,		// scan 9 3 #
+	0x05,		// scan 10 X
+	0x36,		// scan 11 2 "
+	0x21,		// scan 12 Q
+	0x31,		// scan 13 1 !
+	0x16,		// scan 14 A
+	0x71,		// scan 15 DOWN-ARROW
+	0x03,		// scan 16 C
+	0xFF,		// scan 17 ----
+	0x14,		// scan 18 F
+	0xFF,		// scan 19 ----
+	0x23,		// scan 20 R
+	0xFF,		// scan 21 ----
+	0x24,		// scan 22 T
+	0x30,		// scan 23 7 /
+	0x10,		// scan 24 H
+	0x86,		// scan 25 SPACE
+	0x02,		// scan 26 B
+	0x32,		// scan 27 6 &
+	0x12,		// scan 28 G
+	0x34,		// scan 29 5 %
+	0x04,		// scan 30 V
+	0x33,		// scan 31 4 $
+	0x00,		// scan 32 N
+	0x50,		// scan 33 8 (
+	0x06,		// scan 34 Z
+	0xFF,		// scan 35 + ?
+	0x20,		// scan 36 U
+	0x54,		// scan 37 0
+	0x60,		// scan 38 J
+	0xFF,		// scan 39 > <
+	0x64,		// scan 40 L
+	0x53,		// scan 41 - i
+	0x62,		// scan 42 K
+	0x84,		// scan 43 . :
+	0x80,		// scan 44 M
+	0x52,		// scan 45 9 ;
+	0x90,		// scan 46 I
+	0x82,		// scan 47 ,
+	0xFF,		// scan 48 U"
+	0x65,		// scan 49 ' #
+	0x94,		// scan 50 P
+	0xFF,		// scan 51 u' u"
+	0x92,		// scan 52 O
+	0xFF,		// scan 53 CLS
+	0xFF,		// scan 54 ----
+	0x76,		// scan 55 RETURN
+	0xFF,		// scan 56 ----
+	0x75,		// scan 57 LEFT-ARROW
+	0xFF,		// scan 58 E'
+	0xFF,		// scan 59 o'
+	0xFF,		// scan 60 A'
+	0x72,		// scan 61 RIGHT-ARROW
+	0xFF,		// scan 62 O:
+	0x37		// scan 63 BRK
+};
+
 
 
 void primo_switch ( Uint8 data )
@@ -47,18 +115,26 @@ void primo_switch ( Uint8 data )
 
 static int primo_scan_key ( int scan )
 {
-	return (kbd_matrix[scan >> 3] & (1 << (scan & 7))) ? 0 : 1;
+	scan = primo_key_trans[scan];
+	if (scan == 0xFF) return 0; // not implemented?
+	//return kbd_matrix[sca
+	//return (kbd_matrix[scan >> 3] & (1 << (scan & 7))) ? 0 : 1;
+	//return (kbd_matrix[scan & 15] & (1 << (scan >> 4))) ? 0 : 1;
+	return (kbd_matrix[scan >> 4] & (1 << (scan & 15))) ? 0 : 1;
 }
 
 
 Uint8 primo_read_io ( Uint8 port )
 {
+        // Primo does the very same for all I/O ports in the range of 0-3F!
+	// EXCEPT bit 0 which is the state of the key given by the port number.
 	return (vsync ? 32 : 0) | primo_scan_key(port);
 }
 
 
 void primo_write_io ( Uint8 port, Uint8 data )
 {
+	// Primo does the  very same for all I/O ports in the range of 0-3F!
 	primo_nmi_enabled = data & 128;				// bit 7: NMI enabled, this variable is "cloned" as nmi_pending by VINT in dave.c
 	ports[0xA8] = ports[0xAC] = (data & 16) ? 63 : 0;	// bit 4, speaker control
 	memory[0x3F4005] = (data & 8) ? 0x28 : 0x08;		// bit 3: display page: set LPB LD1 high (LPB should be at segment 0xFD, and 0xFC is for primo 0xC000-0xFFFF)
@@ -94,7 +170,7 @@ static const Uint8 primo_lpt[] = {
 
 void primo_emulator_execute ( void )
 {
-	int romseg = search_primo_rom();
+	int a, romseg = search_primo_rom();
 	printf("PRIMO: ROM segment is %d\n", romseg);
 	if (romseg == -1) return;
 	/* set an LPT */
@@ -103,7 +179,11 @@ void primo_emulator_execute ( void )
 	z80ex_pwrite_cb(0x83, 4 | 64 | 128);
 	z80ex_pwrite_cb(0x81, 0);	// border color
 	/* do our stuffs ... */
-	z80ex_pwrite_cb(0xB4, 0);	// disable all interrupts on Dave
+	z80ex_pwrite_cb(0xA7, 8 | 16);	// D/A mode for Dave audio
+	for (a = 0xA8; a < 0xB0; a++)
+		z80ex_pwrite_cb(a, 0);	// volumes of L/H channels
+	z80ex_pwrite_cb(0xB4, 0xFF);
+	z80ex_pwrite_cb(0xB4, 0);	// disable all interrupts on Dave (z80 won't get INT but the cloned NMI directly from Dave "translated" from VINT)
 	z80ex_pwrite_cb(0xB0, romseg);	// first segment is the Primo ROM now
 	z80ex_pwrite_cb(0xB1, 0xFA);	// normal RAM segment
 	z80ex_pwrite_cb(0xB2, 0xFB);	// normal RAM segment
