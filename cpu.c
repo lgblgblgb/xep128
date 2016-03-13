@@ -462,6 +462,8 @@ void z80_reset ( void )
 
 void ep_reset ( void )
 {
+	if (primo_on)
+		primo_emulator_exit();
 	z80_reset();
 	dave_reset();
 	rtc_reset();

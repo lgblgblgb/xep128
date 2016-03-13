@@ -360,6 +360,7 @@ int main (int argc, char *argv[])
 	rom_size = load_roms(COMBINED_ROM_FN, rom_path);
 	if (rom_size <= 0)
 		return 1;
+	primo_rom_seg = primo_search_rom();
 	xep_rom_install(rom_size);
 	//memset(memory + rom_size, 0, 0x4000);
 	//memcpy(memory + rom_size, _xep_rom, sizeof _xep_rom);

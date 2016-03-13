@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 int primo_on = 0;
 int primo_nmi_enabled = 0;
+int primo_rom_seg = -1;
 
 extern int vsync;
 
@@ -93,6 +94,11 @@ const Uint8 primo_key_trans[] = {
 };
 
 
+#define EP_KBDM_SCAN(sc,resval) ((kbd_matrix[(sc) >> 4] & (1 << ((sc) & 15))) ? 0 : (resval))
+
+// F1
+#define PRIMOEMU_HOTKEY_RESET 0x47
+
 
 void primo_switch ( Uint8 data )
 {
@@ -116,19 +122,16 @@ void primo_switch ( Uint8 data )
 static int primo_scan_key ( int scan )
 {
 	scan = primo_key_trans[scan];
-	if (scan == 0xFF) return 0; // not implemented?
-	//return kbd_matrix[sca
-	//return (kbd_matrix[scan >> 3] & (1 << (scan & 7))) ? 0 : 1;
-	//return (kbd_matrix[scan & 15] & (1 << (scan >> 4))) ? 0 : 1;
-	return (kbd_matrix[scan >> 4] & (1 << (scan & 15))) ? 0 : 1;
+	if (scan == 0xFF) return 0;
+	return EP_KBDM_SCAN(scan, 1);
 }
 
 
 Uint8 primo_read_io ( Uint8 port )
 {
-        // Primo does the very same for all I/O ports in the range of 0-3F!
+	// Primo does the very same for all I/O ports in the range of 0-3F!
 	// EXCEPT bit 0 which is the state of the key given by the port number.
-	return (vsync ? 32 : 0) | primo_scan_key(port);
+	return (vsync ? 32 : 0) | EP_KBDM_SCAN(PRIMOEMU_HOTKEY_RESET, 2) | primo_scan_key(port);
 }
 
 
@@ -136,12 +139,12 @@ void primo_write_io ( Uint8 port, Uint8 data )
 {
 	// Primo does the  very same for all I/O ports in the range of 0-3F!
 	primo_nmi_enabled = data & 128;				// bit 7: NMI enabled, this variable is "cloned" as nmi_pending by VINT in dave.c
-	ports[0xA8] = ports[0xAC] = (data & 16) ? 63 : 0;	// bit 4, speaker control
+	ports[0xA8] = ports[0xAC] = (data & 16) ? 63 : 0;	// bit 4, speaker control, pass to Dave in D/A mode
 	memory[0x3F4005] = (data & 8) ? 0x28 : 0x08;		// bit 3: display page: set LPB LD1 high (LPB should be at segment 0xFD, and 0xFC is for primo 0xC000-0xFFFF)
 }
 
 
-static int search_primo_rom ( void )
+int primo_search_rom ( void )
 {
 	int a;
 	for (a = 0x168; a < rom_size; a += 0x4000)
@@ -154,7 +157,7 @@ static int search_primo_rom ( void )
 static const Uint8 primo_lpt[] = {
 	// the USEFULL area of the screen, this must be the FIRST LPB in our LPT.
 	// LPIXEL 2 colour mode is used, 192 scanlines are used
-	256-192,14|16,  14, 46,  0,0,0,0,     1,0xFF,0,0,0,0,0,0,
+	256-192,14|16,  15, 47,  0,0,0,0,     1,0xFF,0,0,0,0,0,0,
 	// bottom not used area ... 47 scanlines
 	256-47,  2 | 128,  6, 63,  0,0,0,0,     0,0,0,0,0,0,0,0,	// 128 = ask for VINT, which is cloned as NMI in primo mode
 	// SYNC etc stuffs ...
@@ -165,14 +168,42 @@ static const Uint8 primo_lpt[] = {
 	// upper not used area ... 48 scanlines, the RELOAD bit must be set!!!!
 	256-48,  3,  6, 63,  0,0,0,0,     0,0,0,0,0,0,0,0
 };
+#define MEMORY_BACKUP_SIZE (0xC000 + sizeof primo_lpt)
+static Uint8 memory_backup[MEMORY_BACKUP_SIZE];
+static Uint8 ports_backup[0x100];
+static Z80EX_CONTEXT z80ex_backup;
 
+
+
+void primo_emulator_exit ( void )
+{
+	int a;
+	ports_backup[0x83] |= 128 | 64;
+	for (a = 0x80; a < 0x84; a++)
+		z80ex_pwrite_cb(a, ports_backup[a]);	// restore Nick registers
+	for (a = 0xA0; a < 0xB5; a++)
+		z80ex_pwrite_cb(a, ports_backup[a]);	// restore Dave registers
+	memcpy(memory + 0xFA * 0x4000, memory_backup, MEMORY_BACKUP_SIZE); // restore memory
+	primo_switch(0);	// turn Primo mode OFF
+	//z80ex.int = 1;		// enable interrupts (?)
+	//memcpy(&z80ex, &z80ex_backup, sizeof(Z80EX_CONTEXT));
+	//z80ex.prefix = 0;	// turn of prefix, because last opc was the ED trap for XEP ROM!
+	//Z80_PC--; // nah ...
+	//xep_accept_trap = 0;
+}
 
 
 void primo_emulator_execute ( void )
 {
-	int a, romseg = search_primo_rom();
-	printf("PRIMO: ROM segment is %d\n", romseg);
-	if (romseg == -1) return;
+	int a;
+	/* Save state of various things to be able to revert into EP mode later, without any data lost */
+	memcpy(memory_backup, memory + 0xFA * 0x4000, MEMORY_BACKUP_SIZE);	// save memory
+	memcpy(ports_backup, ports, 0x100); 	// backup ports [note: on restore, we don't want to rewrite all values, maybe only Dave/Nick!
+	memcpy(&z80ex_backup, &z80ex, sizeof(Z80EX_CONTEXT));
+
+//	memcpy();	// save Dave registers
+//	memcpy();	// save Nick registers
+
 	/* set an LPT */
 	memcpy(memory + 0x3F4000, primo_lpt, sizeof primo_lpt);
 	z80ex_pwrite_cb(0x82, 0);	// LPT address, low byte
@@ -182,9 +213,8 @@ void primo_emulator_execute ( void )
 	z80ex_pwrite_cb(0xA7, 8 | 16);	// D/A mode for Dave audio
 	for (a = 0xA8; a < 0xB0; a++)
 		z80ex_pwrite_cb(a, 0);	// volumes of L/H channels
-	z80ex_pwrite_cb(0xB4, 0xFF);
-	z80ex_pwrite_cb(0xB4, 0);	// disable all interrupts on Dave (z80 won't get INT but the cloned NMI directly from Dave "translated" from VINT)
-	z80ex_pwrite_cb(0xB0, romseg);	// first segment is the Primo ROM now
+	z80ex_pwrite_cb(0xB4, 0xAA);	// disable all interrupts on Dave (z80 won't get INT but the cloned NMI directly from Nick "translated" from VINT) and reset latches
+	z80ex_pwrite_cb(0xB0, primo_rom_seg);	// first segment is the Primo ROM now
 	z80ex_pwrite_cb(0xB1, 0xFA);	// normal RAM segment
 	z80ex_pwrite_cb(0xB2, 0xFB);	// normal RAM segment
 	z80ex_pwrite_cb(0xB3, 0xFC);	// a video segment as the Primo video RAM

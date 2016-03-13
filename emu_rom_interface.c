@@ -163,6 +163,15 @@ static void cmd_audio ( void )
 	audio_start();
 }
 
+static void cmd_primo ( void )
+{
+	if (primo_rom_seg == -1) {
+		sprintf(COBUF, "*** Primo ROM not found in the loaded ROM set.\r\n");
+		return;
+	}
+	primo_emulator_execute();
+}
+
 
 static void cmd_help ( void );
 
@@ -174,7 +183,7 @@ static const struct commands_st commands[] = {
 	{ "emice",	"Set on/off and query entermice mode", cmd_entermice },
 	{ "help",	"This help screen", cmd_help },
 	{ "exit",	"Exit Xep128", cmd_exit },
-	{ "primo",	"Primo emulation", primo_emulator_execute },
+	{ "primo",	"Primo emulation", cmd_primo },
 	{ NULL,		NULL, NULL }
 };
 

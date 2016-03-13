@@ -201,6 +201,9 @@ void primo_write_io ( Uint8 port, Uint8 data );
 Uint8 primo_read_io ( Uint8 port );
 void primo_switch ( Uint8 data );
 void primo_emulator_execute ( void );
+void primo_emulator_exit ( void );
+int primo_search_rom ( void );
+extern int primo_rom_seg;
 
 extern Uint8 memory[0x400000];
 extern Uint8 ports[0x100];
