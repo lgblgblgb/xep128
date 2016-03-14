@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2014,2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -154,12 +154,10 @@ static void _apu_push_fix32(Sint64 data) {
 	_apu_push8(data >> 24);
 }
 
-/* Foreword for FLOAT handling: I use the idea that JavaScript uses
- * its own numeric format for any calculation and only FLOAT pop/push
- * uses conversion between Am9511 binary floating point representation
- * and native JS numeric format. However the following to functions
- * are so messy, that I am sure I am simply lame and it can be done
- * much better ... 
+/* Foreword for FLOAT handling: I use natural float (well, double ...)
+ * numberic format of C, using pop/push APU functions to convert from/to.
+ * This is kinda messy, and not bit-exact emulation of Am9511.
+ * Even my lame push/pop functions can be done much better!!
  */
 
 
@@ -167,14 +165,15 @@ static double _apu_pop_float()
 {
 	int exp = _apu_pop8();
 	int data = _apu_pop8() << 16;
+	double fdata;
 	data |= _apu_pop8() << 8;
 	data |= _apu_pop8();
 	if (!(data & 0x800000)) return 0.0; // MSB of mantissa must be 1 always, _except_ for the value zero, where all bytes should be zero (including the MSB of mantissa)
 	if (exp & 128) data = -data;
 	if (exp & 64) exp = (exp & 63) - 64; else exp &= 63;
-	data = pow(2, exp) * (data / 16777216.0);
-	//debug("APU: float is internally pop'ed: " + data.toString());
-	return data;
+	fdata = pow(2, exp) * ((double)data / 16777216.0);
+	//printf("APU: float is internally pop'ed: %f\n", fdata);
+	return fdata;
 }
 
 
@@ -225,7 +224,7 @@ static void _apu_push_float(double data)
 		_apu_status |= _APU_F_SIGN; // negative flag
 	}
 	//if (data && (!(data & 0x800000)))
-	//	debug("APU: warning: irregular manitssa: " + data);
+	//	printf("APU: warning: irregular manitssa: ", data);
 	// Pushing 8 bit bytes onto the APU stack
 	_apu_push8(i);
 	_apu_push8(i >> 8);
@@ -281,9 +280,8 @@ static void _apu_carry ( Sint64 val, Sint64 limit )
 
 
 /* Note: most of the command emulation uses the fix32/fix16/float POP/PUSH functions.
- * In some cases it's not the optimal solution (performance) but it's much simplier,
- * and in our world this issue can't mean any performance problems with decent hw/browser.
- * However in case of floats it can cause some odd things, ie float<->JS conversion
+ * In some cases it's not the optimal solution (performance) but it's much simplier.
+ * However in case of floats it can cause some odd things, ie APU-float<->C-double conversion
  * rounding problems on POP/PUSH ... Well maybe I will deal with this later versions,
  * now the short solution ... */
 void apu_write_command ( Uint8 cmd )
@@ -402,7 +400,7 @@ void apu_write_command ( Uint8 cmd )
 		/* -------------------------------------------------- */
 		case 0x01: // SQRT: Square Root of TOS. Result to TOS.
 			f = _apu_pop_float();
-			_apu_push_float(sqrt(fabs(f))); // we still want to do something with negative number instead of JS madness, so use abs() but set the error status on the next line too
+			_apu_push_float(sqrt(fabs(f))); // we still want to do something with negative number ..., so use fabs() but set the error status on the next line too
 			if (f < 0) _apu_status |= _APU_F_NEGARG; // negative argument signal
 			clocks = 800;
 			break;
@@ -433,7 +431,7 @@ void apu_write_command ( Uint8 cmd )
 		case 0x08: // LOG: Common Logarithm of TOS. Result to TOS.
 			f = _apu_pop_float();
 			if (f > 0) {
-				_apu_push_float(log(f) / log(10.0)); // Does chrome support Math.log10? it has problem with Math.log2() at least ... We use log(n)/log(base) theory instead to be safe.
+				_apu_push_float(log10(f));
 				clocks = 5500;
 			} else {
 				_apu_status |= _APU_F_NEGARG;
@@ -465,7 +463,7 @@ void apu_write_command ( Uint8 cmd )
 		/* ------------------------------------------------ */
 		/* ---- data and stack manipulation operations ---- */
 		/* ------------------------------------------------ */
-		case 0x00: // NOP: does nothing (but clears status, however it's the first instruction of apuSendCommand() JS function currently ..)
+		case 0x00: // NOP: does nothing (but clears status, however it's the first instruction done in the main func already
 			clocks = 4;
 			break;
 
