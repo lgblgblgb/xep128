@@ -146,7 +146,9 @@ static int config_set_user ( const char *name, int subopt, const char *value, in
    Caller must be careful, the casting of "value" is based on the config key type,
    you should give pointer of the right type! You MUST NOT modify the returned
    entity pointed by value!!
-   In case of a non-existent key query, system error occures!  */
+   In case of a non-existent key query, program will exit.
+   value = NULL can be passed to *test* the existence of a setting (without exiting in case of failure)
+   Returned pointer (if not NULL) can be used to re-fetch the value with function config_getopt_pointed()  */
 void *config_getopt ( const char *name, const int subopt, void *value )
 {
 	struct configSetting_st *st;
@@ -386,6 +388,9 @@ int config_init ( int argc, char **argv )
 	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
 	printf("PATH: SDL base path: %s" NL, app_base_path);
 	printf("PATH: SDL pref path: %s" NL, app_pref_path);
+#ifndef _WIN32
+	printf("PATH: data directory: %s/" NL, DATADIR);
+#endif
 	if (getcwd(current_directory, sizeof current_directory) == NULL) {
 		ERROR_WINDOW("Cannot query the current directory: %s", ERRSTR());
 		return 1;
@@ -453,10 +458,12 @@ int config_init ( int argc, char **argv )
 	/* parse command line ... */
 	if (parse_command_line(argc, argv))
 		return -1;
-	/* This is only debug, TODO remove it later ... */
-	dump_config(stdout);
-	//exit(0);
-	if (testparsing) return 1;
+	if (testparsing) {
+		printf(NL "--- TEST DUMP OF *PARSED* CONFIGURATION (requested)" NL NL);
+		dump_config(stdout);
+		printf(NL "--- END OF TEST PARSING MODE (requested)" NL);
+		return 1;
+	}
 	return 0;
 }
 

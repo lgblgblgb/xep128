@@ -185,7 +185,12 @@ void keymap_dump_config ( FILE *fp )
 {
 	int n = keyMappingTableSize;
 	struct keyMappingTable_st *p = keyMappingTable;
-	fprintf(fp, "# Note: key names are SDL scan codes! Sometimes it's nothing to do with the letters on your keyboard (eg some national layout, like Hungarian etc) but the \"physical\" scan code assignment, eg the right neighbour of key \"L\" is \";\" even if your layout means somewhat different there!" NL NL);
+	fprintf(fp,
+		"# Note: key names are SDL scan codes! Sometimes it's nothing to do with the letters" NL
+		"# on your keyboard (eg some national layout, like Hungarian etc) but the \"physical\"" NL
+		"# scan code assignment, eg the right neighbour of key \"L\" is \";\" even if your layout" NL
+		"# means something different there!" NL NL
+	);
 	while (n--) {
 		const char *name = SDL_GetScancodeName(p->code);
 		const char *desc = keymap_get_key_description(p->posep);
