@@ -26,21 +26,24 @@ int CPU_CLOCK = DEFAULT_CPU_CLOCK;
 
 char *app_pref_path, *app_base_path;
 char current_directory[PATH_MAX + 1];
-char rom_path[PATH_MAX + 1];
 
 static const int _cpu_speeds[4] = { 4000000, 6000000, 7120000, 10000000 };
 static int _cpu_speed_index = 0;
+
+static int guarded_exit = 0;
 
 
 
 static void shutdown_sdl(void)
 {
-	audio_close();
-	printer_close();
+	if (guarded_exit) {
+		audio_close();
+		printer_close();
 #ifdef CONFIG_W5300_SUPPORT
-	w5300_shutdown();
+		w5300_shutdown();
 #endif
-	fprintf(stderr, "Shutdown callback, return.\n");
+		fprintf(stderr, "Shutdown callback, return.\n");
+	}
 	if (sdl_win)
 		SDL_DestroyWindow(sdl_win);
 	SDL_Quit();
@@ -78,39 +81,6 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 	fprintf(stderr, "OPEN: no file could be open for \"%s\"\n", name);
 	strcpy(pathbuffer, name);
 	return NULL;
-}
-
-
-static int load_roms ( const char *basename, char *path )
-{
-	FILE *f;
-	int ret;
-	printf("ROM: loading %s\n", basename);
-	f = open_emu_file(basename, "rb", path);
-	if (f == NULL) {
-		ERROR_WINDOW("Cannot open ROM image \"%s\": %s", basename, ERRSTR());
-		return -1;
-	}
-	ret = fread(memory, 1, 0x100001, f);
-	printf("Read = %d\n", ret);
-	fclose(f);
-	if (ret < 0) {
-		ERROR_WINDOW("Cannot read ROM image \"%s\": %s", path, ERRSTR());
-	}
-	if (ret < 0x8000) {
-		ERROR_WINDOW("ROM image \"%s\" is too short.", path);
-		return -1;
-	}
-	if (ret == 0x100001) {
-		ERROR_WINDOW("ROM image \"%s\" is too large.", path);
-		return -1;
-	}
-	if (ret & 0x3FFF) {
-		ERROR_WINDOW("ROM image \"%s\" size is not multiple of 0x4000 bytes.", path);
-		return -1;
-	}
-	printf("ROM: ROM-set is loaded, %06Xh bytes (%d Kbytes), segments 00-%02Xh\n", ret, ret >> 10, (ret >> 14) - 1);
-	return ret;
 }
 
 
@@ -339,6 +309,8 @@ static int get_sys_dirs ( const char *path )
 }
 
 
+int roms_load ( void );
+
 
 int main (int argc, char *argv[])
 {
@@ -349,6 +321,9 @@ int main (int argc, char *argv[])
 	}
 	if (get_sys_dirs(argv[0]))
 		return 1;
+	if (config_init(argc, argv))
+		return 1;
+	guarded_exit = 1;	// turn on guarded exit, with custom de-init stuffs
 	if (screen_init())
 		return 1;
 	audio_init(0);
@@ -357,7 +332,8 @@ int main (int argc, char *argv[])
 	ep_pixels = nick_init();
 	if (ep_pixels == NULL)
 		return 1;
-	rom_size = load_roms(COMBINED_ROM_FN, rom_path);
+	//rom_size = load_roms(COMBINED_ROM_FN, rom_path_hack);
+	rom_size = roms_load();
 	if (rom_size <= 0)
 		return 1;
 	primo_rom_seg = primo_search_rom();
@@ -368,7 +344,7 @@ int main (int argc, char *argv[])
 	xep_rom_addr = rom_size;
 	fprintf(stderr, "XEP ROM segment will be %02Xh @ %06Xh\n", xep_rom_seg, xep_rom_addr);
 	rom_size += 0x4000;
-	set_ep_ramsize(1024);
+	set_ep_ramsize(config_getopt_int("ram"));
 	mouse_entermice(0);	// 1=Entermice protocol (8 nibbles), 0=boxsoft (4 nibbles), also different lines
 	ep_reset();
 	kbd_matrix_reset();

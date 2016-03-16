@@ -140,6 +140,18 @@ void emu_kbd(SDL_Keysym sym, int press)
 }
 
 
+/* The rest of the file should be moved to an UI related source file if it worth later ... */
+
+
+void check_malloc ( const void *p )
+{
+	if (p == NULL) {
+		ERROR_WINDOW("Memory allocation error. Not enough memory?");
+		exit(1);
+	}
+}
+
+
 int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
 {
         int mg = _mouse_grab, r;

@@ -80,8 +80,10 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
 
 #ifdef _WIN32
 #define DIRSEP "\\"
+#define NL "\r\n"
 #else
 #define DIRSEP "/"
+#define NL "\n"
 #endif
 
 #define SCREEN_WIDTH	736
@@ -90,7 +92,7 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
 
 extern char *app_pref_path, *app_base_path;
 extern char current_directory[PATH_MAX + 1];
-extern char rom_path[PATH_MAX + 1];
+extern char rom00_path[PATH_MAX + 1];
 extern char sdimg_path[PATH_MAX + 1];
 
 void xep_rom_install ( int offset );
@@ -153,6 +155,7 @@ Uint8 mouse_read(void);
 void mouse_check_data_shift(Uint8 val);
 void mouse_reset(void);
 int mouse_entermice ( int entermice );
+void check_malloc ( const void *p );
 
 time_t emu_getunixtime(void);
 
@@ -257,5 +260,23 @@ extern int warn_for_mouse_grab;
 #define OSD_FADE_DEC    3
 
 int keymap_resolve_event ( SDL_Keysym sym, int press, Uint8 *matrix );
+void keymap_preinit_config_internal ( void );
+void keymap_dump_config ( FILE *f );
+int keymap_set_key_by_name ( const char *name, int posep );
+
+
+int config_init ( int argc, char **argv );
+void *config_getopt ( const char *name, const int subopt, void *value );
+void config_getopt_pointed ( void *st_in, void *value );
+static inline int config_getopt_int ( const char *name ) {
+	int n;
+	config_getopt(name, -1, &n);
+	return n;
+}
+static inline const char *config_getopt_str ( const char *name ) {
+	char *s;
+	config_getopt(name, -1, &s);
+	return s;
+}
 
 #endif
