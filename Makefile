@@ -77,6 +77,7 @@ buildinfo.c:
 	echo "const char *BUILDINFO_ON  = \"`whoami`@`uname -n` on `uname -s` `uname -r`\";" > buildinfo.c
 	echo "const char *BUILDINFO_AT  = \"`date -R`\";" >> buildinfo.c
 	echo "const char *BUILDINFO_GIT = \"`git show | head -n 1 | cut -f2 -d' '`\";" >> buildinfo.c
+	echo "const char *BUILDINFO_CC  = \"`$(CC) --version | head -n 1`\";" >> buildinfo.c
 
 $(DLL):
 	@echo "**** Fetching Win32 SDL2 DLL from $(DLLURL) ..."

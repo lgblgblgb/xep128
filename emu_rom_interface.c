@@ -190,13 +190,14 @@ static const struct commands_st commands[] = {
 extern const char *BUILDINFO_ON;
 extern const char *BUILDINFO_AT;
 extern const char *BUILDINFO_GIT;
+extern const char *BUILDINFO_CC;
 
 
 static void cmd_help ( void ) {
         const struct commands_st *cmds = commands;
-        char *p = sprintf(COBUF, "Helper ROM: %s%s %s %s\r\nBuilt on: %s\r\n%s\r\nGIT: %s\r\n\r\n",
+        char *p = sprintf(COBUF, "Helper ROM: %s%s %s %s\r\nBuilt on: %s\r\n%s\r\nGIT: %s\r\nCompiler: %s\r\n\r\n",
 		SHORT_HELP, WINDOW_TITLE, VERSION, COPYRIGHT,
-		BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT
+		BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT, BUILDINFO_CC
 	) + COBUF;
         while (cmds->cmd) {
                 p += sprintf(p, "%s\t%s\r\n", cmds->cmd, cmds->help);
