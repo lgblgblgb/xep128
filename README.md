@@ -191,6 +191,55 @@ RAM size can be queried with :XEP RAM command, also, you can use this
 construct to set RAM size up with :XEP RAM 128 (it will set 128 Kbytes of
 RAM). This also causes the emulated EP to reboot.
 
+# Configuration and command line
+
+Xep128 is not a GUI oriented emulator. Its only GUI level component is the
+emulator window, and the OSD (On-Screen Display). Though it's possible to
+configure the emulator.
+
+First, Xep128 has some built-in defaults, so it can run without any previous
+configuration step.
+
+Second, Xep128 can read a text based config file. By default it tries to use
+@config (@ means the user preference directory). On start-up, it writes
+the @config-sample file (it is also noted in a message window, with the full
+path, so you can learn what '@' means). You can use this file to rename
+it to config (in the pref directory of course) with some customization. You
+can also override the config file to be used with the -config command line
+switch (there, you should use the '@' syntax as well, if you need the pref
+directory, otherwise Xep128 will try to find the file in various directories,
+but currently it is NOT possible to give a full path at a given location!).
+That template file can be useful, as it has even comments about the syntax
+and meaning of a given option.
+
+Third, you can use command line switches, which overrides both the built-in
+config, and the configuration read from a file. You can even use the
+"-config none" option to de-activate config file reading, if you need only
+your options.
+
+To learn about command line switches, you can use the -help switch.
+
+Basically, both the command line and configuration file syntax has the
+same options, but in the config file you say "key = value" where in command
+line you need to specify "-key value" format. If you use the "-config"
+switch, it must be the first command line argument though.
+
+By default, Xep128 tries to load "combined.rom" from segment zero as the
+ROM image. It's simple a concated series of ROM images, starting from
+segment zero (thus the EXOS). Of course you can override even this with
+"-rom@00 myexos.rom" for example in the command line, or with the
+"rom@00 = myexos.rom" config file line. Since combined.rom is one big
+file loaded from segment zero, if you override the rom@00 value, to load
+only your EXOS, still you will loose all of the other concated images,
+as combined.rom treated a single entity. Of course you can specify other
+ROM images as weil from different segments like "rom@0c" (ROM image from
+segment 0x0C) or such. Note, that as with all of the file operations done
+by the emulator, you can use the '@' syntax, and you can't specify
+an absolue path. If you only write some file name (without '@') Xep128
+will try some default directories (like the location where the executable
+is), but you can't say a full path, as it will be tried to prefixed with
+the "guess directories" as well.
+
 # Known problems
 
 There are many! I repeat myself: Xep128 is not a generic, or good emulator for
