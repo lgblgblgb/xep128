@@ -49,7 +49,7 @@ static void shutdown_sdl(void)
 
 FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 {
-	const char *name_used;
+	const char *name_used = name;
 	const char *prefixes[] = {
 		current_directory,	// try in the current directory first
 #ifndef _WIN32
@@ -61,28 +61,36 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 	};
 	int a = 0;
 	FILE *f;
-	if (name[0] == '@') {
+	// try to detect absolue path, Win32 related part tries to detect the possibility of X:\... syntax
+	if (
+		name[0] == DIRSEP[0]
+#ifdef _WIN32
+		|| (strlen(name) > 3 && name[1] == ':' && name[2] == DIRSEP[0])
+#endif
+	) {
+		prefixes[0] = "";
+		prefixes[1] = NULL;
+	} else if (name[0] == '@') {		// @ means user preference directory related path names
 		prefixes[0] = app_pref_path;
 		prefixes[1] = NULL;
 		name_used = name + 1;
-	} else
-		name_used = name;
+	}
 	while (prefixes[a] != NULL)
 		if (strcmp(prefixes[a], "?")) {
 			sprintf(pathbuffer, "%s%s", prefixes[a], name_used);
-			fprintf(stderr, "OPEN: trying file \"%s\" as path \"%s\": ",
+			printf("OPEN: trying file \"%s\" as path \"%s\": ",
 				name, pathbuffer
 			);
 			f = fopen(pathbuffer, mode);
 			if (f == NULL) {
 				a++;
-				fprintf(stderr, "FAILED\n");
+				printf("FAILED" NL);
 			} else {
-				fprintf(stderr, "OK\n");
+				printf("OK" NL);
 				return f;
 			}
 		}
-	fprintf(stderr, "OPEN: no file could be open for \"%s\"\n", name);
+	printf("OPEN: no file could be open for \"%s\"" NL, name);
 	strcpy(pathbuffer, name);
 	return NULL;
 }

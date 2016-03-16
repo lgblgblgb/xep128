@@ -193,24 +193,50 @@ RAM). This also causes the emulated EP to reboot.
 
 # Configuration and command line
 
-Xep128 is not a GUI oriented emulator. Its only GUI level component is the
+Xep128 is *not* a GUI oriented emulator. Its only GUI level component is the
 emulator window, and the OSD (On-Screen Display). Though it's possible to
 configure the emulator.
 
+First, you should be familiar with the file system usage of Xep128:
+
+It's important to note the syntax and meaning of file names for Xep128
+on the "PC" side (Linux or Windows, which runs Xep128). In any situation
+when Xep128 needs a file (reading config file, loading ROM image, using
+the SD card disk image, and so on) it uses a common function which the
+file names in a specific way.
+
+* If a file name has the form of "@filename" then it means "filename" in the
+  user preferences directory. Still, it's possible to use "@dir/filename"
+  (or @dir\filename in case of Windows) for a sub-directory in the "pref
+  dir". So '@' basically means prefixing the file name with pref dir.
+* If a file name "seems to be" an absolute path (that is: the file name begins
+  with '/' in case of Unix/Linux or either of begins with '\' or have
+  the ":\" part in case of Windows) then the file will be tried to use
+  as-is, as an absolute path without any prefixing.
+* Otherwise, the file name is tried to be used with various prefixes probed,
+  including the current directory, the data directory (on Linux/UNIX), and
+  even the pref directory. You must be careful, as it's possible to use
+  some other file in an other directory by Xep128 what you meant ... The
+  best way is to use the pref dir if possible, and it's also kinda private
+  storage only for Xep128.
+
+Now, the configuration possibilities:
+
 First, Xep128 has some built-in defaults, so it can run without any previous
-configuration step.
+configuration step, without any configuration file, etc.
 
 Second, Xep128 can read a text based config file. By default it tries to use
-@config (@ means the user preference directory). On start-up, it writes
-the @config-sample file (it is also noted in a message window, with the full
-path, so you can learn what '@' means). You can use this file to rename
-it to config (in the pref directory of course) with some customization. You
-can also override the config file to be used with the -config command line
+@config (@ means the user preference directory - remember). On start-up, it
+writes the @config-sample file (it is also noted in a message window, with
+the full path, so you can learn what '@' means). You can use this file to
+rename it to config (in the pref directory of course) with some customization.
+You can also override the config file to be used with the -config command line
 switch (there, you should use the '@' syntax as well, if you need the pref
-directory, otherwise Xep128 will try to find the file in various directories,
-but currently it is NOT possible to give a full path at a given location!).
-That template file can be useful, as it has even comments about the syntax
-and meaning of a given option.
+directory). That sample config file can be useful, as it has even comments
+about the syntax and meaning of a given option. You can even delete the sample
+config file, Xep128 will re-create it. It can be useful, if a new version of
+the emulator has more options etc and you need to examine all of them (Xep128
+only writes the sample config file if the file does not exist).
 
 Third, you can use command line switches, which overrides both the built-in
 config, and the configuration read from a file. You can even use the
@@ -218,27 +244,26 @@ config, and the configuration read from a file. You can even use the
 your options.
 
 To learn about command line switches, you can use the -help switch.
+_It also prints the pref directory_ and other emulator related information,
+which can be useful in bug reports, etc.
 
 Basically, both the command line and configuration file syntax has the
 same options, but in the config file you say "key = value" where in command
 line you need to specify "-key value" format. If you use the "-config"
-switch, it must be the first command line argument though.
+switch, it must be the first command line argument though, "-config @my"
+will use file "my" in the pref dir instead of default @config.
 
 By default, Xep128 tries to load "combined.rom" from segment zero as the
 ROM image. It's simple a concated series of ROM images, starting from
 segment zero (thus the EXOS). Of course you can override even this with
-"-rom@00 myexos.rom" for example in the command line, or with the
-"rom@00 = myexos.rom" config file line. Since combined.rom is one big
-file loaded from segment zero, if you override the rom@00 value, to load
-only your EXOS, still you will loose all of the other concated images,
-as combined.rom treated a single entity. Of course you can specify other
-ROM images as weil from different segments like "rom@0c" (ROM image from
-segment 0x0C) or such. Note, that as with all of the file operations done
-by the emulator, you can use the '@' syntax, and you can't specify
-an absolue path. If you only write some file name (without '@') Xep128
-will try some default directories (like the location where the executable
-is), but you can't say a full path, as it will be tried to prefixed with
-the "guess directories" as well.
+"-rom@00 @myexos.rom" for example in the command line (here again, the
+'@' before the file name means the pref dir, however rom@00 is simply
+the ROM at segment 00) or with the "rom@00 = @myexos.rom" config file line.
+Since combined.rom is one big file loaded from segment zero, if you override
+the rom@00 value, to load only your EXOS, still you will loose all of the
+other concated images, as combined.rom treated a single entity. Of course
+you can specify other ROM images as well from different segments like
+"rom@0c" (ROM image from segment 0x0C) or such.
 
 # Known problems
 
@@ -247,14 +272,13 @@ an average EP user. It's more about emulation of some unusal add-ons.
 
 Just to mention some problems with Xep128:
 
-* no configuration of the emulator too much
 * no write disk access (with SD card)
 * no EXDOS/WD emulation
 * no menu/UI whatever
 * no debugger
 * no precise Nick emulation
 * no slowdown of VRAM access, would be on a real machine
-* no sound
+* no sound [in-progress now]
 * no joystick emulation yet
 
 # Credits

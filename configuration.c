@@ -372,12 +372,27 @@ int config_init ( int argc, char **argv )
 	const struct configOption_st *opt;
 	const char *exe = argv[0];
 	int default_config = 1;
+	int testparsing = 0;
 	argc--; argv++;
 	printf("%s Enterprise-128 Emulator %s %s [%s]" NL
 		"GIT %s compiled by %s at %s with %s %s" NL NL,
 		WINDOW_TITLE, VERSION, COPYRIGHT, exe,
 		BUILDINFO_GIT, BUILDINFO_ON, BUILDINFO_AT, CC_TYPE, BUILDINFO_CC
 	);
+	/* SDL path info block */
+	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
+	app_base_path = SDL_GetBasePath();
+	if (app_pref_path == NULL) app_pref_path = SDL_strdup("?");
+	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
+	printf("PATH: SDL base path: %s" NL, app_base_path);
+	printf("PATH: SDL pref path: %s" NL, app_pref_path);
+	if (getcwd(current_directory, sizeof current_directory) == NULL) {
+		ERROR_WINDOW("Cannot query the current directory: %s", ERRSTR());
+		return 1;
+	}
+	strcat(current_directory, DIRSEP);
+	printf("PATH: Current directory: %s" NL NL, current_directory);
+	/* Look the very basic command line switches first */
 	if (argc && (!strcasecmp(argv[0], "-h") || !strcasecmp(argv[0], "--h") || !strcasecmp(argv[0], "-help") || !strcasecmp(argv[0], "--help"))) {
 		opt = configOptions;
 		printf("USAGE:" NL NL
@@ -391,6 +406,10 @@ int config_init ( int argc, char **argv )
 		}
 		return 1;
 	}
+	if (argc && !strcasecmp(argv[0], "-testparsing")) {
+		testparsing = 1;
+		argc--; argv++;
+	}
 	if (argc & 1) {
 		fprintf(stderr, "FATAL: Bad command line: should be even number of parameters (two for an option as key and its value)" NL);
 		return 1;
@@ -401,19 +420,6 @@ int config_init ( int argc, char **argv )
 		argc -= 2;
 		argv += 2;
 	}
-	/* SDL path info */
-	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
-	app_base_path = SDL_GetBasePath();
-	if (app_pref_path == NULL) app_pref_path = SDL_strdup("?");
-	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
-	printf("PATH: SDL base path: %s" NL, app_base_path);
-	printf("PATH: SDL pref path: %s" NL, app_pref_path);
-	if (getcwd(current_directory, sizeof current_directory) == NULL) {
-		ERROR_WINDOW("Cannot query the current directory: %s", ERRSTR());
-		return 1;
-	}
-	strcat(current_directory, DIRSEP);
-	printf("PATH: Current directory: %s" NL, current_directory);
 	/* Set default (built-in) values */
 	opt = configOptions;
 	while (opt->name) {
@@ -427,11 +433,10 @@ int config_init ( int argc, char **argv )
 	/* check if we have written sample config file, if there is not, let's create one */
 	save_sample_config(DEFAULT_CONFIG_SAMPLE_FILE);
 	/* now parse config file (not the sample one!) if there is any */
-	printf("Using config file: ");
 	if (strcasecmp(config_name, "none")) {
 		char path[PATH_MAX + 1];
 		FILE *f = open_emu_file(config_name, "r", path);
-		printf("%s (%s)" NL, config_name, f ? path : "CANNOT OPEN");
+		printf("Using config file: %s (%s)" NL, config_name, f ? path : "CANNOT OPEN");
 		if (f) {
 			if (load_config_file_stream(f, path)) {
 				fclose(f);
@@ -444,13 +449,14 @@ int config_init ( int argc, char **argv )
 		} else
 			printf("Skipping default config file (cannot open), using built-in defaults." NL);
 	} else
-		printf("DISABLED by command line" NL);
+		printf("Using config file: DISABLED by command line" NL);
 	/* parse command line ... */
 	if (parse_command_line(argc, argv))
 		return -1;
 	/* This is only debug, TODO remove it later ... */
 	dump_config(stdout);
 	//exit(0);
+	if (testparsing) return 1;
 	return 0;
 }
 
