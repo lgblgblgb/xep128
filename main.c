@@ -49,6 +49,7 @@ static void shutdown_sdl(void)
 
 FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 {
+	const char *name_used;
 	const char *prefixes[] = {
 		current_directory,	// try in the current directory first
 #ifndef _WIN32
@@ -60,9 +61,15 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 	};
 	int a = 0;
 	FILE *f;
+	if (name[0] == '@') {
+		prefixes[0] = app_pref_path;
+		prefixes[1] = NULL;
+		name_used = name + 1;
+	} else
+		name_used = name;
 	while (prefixes[a] != NULL)
 		if (strcmp(prefixes[a], "?")) {
-			sprintf(pathbuffer, "%s%s", prefixes[a], name);
+			sprintf(pathbuffer, "%s%s", prefixes[a], name_used);
 			fprintf(stderr, "OPEN: trying file \"%s\" as path \"%s\": ",
 				name, pathbuffer
 			);

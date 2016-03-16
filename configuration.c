@@ -375,7 +375,7 @@ int config_init ( int argc, char **argv )
 		fprintf(stderr, "FATAL: Bad command line: should be even number of parameters (two for an option as key and its value)" NL);
 		return 1;
 	}
-	if (argc > 1 && !strcasecmp(argv[0], "-config")) {
+	if (argc > 1 && !strcmp(argv[0], "-config")) {
 		default_config = 0;
 		config_name = argv[1];
 		argc -= 2;

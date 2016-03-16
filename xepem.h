@@ -52,7 +52,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define COMBINED_ROM_FN "combined.rom"
 #define SDCARD_IMG_FN "sdcard.img"
 #define PRINT_OUT_FN "print.out"
-#define DEFAULT_CONFIG_FILE "config"
+#define DEFAULT_CONFIG_FILE "@config"
 
 
 #define OSD(...) do { \
@@ -286,12 +286,14 @@ extern const char *BUILDINFO_AT;
 extern const char *BUILDINFO_GIT;
 extern const char *BUILDINFO_CC;
 
-#if defined(__MINGW32__)
+#if defined(__clang__)
+#define CC_TYPE "clang"
+#elif defined(__MINGW32__)
 #define CC_TYPE "mingw32"
 #elif defined(__MINGW64__)
 #define CC_TYPE "mingw64"
 #elif defined(__GNUC__)
-#define CC_TYPE "GNU C"
+#define CC_TYPE "gcc"
 #else
 #define CC_TYPE "Something"
 #endif
