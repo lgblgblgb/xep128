@@ -92,8 +92,9 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
 
 extern char *app_pref_path, *app_base_path;
 extern char current_directory[PATH_MAX + 1];
-extern char rom00_path[PATH_MAX + 1];
+extern char *rom_desc;
 extern char sdimg_path[PATH_MAX + 1];
+
 
 void xep_rom_install ( int offset );
 
@@ -278,5 +279,20 @@ static inline const char *config_getopt_str ( const char *name ) {
 	config_getopt(name, -1, &s);
 	return s;
 }
+
+extern const char *BUILDINFO_ON;
+extern const char *BUILDINFO_AT;
+extern const char *BUILDINFO_GIT;
+extern const char *BUILDINFO_CC;
+
+#if defined(__MINGW32__)
+#define CC_TYPE "mingw32"
+#elif defined(__MINGW64__)
+#define CC_TYPE "mingw64"
+#elif defined(__GNUC__)
+#define CC_TYPE "GNU C"
+#else
+#define CC_TYPE "Something"
+#endif
 
 #endif

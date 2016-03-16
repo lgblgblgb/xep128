@@ -118,7 +118,7 @@ static void cmd_emu ( void )
 	gethostname(buf, sizeof buf);
 #define OS_KIND "POSIX"
 #endif
-	sprintf(COBUF, "Run by: %s@%s %s %s\r\nDrivers: %s %s\r\nSDL c/l: %d.%d.%d %d.%d.%d\r\nBase path: %s\r\nPref path: %s\r\nStart dir: %s\r\nROM@00: %s\r\nSD img: %s\r\n",
+	sprintf(COBUF, "Run by: %s@%s %s %s\r\nDrivers: %s %s\r\nSDL c/l: %d.%d.%d %d.%d.%d\r\nBase path: %s\r\nPref path: %s\r\nStart dir: %s\r\nSD img: %s\r\n\r\n%s\r\n",
 #ifdef _WIN32
 		getenv("USERNAME"),
 #else
@@ -128,7 +128,7 @@ static void cmd_emu ( void )
 		sdlver_c.major, sdlver_c.minor, sdlver_c.patch,
 		sdlver_l.major, sdlver_l.minor, sdlver_l.patch,
 		app_base_path, app_pref_path, current_directory,
-		rom00_path, sdimg_path
+		sdimg_path, rom_desc
 	);
 }
 
@@ -187,17 +187,12 @@ static const struct commands_st commands[] = {
 	{ NULL,		NULL, NULL }
 };
 
-extern const char *BUILDINFO_ON;
-extern const char *BUILDINFO_AT;
-extern const char *BUILDINFO_GIT;
-extern const char *BUILDINFO_CC;
-
 
 static void cmd_help ( void ) {
         const struct commands_st *cmds = commands;
-        char *p = sprintf(COBUF, "Helper ROM: %s%s %s %s\r\nBuilt on: %s\r\n%s\r\nGIT: %s\r\nCompiler: %s\r\n\r\n",
+        char *p = sprintf(COBUF, "Helper ROM: %s%s %s %s\r\nBuilt on: %s\r\n%s\r\nGIT: %s\r\nCompiler: %s %s\r\n\r\n",
 		SHORT_HELP, WINDOW_TITLE, VERSION, COPYRIGHT,
-		BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT, BUILDINFO_CC
+		BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT, CC_TYPE, BUILDINFO_CC
 	) + COBUF;
         while (cmds->cmd) {
                 p += sprintf(p, "%s\t%s\r\n", cmds->cmd, cmds->help);

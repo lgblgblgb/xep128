@@ -248,6 +248,11 @@ int config_init ( int argc, char **argv )
 {
 	const char *config_name = "config";	// name of the used config file, can be overwritten via CLI
 	const struct configOption_st *opt;
+	printf("%s Enterprise-128 Emulator %s %s" NL
+		"GIT %s compiled by %s at %s with %s %s" NL NL,
+		WINDOW_TITLE, VERSION, COPYRIGHT,
+		BUILDINFO_GIT, BUILDINFO_ON, BUILDINFO_AT, CC_TYPE, BUILDINFO_CC
+	);
 	argc--;
 	argv++;
 	if (argc) {

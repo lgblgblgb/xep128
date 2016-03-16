@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define ROM_SEG_LIMIT 0xF0
 
-char rom00_path[PATH_MAX + 1];
+char *rom_desc = NULL;
 
 
 int roms_load ( void )
@@ -48,8 +48,6 @@ int roms_load ( void )
 				}
 				return -1;
 			}
-			if (!seg)
-				strcpy(rom00_path, path);
 			printf("CONFIG: ROM: ... file path is %s" NL, path);
 			for (;;) {
 				int ret;
@@ -60,7 +58,7 @@ int roms_load ( void )
 				}
 				if (used[lseg]) {
 					fclose(f);
-					ERROR_WINDOW("While reading ROM image \"%s\" into segment %02Xh: already used ROM segment fatal error occured!", path, lseg);
+					ERROR_WINDOW("While reading ROM image \"%s\" into segment %02Xh: already used ROM segment!", path, lseg);
 					return -1;
 				}
 				ret = fread(memory + (lseg << 14), 1, 0x4000, f);
@@ -90,11 +88,22 @@ int roms_load ( void )
 				lseg++;
 			}
 			fclose(f);
+			if (rom_desc) {
+				rom_desc = realloc(rom_desc, strlen(rom_desc) + PATH_MAX + 10);
+				check_malloc(rom_desc);
+			} else {
+				rom_desc = malloc(PATH_MAX + 10);
+				check_malloc(rom_desc);
+				rom_desc[0] = 0;
+			}
+			sprintf(rom_desc + strlen(rom_desc), "%02X-%02X %s\r\n", seg, lseg - 1, path);
 		} else if (!seg) {
 			ERROR_WINDOW("Fatal ROM image error: No ROM defined for segment 00h, no EXOS is requested!");
 			return -1;
 		}
 	}
+	rom_desc = realloc(rom_desc, strlen(rom_desc) + 1);
+	check_malloc(rom_desc);
 	printf("CONFIG: ROM: DONE :-) Last used segment is %02Xh." NL, last);
 	return last << 14;
 }
