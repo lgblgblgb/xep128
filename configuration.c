@@ -47,7 +47,7 @@ struct configSetting_st {
 static const struct configOption_st configOptions[] = {
 	{ "ram", CONFITEM_INT, "128", 0, "RAM size in Kbytes" },
 	{ "rom", CONFITEM_STR, NULL, 1, "ROM image, format is \"rom@xx=filename\" (xx=start segment in hex), use rom@00 for EXOS or combined ROM set" },
-	{ "sdimg", CONFITEM_STR, "sdcard.img", 0, "SD-card disk image (VHD) file name/path" },
+	{ "sdimg", CONFITEM_STR, SDCARD_IMG_FN, 0, "SD-card disk image (VHD) file name/path" },
 	{ "epkey", CONFITEM_STR, NULL, 1, "Define a given EP/emu key, format epkey@xy=SDLname, where x/y are row/col in hex or spec code (ie screenshot, etc)." },
 	{ NULL, 0, NULL, 0, NULL }
 };

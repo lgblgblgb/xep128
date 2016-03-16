@@ -134,7 +134,7 @@ void sdext_init ( void )
 		return;
 	}
 	printf("SDEXT: init: cool, SD-card cartridge ROM code seems to be found in loaded ROM set, enabling SD card hardware emulation ...\n");
-	sdf = open_emu_file(SDCARD_IMG_FN, "rb", sdimg_path);
+	sdf = open_emu_file(config_getopt_str("sdimg"), "rb", sdimg_path);
 	if (sdf == NULL) {
 		WARNING_WINDOW("SD card image file \"%s\" cannot be open: %s. You can use Xep128 but SD card access won't work!", sdimg_path, ERRSTR());
 		*sdimg_path = 0;
