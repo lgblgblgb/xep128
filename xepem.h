@@ -53,6 +53,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define SDCARD_IMG_FN "sdcard.img"
 #define PRINT_OUT_FN "print.out"
 #define DEFAULT_CONFIG_FILE "@config"
+#define DEFAULT_CONFIG_SAMPLE_FILE "@config-sample"
 
 
 #define OSD(...) do { \

@@ -346,6 +346,26 @@ static void dump_config ( FILE *fp )
 
 
 
+static void save_sample_config ( const char *name )
+{
+	char path[PATH_MAX + 1];
+	FILE *f = open_emu_file(name, "r", path);
+	if (f) {
+		fclose(f);
+		printf("CONFIG: sample configuration %s (%s) already existis, skipping to create." NL, name, path);
+		return;
+	}
+	f = open_emu_file(name, "w", path);
+	if (f) {
+		dump_config(f);
+		fclose(f);
+		INFO_WINDOW("Note: created sample config file %s", path);
+	} else
+		INFO_WINDOW("Note: cannot create sample config file %s", path);
+}
+
+
+
 int config_init ( int argc, char **argv )
 {
 	const char *config_name = DEFAULT_CONFIG_FILE;	// name of the used config file, can be overwritten via CLI
@@ -405,7 +425,7 @@ int config_init ( int argc, char **argv )
 	/* Default values for the keyboard follows ... */
 	keymap_preinit_config_internal();
 	/* check if we have written sample config file, if there is not, let's create one */
-	// TODO !!!!
+	save_sample_config(DEFAULT_CONFIG_SAMPLE_FILE);
 	/* now parse config file (not the sample one!) if there is any */
 	printf("Using config file: ");
 	if (strcasecmp(config_name, "none")) {
@@ -428,7 +448,7 @@ int config_init ( int argc, char **argv )
 	/* parse command line ... */
 	if (parse_command_line(argc, argv))
 		return -1;
-	/* Check, if we have written config file, if no, let's create one! */
+	/* This is only debug, TODO remove it later ... */
 	dump_config(stdout);
 	//exit(0);
 	return 0;
