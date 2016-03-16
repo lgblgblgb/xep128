@@ -1,0 +1,102 @@
+
+# Xep128 default built-in configuration as a sample / template file.
+# Feel free to customize for your needs, and rename to config to be loaded automatically.
+# Delete this _template_ file (not the one renamed as config) Xep128 to allow to re-create
+# in case of some new options with a new version.
+
+# Generic, simple options
+
+audio = 0	# Enable audio output
+fullscreen = 0	# Start in full screen
+printfile = @print.out	# Printing into this file
+ram = 128	# RAM size in Kbytes
+sdimg = sdcard.img	# SD-card disk image (VHD) file name/path
+
+# ROM image, format is "rom@xx=filename" (xx=start segment in hex), use rom@00 for EXOS or combined ROM set
+
+rom@00 = combined.rom
+
+# Define a given EP/emu key, format epkey@xy=SDLname, where x/y are row/col in hex or spec code (ie screenshot, etc).
+
+# Note: key names are SDL scan codes! Sometimes it's nothing to do with the letters
+# on your keyboard (eg some national layout, like Hungarian etc) but the "physical"
+# scan code assignment, eg the right neighbour of key "L" is ";" even if your layout
+# means something different there!
+
+epkey@31 = 1	# for Enterprise key 1
+epkey@36 = 2	# for Enterprise key 2
+epkey@35 = 3	# for Enterprise key 3
+epkey@33 = 4	# for Enterprise key 4
+epkey@34 = 5	# for Enterprise key 5
+epkey@32 = 6	# for Enterprise key 6
+epkey@30 = 7	# for Enterprise key 7
+epkey@50 = 8	# for Enterprise key 8
+epkey@52 = 9	# for Enterprise key 9
+epkey@54 = 0	# for Enterprise key 0
+epkey@21 = Q	# for Enterprise key Q
+epkey@26 = W	# for Enterprise key W
+epkey@25 = E	# for Enterprise key E
+epkey@23 = R	# for Enterprise key R
+epkey@24 = T	# for Enterprise key T
+epkey@22 = Y	# for Enterprise key Y
+epkey@20 = U	# for Enterprise key U
+epkey@90 = I	# for Enterprise key I
+epkey@92 = O	# for Enterprise key O
+epkey@94 = P	# for Enterprise key P
+epkey@16 = A	# for Enterprise key A
+epkey@15 = S	# for Enterprise key S
+epkey@13 = D	# for Enterprise key D
+epkey@14 = F	# for Enterprise key F
+epkey@12 = G	# for Enterprise key G
+epkey@10 = H	# for Enterprise key H
+epkey@60 = J	# for Enterprise key J
+epkey@62 = K	# for Enterprise key K
+epkey@64 = L	# for Enterprise key L
+epkey@76 = Return	# for Enterprise key ENTER
+epkey@07 = Left Shift	# for Enterprise key SHIFT
+epkey@11 = CapsLock	# for Enterprise key CAPS
+epkey@06 = Z	# for Enterprise key Z
+epkey@05 = X	# for Enterprise key X
+epkey@03 = C	# for Enterprise key C
+epkey@04 = V	# for Enterprise key V
+epkey@02 = B	# for Enterprise key B
+epkey@00 = N	# for Enterprise key N
+epkey@80 = M	# for Enterprise key M
+epkey@17 = Left Ctrl	# for Enterprise key CTRL
+epkey@86 = Space	# for Enterprise key SPACE
+epkey@63 = ;	# for Enterprise key ;
+epkey@95 = [	# for Enterprise key [
+epkey@66 = ]	# for Enterprise key ]
+epkey@65 = '	# for Enterprise key :
+epkey@53 = -	# for Enterprise key -
+epkey@01 = \	# for Enterprise key \
+epkey@27 = Tab	# for Enterprise key TAB
+epkey@37 = Escape	# for Enterprise key ESC
+epkey@87 = Insert	# for Enterprise key INS
+epkey@56 = Backspace	# for Enterprise key ERASE
+epkey@81 = Delete	# for Enterprise key DEL
+epkey@75 = Left	# for Enterprise key LEFT
+epkey@72 = Right	# for Enterprise key RIGHT
+epkey@73 = Up	# for Enterprise key UP
+epkey@71 = Down	# for Enterprise key DOWN
+epkey@83 = /	# for Enterprise key /
+epkey@84 = .	# for Enterprise key .
+epkey@82 = ,	# for Enterprise key ,
+epkey@93 = =	# for Enterprise key @
+epkey@47 = F1	# for Enterprise key F1
+epkey@46 = F2	# for Enterprise key F2
+epkey@42 = F3	# for Enterprise key F3
+epkey@40 = F4	# for Enterprise key F4
+epkey@44 = F5	# for Enterprise key F5
+epkey@43 = F6	# for Enterprise key F6
+epkey@45 = F7	# for Enterprise key F7
+epkey@41 = F8	# for Enterprise key F8
+epkey@77 = F9	# for Enterprise key F9
+epkey@74 = Home	# for Enterprise key HOLD
+epkey@70 = End	# for Enterprise key STOP
+epkey@a0 = Keypad 5	# for Enterprise key ExtJoy FIRE
+epkey@a1 = Keypad 8	# for Enterprise key ExtJoy UP
+epkey@a2 = Keypad 2	# for Enterprise key ExtJoy DOWN
+epkey@a3 = Keypad 4	# for Enterprise key ExtJoy LEFT
+epkey@a4 = Keypad 6	# for Enterprise key ExtJoy RIGHT
+

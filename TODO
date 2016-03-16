@@ -54,10 +54,10 @@ Emulator:
 	* ... OR native dialogs on specific host OS, at least file browser when needed (?)
 	* network installer for ROM images, maybe SD card image as well?
 	* [DONE] system directory on host OS, to read ROMs, config, whatever
-	* ability to configure emulator, save/load configuration?
+	* [DONE] ability to configure emulator, save/load configuration?
 	* ep128emu "fileio" like stuff to load/save single files
 	* Xep ROM clean-up, almost useless currently (maybe it should implement the fileio stuff)
-	* configurable keyboard? positional/symbolic mapping, switchable?
+	* [DONE, but only the positional based] configurable keyboard? positional/symbolic mapping, switchable?
 	* [DONE] maybe: OSD, if something import happens (mouse grab starts, full screen entered, whatever)
 	* video and/or audio recording mode maybe?
 	* scripting in command window?
@@ -73,7 +73,7 @@ Host OS / target:
 
 Network emulation:
 
-	* [STARTED] Wiznet W5300 emulation, partial stuff with host TCP/IP, not raw level! emulate DHCP etc answer though
+	* [STARTED/STALLING] Wiznet W5300 emulation, partial stuff with host TCP/IP, not raw level! emulate DHCP etc answer though
 
 ZX Spectrum emulator card:
 

@@ -1,0 +1,29 @@
+Xep128 Enterprise-128 Emulator v0.3 (C)2015,2016 LGB Gabor Lenart [./xep128]
+
+PATH: SDL base path: /home/lgb/prog/xep128/
+PATH: SDL pref path: /home/lgb/.local/share/nemesys.lgb/xep128/
+PATH: data directory: /usr/local/lib/xep128/
+PATH: Current directory: /home/lgb/prog/xep128/
+
+USAGE:
+
+	./xep128 -optname optval -optname2 optval2 ...
+
+OPTIONS:
+
+-config
+	Use config file (or do not use the default one, if "none" is specified). This must be the first option if used!
+-audio
+	Enable audio output [default: 0]
+-fullscreen
+	Start in full screen [default: 0]
+-printfile
+	Printing into this file [default: @print.out]
+-ram
+	RAM size in Kbytes [default: 128]
+-rom
+	ROM image, format is "rom@xx=filename" (xx=start segment in hex), use rom@00 for EXOS or combined ROM set [default: -]
+-sdimg
+	SD-card disk image (VHD) file name/path [default: sdcard.img]
+-epkey
+	Define a given EP/emu key, format epkey@xy=SDLname, where x/y are row/col in hex or spec code (ie screenshot, etc). [default: -]

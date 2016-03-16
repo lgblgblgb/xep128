@@ -130,6 +130,11 @@ distclean:
 	$(MAKE) zclean
 	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) $(PRG_EXE) $(ZIP32)
 
+help:
+	$(MAKE) $(PRG)
+	./$(PRG) -help | grep -v '^GIT ' > doc/help-cli.txt
+	./$(PRG) -testparsing -config none | sed -e '1,/^--- /d' -e '/^--- /,$$d' > doc/help-config.txt
+
 commit:
 	git diff
 	git status

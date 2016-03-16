@@ -412,7 +412,7 @@ int config_init ( int argc, char **argv )
 			printf("-%s" NL "\t%s [default: %s]" NL, opt->name, opt->help, opt->defval ? opt->defval : "-");
 			opt++;
 		}
-		return 1;
+		exit(0);
 	}
 	if (argc && !strcasecmp(argv[0], "-testparsing")) {
 		testparsing = 1;
@@ -465,7 +465,7 @@ int config_init ( int argc, char **argv )
 		printf(NL "--- TEST DUMP OF *PARSED* CONFIGURATION (requested)" NL NL);
 		dump_config(stdout);
 		printf(NL "--- END OF TEST PARSING MODE (requested)" NL);
-		return 1;
+		exit(0);
 	}
 	return 0;
 }

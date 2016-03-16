@@ -16,7 +16,7 @@ read file LICENSE. You can find the source on github, see above.
 
 WARNING! Xep128 is in early alpha stage currently! It lacks many important
 features (no sound, not so precise nick emulation, etc etc), and it's not
-comfortable to use, there is no configuration but a single built-in config.
+comfortable to use, there is only CLI/config file based configuration, etc.
 It will change later, hopefully.
 
 Currently it's mainly for Linux and/or UNIX-like systems, but since it's an SDL
@@ -244,7 +244,7 @@ config, and the configuration read from a file. You can even use the
 your options.
 
 To learn about command line switches, you can use the -help switch.
-_It also prints the pref directory_ and other emulator related information,
+**It also prints the pref directory** and other emulator related information,
 which can be useful in bug reports, etc.
 
 Basically, both the command line and configuration file syntax has the
@@ -264,6 +264,11 @@ the rom@00 value, to load only your EXOS, still you will loose all of the
 other concated images, as combined.rom treated a single entity. Of course
 you can specify other ROM images as well from different segments like
 "rom@0c" (ROM image from segment 0x0C) or such.
+
+Further readings:
+
+* [Summary of CLI options, output of -help](doc/help-cli.txt)
+* [Example of a sample configuration file](doc/help-config.txt)
 
 # Known problems
 
