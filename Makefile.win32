@@ -2,6 +2,8 @@
 # Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
 # http://xep128.lgb.hu/
 
+include Makefile.common
+
 CC	= $(CC_WIN32)
 DEBUG	=
 CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --cflags) $(DEBUG)
