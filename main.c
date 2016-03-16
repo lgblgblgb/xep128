@@ -24,9 +24,6 @@ static Uint32 *ep_pixels;
 int rom_size;
 int CPU_CLOCK = DEFAULT_CPU_CLOCK;
 
-char *app_pref_path, *app_base_path;
-char current_directory[PATH_MAX + 1];
-
 static const int _cpu_speeds[4] = { 4000000, 6000000, 7120000, 10000000 };
 static int _cpu_speed_index = 0;
 
@@ -289,28 +286,6 @@ int set_cpu_clock_with_osd ( int hz )
 
 
 
-static int get_sys_dirs ( const char *path )
-{
-	fprintf(stderr, "Program path: %s\n", path);
-	//fprintf(stderr, "XEP ROM size: %d\n", sizeof _xep_rom);
-	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
-	app_base_path = SDL_GetBasePath();
-	if (app_pref_path == NULL) app_pref_path = SDL_strdup("?");
-	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
-	fprintf(stderr, "SDL base path: %s\n", app_base_path);
-	fprintf(stderr, "SDL pref path: %s\n", app_pref_path);
-	if (getcwd(current_directory, sizeof current_directory) == NULL) {
-		ERROR_WINDOW("Cannot query the current directory: %s", ERRSTR());
-		return 1;
-	}
-	strcat(current_directory, DIRSEP);
-	fprintf(stderr, "Current directory: %s\n", current_directory);
-	return 0;
-}
-
-
-int roms_load ( void );
-
 
 int main (int argc, char *argv[])
 {
@@ -319,8 +294,6 @@ int main (int argc, char *argv[])
 		ERROR_WINDOW("Fatal SDL initialization problem: %s", SDL_GetError());
 		return 1;
 	}
-	if (get_sys_dirs(argv[0]))
-		return 1;
 	if (config_init(argc, argv))
 		return 1;
 	guarded_exit = 1;	// turn on guarded exit, with custom de-init stuffs

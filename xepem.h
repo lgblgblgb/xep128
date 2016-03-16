@@ -295,4 +295,6 @@ extern const char *BUILDINFO_CC;
 #define CC_TYPE "Something"
 #endif
 
+int roms_load ( void );
+
 #endif

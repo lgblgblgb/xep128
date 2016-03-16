@@ -56,6 +56,10 @@ static const struct configOption_st configOptions[] = {
 static struct configSetting_st *config = NULL;
 static int config_size = 0;
 
+char *app_pref_path, *app_base_path;
+char current_directory[PATH_MAX + 1];
+
+
 
 
 static const struct configOption_st *search_opt ( const char *name, int subopt )
@@ -268,6 +272,19 @@ int config_init ( int argc, char **argv )
 		//if (!strcasecmp(argv[0], "-config") || !strcasecmp(argv[0], "--config"))	
 
 	}
+	/* SDL path info */
+	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
+	app_base_path = SDL_GetBasePath();
+	if (app_pref_path == NULL) app_pref_path = SDL_strdup("?");
+	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
+	printf("SDL base path: %s\n", app_base_path);
+	printf("SDL pref path: %s\n", app_pref_path);
+	if (getcwd(current_directory, sizeof current_directory) == NULL) {
+		ERROR_WINDOW("Cannot query the current directory: %s", ERRSTR());
+		return 1;
+	}
+	strcat(current_directory, DIRSEP);
+	printf("Current directory: %s\n", current_directory);
 	/* Set default (built-in) values */
 	opt = configOptions;
 	while (opt->name) {
