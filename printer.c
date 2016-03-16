@@ -57,11 +57,13 @@ void printer_send_data ( Uint8 data )
 {
 	//fprintf(stderr, "PRINTER GOT DATA: %d\n", data);
 	if (fp_to_open) {
-		fp = fopen(PRINT_OUT_FN, "a");
+		const char *printfile = config_getopt_str("printfile");
+		char path[PATH_MAX + 1];
+		fp = open_emu_file(printfile, "ab", path);
 		if (fp == NULL)
-			WARNING_WINDOW("Cannot create/append printer output file \"%s%s\": %s.\nYou can use Xep128 but printer output will not be logged!", current_directory, PRINT_OUT_FN, ERRSTR());
+			WARNING_WINDOW("Cannot create/append printer output file \"%s\": %s.\nYou can use Xep128 but printer output will not be logged!", path, ERRSTR());
 		else
-			INFO_WINDOW("Printer event, file \"%s%s\" has been opened for the output.", current_directory, PRINT_OUT_FN);
+			INFO_WINDOW("Printer event, file \"%s\" has been opened for the output.", path);
 		fp_to_open = 0;
 		buffer_pos = 0;
 	}

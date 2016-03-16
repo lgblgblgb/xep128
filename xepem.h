@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <limits.h>
 
 #define WINDOW_TITLE "Xep128"
-#define VERSION "v0.1"
+#define VERSION "v0.3"
 #define COPYRIGHT "(C)2015,2016 LGB Gabor Lenart"
 
 #define USE_LODEPNG
@@ -51,7 +51,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define COMBINED_ROM_FN "combined.rom"
 #define SDCARD_IMG_FN "sdcard.img"
-#define PRINT_OUT_FN "print.out"
+#define PRINT_OUT_FN "@print.out"
 #define DEFAULT_CONFIG_FILE "@config"
 #define DEFAULT_CONFIG_SAMPLE_FILE "@config-sample"
 

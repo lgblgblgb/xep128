@@ -317,7 +317,7 @@ int main (int argc, char *argv[])
 	guarded_exit = 1;	// turn on guarded exit, with custom de-init stuffs
 	if (screen_init())
 		return 1;
-	audio_init(0);
+	audio_init(config_getopt_int("audio"));
 	z80ex_init();
 	set_ep_cpu(CPU_Z80);
 	ep_pixels = nick_init();
@@ -355,6 +355,8 @@ int main (int argc, char *argv[])
 	set_cpu_clock(DEFAULT_CPU_CLOCK);
 	emu_timekeeping_start();
 	audio_start();
+	if (config_getopt_str("fullscreen"))
+		screen_set_fullscreen(1);
 	//osd_disable();
 	while (running) {
 		int t;
