@@ -52,6 +52,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define COMBINED_ROM_FN "combined.rom"
 #define SDCARD_IMG_FN "sdcard.img"
 #define PRINT_OUT_FN "print.out"
+#define DEFAULT_CONFIG_FILE "config"
 
 
 #define OSD(...) do { \
