@@ -1,0 +1,6 @@
+CC_NATIVE	= gcc
+CC_WIN32	= i686-w64-mingw32-gcc
+LINSRCS		=
+WINSRCS		=
+SRCS_COMMON	= lodepng.c screen.c font_16x16.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c primoemu.c emu_rom_interface.c w5300.c apu.c keyboard_mapping.c configuration.c roms.c
+

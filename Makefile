@@ -2,10 +2,12 @@
 # Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
 # http://xep128.lgb.hu/
 
+include Makefile.common
+
 PREFIX	= /usr/local
 BINDIR	= $(PREFIX)/bin
 DATADIR	= $(PREFIX)/lib/xep128
-CC	= gcc
+CC	= $(CC_NATIVE)
 DEBUG	=
 CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\"
 ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -DWORDS_LITTLE_ENDIAN -DZ80EX_ED_TRAPPING_SUPPORT -DZ80EX_Z180_SUPPORT $(DEBUG)
@@ -13,8 +15,7 @@ CPPFLAGS= -Iz80ex -I.
 LDFLAGS	= $(shell sdl2-config --libs) -lm $(DEBUG)
 LIBS	=
 INCS	= xepem.h
-LINSRCS	=
-SRCS	= $(LINSRCS) lodepng.c screen.c font_16x16.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c primoemu.c emu_rom_interface.c w5300.c apu.c keyboard_mapping.c configuration.c roms.c
+SRCS	= $(LINSRCS) $(SRCS_COMMON)
 OBJS	= $(SRCS:.c=.o)
 PRG	= xep128
 PRG_EXE	= xep128.exe
@@ -32,10 +33,10 @@ all:
 	@echo "Linker:   $(CC) $(LDFLAGS) $(LIBS)"
 	$(MAKE) $(PRG)
 
-%.o: %.c $(INCS) Makefile
+%.o: %.c $(INCS) Makefile Makefile.common
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-%.s: %.c $(INCS) Makefile
+%.s: %.c $(INCS) Makefile Makefile.common
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 z80ex/z180ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
@@ -77,7 +78,7 @@ buildinfo.c:
 	echo "const char *BUILDINFO_ON  = \"`whoami`@`uname -n` on `uname -s` `uname -r`\";" > buildinfo.c
 	echo "const char *BUILDINFO_AT  = \"`date -R`\";" >> buildinfo.c
 	echo "const char *BUILDINFO_GIT = \"`git show | head -n 1 | cut -f2 -d' '`\";" >> buildinfo.c
-	echo "const char *BUILDINFO_CC  = \"`$(CC) --version | head -n 1`\";" >> buildinfo.c
+	echo "const char *BUILDINFO_CC  = __VERSION__;" >> buildinfo.c
 
 $(DLL):
 	@echo "**** Fetching Win32 SDL2 DLL from $(DLLURL) ..."
@@ -93,7 +94,7 @@ $(ROM):
 data:	$(SDIMG) $(ROM)
 	rm -f buildinfo.c
 
-$(PRG): .depend $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(INCS) Makefile
+$(PRG): .depend $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(INCS) Makefile Makefile.common
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.o
 	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(LDFLAGS) $(LIBS)
