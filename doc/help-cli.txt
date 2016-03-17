@@ -1,5 +1,7 @@
-Xep128 Enterprise-128 Emulator v0.3 (C)2015,2016 LGB Gabor Lenart [./xep128]
+Xep128 Enterprise-128 Emulator v0.3 (C)2015,2016 LGB Gabor Lenart http://xep128.lgb.hu/
+Platform: (Linux), video: (x11), audio: (pulseaudio), SDL version compiled: (2.0.2) and linked: (2.0.2)
 
+PATH: executable: ./xep128
 PATH: SDL base path: /home/lgb/prog/xep128/
 PATH: SDL pref path: /home/lgb/.local/share/nemesys.lgb/xep128/
 PATH: data directory: /usr/local/lib/xep128/
@@ -27,3 +29,4 @@ OPTIONS:
 	SD-card disk image (VHD) file name/path [default: sdcard.img]
 -epkey
 	Define a given EP/emu key, format epkey@xy=SDLname, where x/y are row/col in hex or spec code (ie screenshot, etc). [default: -]
+
