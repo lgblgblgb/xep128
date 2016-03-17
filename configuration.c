@@ -63,7 +63,7 @@ static int config_size = 0;
 char *app_pref_path, *app_base_path;
 char current_directory[PATH_MAX + 1];
 
-
+SDL_version sdlver_compiled, sdlver_linked;
 
 
 static const struct configOption_st *search_opt ( const char *name, int subopt )
@@ -379,11 +379,19 @@ int config_init ( int argc, char **argv )
 	int default_config = 1;
 	int testparsing = 0;
 	argc--; argv++;
-	printf("%s Enterprise-128 Emulator %s %s [%s]" NL
-		"GIT %s compiled by %s at %s with %s %s" NL NL,
-		WINDOW_TITLE, VERSION, COPYRIGHT, exe,
-		BUILDINFO_GIT, BUILDINFO_ON, BUILDINFO_AT, CC_TYPE, BUILDINFO_CC
+	SDL_VERSION(&sdlver_compiled);
+	SDL_GetVersion(&sdlver_linked);
+	printf("%s Enterprise-128 Emulator v%s %s %s" NL
+		"GIT %s compiled by %s at %s with %s %s" NL
+		"Platform: (%s), video: (%s), audio: (%s), "
+		"SDL version compiled: (%d.%d.%d) and linked: (%d.%d.%d)" NL NL,
+		WINDOW_TITLE, VERSION, COPYRIGHT, PROJECT_PAGE,
+		BUILDINFO_GIT, BUILDINFO_ON, BUILDINFO_AT, CC_TYPE, BUILDINFO_CC,
+		SDL_GetPlatform(), SDL_GetCurrentVideoDriver(), SDL_GetCurrentAudioDriver(),
+		sdlver_compiled.major, sdlver_compiled.minor, sdlver_compiled.patch,
+		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch
 	);
+	printf("PATH: executable: %s" NL, exe);
 	/* SDL path info block */
 	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
 	app_base_path = SDL_GetBasePath();
@@ -412,6 +420,7 @@ int config_init ( int argc, char **argv )
 			printf("-%s" NL "\t%s [default: %s]" NL, opt->name, opt->help, opt->defval ? opt->defval : "-");
 			opt++;
 		}
+		printf(NL);
 		exit(0);
 	}
 	if (argc && !strcasecmp(argv[0], "-testparsing")) {

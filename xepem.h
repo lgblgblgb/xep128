@@ -35,8 +35,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <limits.h>
 
 #define WINDOW_TITLE "Xep128"
-#define VERSION "v0.3"
+#define VERSION "0.3"
 #define COPYRIGHT "(C)2015,2016 LGB Gabor Lenart"
+#define PROJECT_PAGE "http://xep128.lgb.hu/"
 
 #define USE_LODEPNG
 
@@ -281,6 +282,7 @@ static inline const char *config_getopt_str ( const char *name ) {
 	config_getopt(name, -1, &s);
 	return s;
 }
+extern SDL_version sdlver_compiled, sdlver_linked;
 
 extern const char *BUILDINFO_ON;
 extern const char *BUILDINFO_AT;

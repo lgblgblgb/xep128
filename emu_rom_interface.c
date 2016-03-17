@@ -32,7 +32,7 @@ struct commands_st {
 static char buffer[256];
 static char *carg;
 
-static const char *SHORT_HELP = "XEP   version 0.1  (Xep128 EMU)\r\n";
+static const char *SHORT_HELP = "XEP   version " VERSION "  (Xep128 EMU)\r\n";
 
 #define COBUF ((char*)(memory + xep_rom_addr + 0x3802))
 
@@ -104,12 +104,11 @@ static void cmd_cpu ( void ) {
 static void cmd_emu ( void )
 {
 	char buf[1024];
-	SDL_version sdlver_c, sdlver_l;
 #ifdef _WIN32
 	int siz = sizeof buffer;
 #endif
-	SDL_VERSION(&sdlver_c);
-	SDL_GetVersion(&sdlver_l);
+	//SDL_VERSION(&sdlver_c);
+	//SDL_GetVersion(&sdlver_l);
 #ifdef _WIN32
 	//GetUserName(buf, &siz);
 	GetComputerNameEx(ComputerNamePhysicalNetBIOS, buf, &siz);
@@ -125,8 +124,8 @@ static void cmd_emu ( void )
 		getenv("USER"),
 #endif
 		buf, OS_KIND, SDL_GetPlatform(), SDL_GetCurrentVideoDriver(), SDL_GetCurrentAudioDriver(),
-		sdlver_c.major, sdlver_c.minor, sdlver_c.patch,
-		sdlver_l.major, sdlver_l.minor, sdlver_l.patch,
+		sdlver_compiled.major, sdlver_compiled.minor, sdlver_compiled.patch,
+		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch,
 		app_base_path, app_pref_path, current_directory,
 		sdimg_path, rom_desc
 	);

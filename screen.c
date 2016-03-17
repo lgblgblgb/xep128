@@ -290,7 +290,7 @@ int screen_init ( void )
 	win_xsize = SCREEN_WIDTH;
 	win_ysize = SCREEN_HEIGHT * 2;
 	sdl_win = SDL_CreateWindow(
-                WINDOW_TITLE " " VERSION,
+                WINDOW_TITLE " v" VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                 win_xsize, win_ysize,
                 SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
