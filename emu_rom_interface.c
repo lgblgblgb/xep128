@@ -117,7 +117,7 @@ static void cmd_emu ( void )
 	gethostname(buf, sizeof buf);
 #define OS_KIND "POSIX"
 #endif
-	sprintf(COBUF, "Run by: %s@%s %s %s\r\nDrivers: %s %s\r\nSDL c/l: %d.%d.%d %d.%d.%d\r\nBase path: %s\r\nPref path: %s\r\nStart dir: %s\r\nSD img: %s\r\n\r\n%s\r\n",
+	sprintf(COBUF, "Run by: %s@%s %s %s\r\nDrivers: %s %s\r\nSDL c/l: %d.%d.%d %d.%d.%d\r\nBase path: %s\r\nPref path: %s\r\nStart dir: %s\r\nSD img: %s [%ldM]\r\n\r\n%s\r\n",
 #ifdef _WIN32
 		getenv("USERNAME"),
 #else
@@ -127,7 +127,7 @@ static void cmd_emu ( void )
 		sdlver_compiled.major, sdlver_compiled.minor, sdlver_compiled.patch,
 		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch,
 		app_base_path, app_pref_path, current_directory,
-		sdimg_path, rom_desc
+		sdimg_path, sd_card_size >> 20, rom_desc
 	);
 }
 

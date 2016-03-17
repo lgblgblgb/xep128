@@ -61,6 +61,10 @@ static void (*ans_callback)(void);
 static FILE *sdf;
 static int sdfd;
 static Uint8 _buffer[1024];
+off_t sd_card_size = 0;
+
+#define MAX_CARD_SIZE 2147483648UL
+#define MIN_CARD_SIZE    8388608UL
 
 /* ID files:
  * C0 71 00 00 │ 00 5D 01 32 │ 13 59 80 E3 │ 76 D9 CF FF │ 16 40 00 4F │ 01 50 41 53
@@ -139,8 +143,21 @@ void sdext_init ( void )
 	if (sdf == NULL) {
 		WARNING_WINDOW("SD card image file \"%s\" cannot be open: %s. You can use Xep128 but SD card access won't work!", sdimg_path, ERRSTR());
 		*sdimg_path = 0;
-	} else
+	} else {
 		sdfd = fileno(sdf);
+		sd_card_size = lseek(sdfd, 0, SEEK_END);
+		DEBUG("SDEXT: SD card size is: %ld bytes" NL, sd_card_size);
+		if (sd_card_size > MAX_CARD_SIZE || sd_card_size < MIN_CARD_SIZE) {
+			fclose(sdf);
+			sdf = NULL;
+			ERROR_WINDOW("SD card image file \"%s\" is too small or large, valid range is %ld - %ld Mbytes, but this one is %ld bytes long (about %ld Mbytes). SD access has been disabled!",
+				sdimg_path, MIN_CARD_SIZE >> 20, MAX_CARD_SIZE >> 20,
+				sd_card_size, sd_card_size >> 20
+
+			);
+			*sdimg_path = 0;
+		}
+	}
 	memset(sd_rom_ext, 0xFF, 0x10000);
 	/* Copy ROM image of 16K to the second 64K of the cartridge flash. Currently only 8K is used.
            It's possible to use 64K the ROM set image used by Xep128 can only hold 16K this way, though. */
@@ -163,9 +180,13 @@ void sdext_init ( void )
 
 static int blocks;
 
+
+// FIXME: error handling of read() !!!!
+// FIXME: check excess of card size (during multiple block read) !!!!
 static void _block_read ( void )
 {
 	int ret;
+	z80ex_w_states(40);	// TODO: fake some wait states here, actully this is the WRONG method, as not the Z80 should wait but the SD card's answer ...
 	blocks++;
 	_buffer[0] = 0xFF; // wait a bit
 	_buffer[1] = 0xFE; // data token
@@ -267,15 +288,27 @@ static void _spi_shifting_with_sd_card ()
 			if (sdf == NULL)
 				_read_b = 32; // address error, if no SD card image ... [this is bad TODO, better error handling]
 			else {
-				int _offset = (cmd[1] << 24) | (cmd[2] << 16) | (cmd[3] << 8) | cmd[4];
+				off_t ret, _offset = (cmd[1] << 24) | (cmd[2] << 16) | (cmd[3] << 8) | cmd[4];
 #ifdef DEBUG_SDEXT
 				DEBUG("SDEXT: REGIO: seek to %d in the image file." NL, _offset);
 #endif
-				//fseek(sdf, _offset, SEEK_SET);
-				lseek(sdfd, _offset, SEEK_SET);
-				_block_read();
-				if (cmd[0] == 18) ans_callback = _block_read; // in case of CMD18, continue multiple sectors, register callback for that!
-				_read_b = 0; // R1
+				z80ex_w_states(100);	// TODO: fake some wait states here, actully this is the WRONG method, as not the Z80 should wait but the SD card's answer ...
+				if (_offset > sd_card_size - 512UL) {
+					_read_b = 32; // address error, TODO: what is the correct answer here?
+					DEBUG("SDEXT: access beyond the card size!" NL);
+				} else {
+					//fseek(sdf, _offset, SEEK_SET);
+					ret = lseek(sdfd, _offset, SEEK_SET);
+					if (ret != _offset) {
+						_read_b = 32; // address error, TODO: what is the correct answer here?
+						DEBUG("SDEXT: seek error to %ld (got: %ld)" NL, _offset, ret);
+					} else {
+						_block_read();
+						if (cmd[0] == 18)
+							ans_callback = _block_read; // in case of CMD18, continue multiple sectors, register callback for that!
+						_read_b = 0; // R1
+					}
+				}
 			}
 			break;
 		default: // unimplemented command, heh!

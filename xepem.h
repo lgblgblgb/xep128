@@ -205,6 +205,7 @@ void sdext_init ( void );
 Uint8 sdext_read_cart ( Uint16 addr );
 void sdext_write_cart ( Uint16 addr, Uint8 data );
 void sdext_clear_ram(void);
+extern off_t sd_card_size;
 #endif
 
 void rtc_reset(void);
