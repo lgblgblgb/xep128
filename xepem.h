@@ -172,7 +172,7 @@ void set_ep_memseg(int seg, int val);
 void port_write ( Z80EX_WORD port, Z80EX_BYTE value );
 
 
-void emu_kbd(SDL_Keysym sym, int press);
+int emu_kbd(SDL_Keysym sym, int press);
 void emu_mouse_button(Uint8 button, int press);
 void emu_mouse_motion(int dx, int dy);
 Uint8 mouse_read(void);
@@ -284,7 +284,12 @@ extern int warn_for_mouse_grab;
 #define OSD_FADE_STOP    0x80
 #define OSD_FADE_DEC    3
 
-int keymap_resolve_event ( SDL_Keysym sym, int press, Uint8 *matrix );
+struct keyMappingTable_st {
+	SDL_Scancode	code;
+	Uint8		posep;
+	const char	*description;
+};
+const struct keyMappingTable_st *keymap_resolve_event ( SDL_Keysym sym );
 void keymap_preinit_config_internal ( void );
 void keymap_dump_config ( FILE *f );
 int keymap_set_key_by_name ( const char *name, int posep );

@@ -30,6 +30,9 @@ struct keyMappingDefault_st {
 	const char		*description;
 };
 
+static const char *unknown_key_name = "SomeUnknownKey";
+static struct keyMappingTable_st *keyMappingTable = NULL;
+static int keyMappingTableSize = 0;
 
 static const struct keyMappingDefault_st keyMappingDefaults[] = {
 	{ SDL_SCANCODE_1,		0x31, "1"	},
@@ -100,7 +103,7 @@ static const struct keyMappingDefault_st keyMappingDefaults[] = {
 	{ SDL_SCANCODE_F6,		0x43, "F6"	},
 	{ SDL_SCANCODE_F7,		0x45, "F7"	},
 	{ SDL_SCANCODE_F8,		0x41, "F8"	},
-	{ SDL_SCANCODE_F9,		0x77, "F9"	},
+//	{ SDL_SCANCODE_F9,		0x77, "F9"	},
 	{ SDL_SCANCODE_HOME,		0x74, "HOLD"	},	// for EP HOLD we map PC HOME
 	{ SDL_SCANCODE_END,		0x70, "STOP"	},	// for EP STOP we map PC END
 	/* ---- Not real EP kbd matrix, used for extjoy emulation with numeric keypad ---- */
@@ -109,23 +112,18 @@ static const struct keyMappingDefault_st keyMappingDefaults[] = {
 	{ SDL_SCANCODE_KP_2,		0xA2, "ExtJoy DOWN"	},	// for EP external joy DOWN  we map PC num keypad 2
 	{ SDL_SCANCODE_KP_4,		0xA3, "ExtJoy LEFT"	},	// for EP external joy LEFT  we map PC num keypad 4
 	{ SDL_SCANCODE_KP_6,		0xA4, "ExtJoy RIGHT"	},	// for EP external joy RIGHT we map PC num keypad 6
-	/* ---- TODO move emu related keys (like screenshot, exit, fullscreen ...) here, with same "faked" position number to allow configurable settings! ---- */
+	/* ---- emu related "SYS" keys (like screenshot, exit, fullscreen ...) position codes are the identifier for the caller! Must be values, not used otherwise by the emulated computer! */
+	{ SDL_SCANCODE_F11,		0xFF, "EMU fullscreen"	},	// ... on EP the lower nibble is the mask shift, so values X8-XF are not used!
+	{ SDL_SCANCODE_F9,		0xFE, "EMU exit"	},
+	{ SDL_SCANCODE_F10,		0xFD, "EMU screenshot"	},
+	{ SDL_SCANCODE_PAUSE,		0xFC, "EMU reset"	},
+	{ SDL_SCANCODE_PAGEDOWN,	0xFB, "EMU slower-cpu"	},
+	{ SDL_SCANCODE_PAGEUP,		0xFA, "EMU faster-cpu"	},
+	{ SDL_SCANCODE_GRAVE,		0xF9, "EMU osd-replay"	},
 	/* ---- end of table marker, must be the last entry ---- */
 	{ 0, -1, NULL }
 };
 
-
-struct keyMappingTable_st {
-	SDL_Scancode	code;
-	Uint8		sel;
-	Uint8		mask;
-	Uint8		posep;
-};
-
-
-//static int keyMappingTable[256][3];
-static struct keyMappingTable_st *keyMappingTable = NULL;
-static int keyMappingTableSize = 0;
 
 
 
@@ -133,6 +131,7 @@ static void keymap_set_key ( SDL_Scancode code, int posep )
 {
 	int n = keyMappingTableSize;
 	struct keyMappingTable_st *p = keyMappingTable;
+	const struct keyMappingDefault_st *q = keyMappingDefaults;
 	while (n && p->code != code) {
 		n--;
 		p++;
@@ -143,10 +142,18 @@ static void keymap_set_key ( SDL_Scancode code, int posep )
 		p = keyMappingTable + (keyMappingTableSize++);
 		p->code = code;
 	}
-	p->sel  = posep >> 4;
-	p->mask = 1 << (posep & 15);
 	p->posep = posep;
+	/* search for description */
+	while (q->description) {
+		if (q->pos == posep) {
+			p->description = q->description;
+			return;
+		}
+		q++;
+	}
+	p->description = unknown_key_name;
 }
+
 
 
 int keymap_set_key_by_name ( const char *name, int posep )
@@ -159,6 +166,7 @@ int keymap_set_key_by_name ( const char *name, int posep )
 }
 
 
+
 void keymap_preinit_config_internal ( void )
 {
 	const struct keyMappingDefault_st *p = keyMappingDefaults;
@@ -168,17 +176,6 @@ void keymap_preinit_config_internal ( void )
 	}
 }
 
-
-static const char *keymap_get_key_description ( int pos )
-{
-	const struct keyMappingDefault_st *p = keyMappingDefaults;
-	while (p->pos != -1) {
-		if (p->pos == pos)
-			return p->description;
-		p++;
-	}
-	return NULL;
-}
 
 
 void keymap_dump_config ( FILE *fp )
@@ -193,15 +190,10 @@ void keymap_dump_config ( FILE *fp )
 	);
 	while (n--) {
 		const char *name = SDL_GetScancodeName(p->code);
-		const char *desc = keymap_get_key_description(p->posep);
 		if (!name) {
 			fprintf(fp, "# WARNING: cannot get SDL key name for epkey@%02x with SDL scan code of %d!" NL, p->posep, p->code);
 		} else {
-			fprintf(fp, "epkey@%02x = %s%s%s" NL,
-				p->posep, name,
-				desc ? "\t# for Enterprise key " : "",
-				desc ? desc  : ""
-			);
+			fprintf(fp, "epkey@%02x = %s\t# %s" NL, p->posep, name, p->description);
 		}
 		p++;
 	}
@@ -209,19 +201,19 @@ void keymap_dump_config ( FILE *fp )
 
 
 
-int keymap_resolve_event ( SDL_Keysym sym, int press, Uint8 *matrix )
+const struct keyMappingTable_st *keymap_resolve_event ( SDL_Keysym sym )
 {
-	int a;
-	DEBUG("KEY: scan=%d sym=%d press=%d" NL, sym.scancode, sym.sym, press);
-	for (a = 0; a < keyMappingTableSize; a++)
-		if (keyMappingTable[a].code == sym.scancode) {
-			if (press)
-				matrix[keyMappingTable[a].sel] &= 255 - keyMappingTable[a].mask;
-			else
-				matrix[keyMappingTable[a].sel] |= keyMappingTable[a].mask;
-			DEBUG("  to EP key %dd mask=%02Xh" NL, keyMappingTable[a].sel, keyMappingTable[a].mask);
-			return 1;
+	int n = keyMappingTableSize;
+	struct keyMappingTable_st *p = keyMappingTable;
+	DEBUG("KBD: SEARCH: scan=%d sym=%d (map size=%d)" NL, sym.scancode, sym.sym, n);
+	while (n--) {
+		if (p->code == sym.scancode) {
+			DEBUG("KBD: FOUND: key position %02Xh (%s)" NL, p->posep, p->description);
+			return p;
 		}
-	return 0;
+		p++;
+	}
+	DEBUG("KBD: FOUND: none." NL);
+	return NULL;
 }
 

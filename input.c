@@ -130,13 +130,26 @@ int mouse_entermice ( int entermice )
 }
 
 
-void emu_kbd(SDL_Keysym sym, int press)
+int emu_kbd(SDL_Keysym sym, int press)
 {
 	if (_mouse_grab && sym.scancode == SDL_SCANCODE_ESCAPE && press) {
 		_mouse_grab = 0;
 		screen_grab(SDL_FALSE);
-	} else
-		(void)keymap_resolve_event(sym, press, kbd_matrix);
+	} else {
+		const struct keyMappingTable_st *ke = keymap_resolve_event(sym);
+		if (ke) {
+			int sel  = ke->posep >> 4;
+			int mask = 1 << (ke->posep & 15);
+			if (mask < 0x100) {
+				if (press)
+					kbd_matrix[sel] &= 255 - mask;
+				else
+					kbd_matrix[sel] |= mask;
+			} else
+				return ke->posep;	// give special code back to be handled by the caller!
+		}
+	}
+	return 0;	// no kbd should be handled by the caller ...
 }
 
 

@@ -156,26 +156,37 @@ void emu_one_frame(int rasters, int frameksip)
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 				if (e.key.repeat == 0 && (e.key.windowID == sdl_winid || e.key.windowID == 0)) {
-					if (e.key.keysym.scancode == SDL_SCANCODE_F11 && e.key.state == SDL_PRESSED) {
-						screen_set_fullscreen(!is_fullscreen);
-					} else if (e.key.keysym.scancode == SDL_SCANCODE_F9 && e.key.state == SDL_PRESSED) {
-						if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1) running = 0;
-					} else if (e.key.keysym.scancode == SDL_SCANCODE_F10 && e.key.state == SDL_PRESSED)
-						screen_shot(ep_pixels, current_directory, "screenshot-*.png");
-					else if (e.key.keysym.scancode == SDL_SCANCODE_PAUSE && e.key.state == SDL_PRESSED) {
-						if (e.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT)) {
-							zxemu_on = 0;
-							ep_clear_ram();
-						}
-						ep_reset();
-					} else if (e.key.keysym.scancode == SDL_SCANCODE_PAGEDOWN && e.key.state == SDL_PRESSED && _cpu_speed_index) {
-						set_cpu_clock_with_osd(_cpu_speeds[-- _cpu_speed_index]);
-					} else if (e.key.keysym.scancode == SDL_SCANCODE_PAGEUP && e.key.state == SDL_PRESSED && _cpu_speed_index < 3) {
-						set_cpu_clock_with_osd(_cpu_speeds[++ _cpu_speed_index]);
-					} else if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
+					int code = emu_kbd(e.key.keysym, e.key.state == SDL_PRESSED);
+					if (code == 0xF9)		// // OSD REPLAY, default key GRAVE
 						osd_replay(e.key.state == SDL_PRESSED ? 0 : OSD_FADE_START);
-					} else
-						emu_kbd(e.key.keysym, e.key.state == SDL_PRESSED);
+					else if (code && e.key.state == SDL_PRESSED)
+						switch(code) {
+							case 0xFF:	// FULLSCREEN toogle, default key F11
+								screen_set_fullscreen(!is_fullscreen);
+								break;
+							case 0xFE:	// EXIT, default key F9
+								if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1)
+									running = 0;
+								break;
+							case 0xFD:	// SCREENSHOT, default key F10
+								screen_shot(ep_pixels, current_directory, "screenshot-*.png");
+								break;
+							case 0xFC:	// RESET, default key PAUSE
+								if (e.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT)) {
+									zxemu_on = 0;
+									ep_clear_ram();
+								}
+								ep_reset();
+								break;
+							case 0xFB:	// DOWNGRADE CPU SPEED, default key PAGE DOWN
+								if (_cpu_speed_index)
+									set_cpu_clock_with_osd(_cpu_speeds[-- _cpu_speed_index]);
+								break;
+							case 0xFA:	// UPGRADE CPU SPEED, default key PAGE UP
+								if (_cpu_speed_index < 3)
+									set_cpu_clock_with_osd(_cpu_speeds[++ _cpu_speed_index]);
+								break;
+						}
 				} else if (e.key.repeat == 0)
 					DEBUG("UI: NOT HANDLED KEY EVENT: repeat = %d windowid = %d [our win = %d]" NL, e.key.repeat, e.key.windowID, sdl_winid);
 				break;
