@@ -147,7 +147,7 @@ static void _apu_push_fix32(Sint64 data) {
 		_apu_status |= _APU_F_SIGN;
 		data += 4294967296L;
 	}
-	if (data > 4294967295L || data < 0) _apu_status |= _APU_F_OVERFLOW;
+	if (data > 4294967295UL || data < 0) _apu_status |= _APU_F_OVERFLOW;
 	_apu_push8(data);
 	_apu_push8(data >> 8);
 	_apu_push8(data >> 16);

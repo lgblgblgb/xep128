@@ -59,6 +59,7 @@ static int ans_index, ans_size;
 static void (*ans_callback)(void);
 
 static FILE *sdf;
+static int sdfd;
 static Uint8 _buffer[1024];
 
 /* ID files:
@@ -138,7 +139,8 @@ void sdext_init ( void )
 	if (sdf == NULL) {
 		WARNING_WINDOW("SD card image file \"%s\" cannot be open: %s. You can use Xep128 but SD card access won't work!", sdimg_path, ERRSTR());
 		*sdimg_path = 0;
-	}
+	} else
+		sdfd = fileno(sdf);
 	memset(sd_rom_ext, 0xFF, 0x10000);
 	/* Copy ROM image of 16K to the second 64K of the cartridge flash. Currently only 8K is used.
            It's possible to use 64K the ROM set image used by Xep128 can only hold 16K this way, though. */
@@ -167,7 +169,8 @@ static void _block_read ( void )
 	blocks++;
 	_buffer[0] = 0xFF; // wait a bit
 	_buffer[1] = 0xFE; // data token
-	ret = fread(_buffer + 2, 1, 512, sdf);
+	//ret = fread(_buffer + 2, 1, 512, sdf);
+	ret = read(sdfd, _buffer + 2, 512);
 #ifdef DEBUG_SDEXT
 	DEBUG("SDEXT: REGIO: fread retval = %d" NL, ret);
 #endif
@@ -268,7 +271,8 @@ static void _spi_shifting_with_sd_card ()
 #ifdef DEBUG_SDEXT
 				DEBUG("SDEXT: REGIO: seek to %d in the image file." NL, _offset);
 #endif
-				fseek(sdf, _offset, SEEK_SET);
+				//fseek(sdf, _offset, SEEK_SET);
+				lseek(sdfd, _offset, SEEK_SET);
 				_block_read();
 				if (cmd[0] == 18) ans_callback = _block_read; // in case of CMD18, continue multiple sectors, register callback for that!
 				_read_b = 0; // R1
