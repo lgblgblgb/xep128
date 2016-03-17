@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -34,13 +34,13 @@ int rtc_update_trigger;
 void rtc_set_reg(Uint8 val)
 {
 	_rtc_register = val;
-	printf("RTC: register number %02X has been selected\n", val);
+	DEBUG("RTC: register number %02X has been selected" NL, val);
 }
 
 
 void rtc_write_reg(Uint8 val)
 {
-	printf("RTC: write reg %02X with data %02X\n", _rtc_register, val);
+	DEBUG("RTC: write reg %02X with data %02X" NL, _rtc_register, val);
 	if (_rtc_register == 0xC || _rtc_register == 0xD) return;
 	if (_rtc_register == 0xA) val &= 127;
 	cmos_ram[_rtc_register] = val;
@@ -83,7 +83,7 @@ static void _rtc_update(void)
 	cmos_ram[   8] = _rtc_conv(t->tm_mon + 1, 0); // month, 1 -12
 	cmos_ram[   9] = _rtc_conv((t->tm_year % 100) + 20, 0); // year, 0 - 99
 	cmos_ram[0x32] = _rtc_conv(21, 0); // century???
-	printf("RTC: time/date has been updated for \"%d-%02d-%02d %02d:%02d:%02d\" at UNIX epoch %ld\n",
+	DEBUG("RTC: time/date has been updated for \"%d-%02d-%02d %02d:%02d:%02d\" at UNIX epoch %ld" NL,
 		t->tm_year + 1900,
 		t->tm_mon + 1,
 		t->tm_mday,
@@ -104,7 +104,7 @@ void rtc_reset(void)
 	cmos_ram[0xB] = 2; // 2 | 4;
 	cmos_ram[0xC] = 0;
 	cmos_ram[0xD] = 128;
-	printf("RTC: reset\n");
+	DEBUG("RTC: reset" NL);
 	_rtc_update();
 }
 
@@ -121,7 +121,7 @@ Uint8 rtc_read_reg(void)
 		_rtc_update();
 		rtc_update_trigger = 0;
 	}
-	printf("RTC: reading register %02X, result will be: %02X\n", i, cmos_ram[i]);
+	DEBUG("RTC: reading register %02X, result will be: %02X" NL, i, cmos_ram[i]);
 	return cmos_ram[i];
 }
 

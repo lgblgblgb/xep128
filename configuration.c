@@ -42,10 +42,12 @@ struct configSetting_st {
 };
 
 
+#define DEBUGFILE_OPT "debug"
 
 /* Default keyboard mapping can be found in keyboard_mapping.c */
 static const struct configOption_st configOptions[] = {
 	{ "audio",	CONFITEM_BOOL,	"0",		0, "Enable audio output"	},
+	{ DEBUGFILE_OPT,CONFITEM_STR,	"none",		0, "Enable debug messages written to a specified file" },
 	{ "fullscreen",	CONFITEM_BOOL,	"0",		0, "Start in full screen"	},
 	{ "printfile",	CONFITEM_STR,	PRINT_OUT_FN,	0, "Printing into this file"	},
 	{ "ram",	CONFITEM_INT,	"128",		0, "RAM size in Kbytes" 	},
@@ -64,6 +66,10 @@ char *app_pref_path, *app_base_path;
 char current_directory[PATH_MAX + 1];
 
 SDL_version sdlver_compiled, sdlver_linked;
+
+FILE *debug_file = NULL;
+
+
 
 
 static const struct configOption_st *search_opt ( const char *name, int subopt )
@@ -270,7 +276,7 @@ static int load_config_file_stream ( FILE *f, const char *name )
 			int subopt = separate_key(buffer, cleankey);
 			//str_rstrip(buffer);
 			//printf("[%d][%s]%s = %s\n", lineno, orig_line, key, val);
-			printf("CONFIG: FILE: %s@%d = %s" NL, cleankey, subopt, val);
+			DEBUGPRINTF("CONFIG: FILE: %s@%d = %s" NL, cleankey, subopt, val);
 			if (subopt < -1 || config_set_user(cleankey, subopt, val, 1)) {
 				ERROR_WINDOW("Config file %s has invalid option key/value at lineno %d: %s = %s", name, lineno, key, val);
 				return 1;
@@ -381,7 +387,31 @@ int config_init ( int argc, char **argv )
 	argc--; argv++;
 	SDL_VERSION(&sdlver_compiled);
 	SDL_GetVersion(&sdlver_linked);
-	printf("%s Enterprise-128 Emulator v%s %s %s" NL
+	/* SDL info on paths */
+	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
+	app_base_path = SDL_GetBasePath();
+	if (app_pref_path == NULL) app_pref_path = SDL_strdup("?");
+	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
+	if (getcwd(current_directory, sizeof current_directory) == NULL) {
+		ERROR_WINDOW("Cannot query the current directory: %s", ERRSTR());
+		return 1;
+	}
+	strcat(current_directory, DIRSEP);
+	/* ugly hack: pre-parse comand line to find debug statement (to be worse, it does not handle single argument options too well ... */
+	while (testparsing < argc) {
+		if (!strcmp(argv[testparsing], "-" DEBUGFILE_OPT) && testparsing != argc - 1 && strcmp(argv[testparsing + 1], "none")) {
+			debug_file = fopen(argv[testparsing + 1], "w");
+			DEBUGPRINTF("DEBUG: enable logging into file: %s" NL, argv[testparsing + 1]);
+			if (debug_file == NULL)
+				fprintf(stderr, "Cannot open debug logging file: %s" NL, argv[testparsing + 1]);
+			break;
+		}
+		testparsing++;
+	}
+	/* end of ugly hack */
+	/* let's continue with the info block ... */
+	testparsing = 0;
+	DEBUGPRINTF("%s Enterprise-128 Emulator v%s %s %s" NL
 		"GIT %s compiled by %s at %s with %s %s" NL
 		"Platform: (%s), video: (%s), audio: (%s), "
 		"SDL version compiled: (%d.%d.%d) and linked: (%d.%d.%d)" NL NL,
@@ -391,23 +421,14 @@ int config_init ( int argc, char **argv )
 		sdlver_compiled.major, sdlver_compiled.minor, sdlver_compiled.patch,
 		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch
 	);
-	printf("PATH: executable: %s" NL, exe);
-	/* SDL path info block */
-	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
-	app_base_path = SDL_GetBasePath();
-	if (app_pref_path == NULL) app_pref_path = SDL_strdup("?");
-	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
-	printf("PATH: SDL base path: %s" NL, app_base_path);
-	printf("PATH: SDL pref path: %s" NL, app_pref_path);
+	DEBUGPRINTF("PATH: executable: %s" NL, exe);
+	/* SDL path info block printout */
+	DEBUGPRINTF("PATH: SDL base path: %s" NL, app_base_path);
+	DEBUGPRINTF("PATH: SDL pref path: %s" NL, app_pref_path);
 #ifndef _WIN32
-	printf("PATH: data directory: %s/" NL, DATADIR);
+	DEBUGPRINTF("PATH: data directory: %s/" NL, DATADIR);
 #endif
-	if (getcwd(current_directory, sizeof current_directory) == NULL) {
-		ERROR_WINDOW("Cannot query the current directory: %s", ERRSTR());
-		return 1;
-	}
-	strcat(current_directory, DIRSEP);
-	printf("PATH: Current directory: %s" NL NL, current_directory);
+	DEBUGPRINTF("PATH: Current directory: %s" NL NL, current_directory);
 	/* Look the very basic command line switches first */
 	if (argc && (!strcasecmp(argv[0], "-h") || !strcasecmp(argv[0], "--h") || !strcasecmp(argv[0], "-help") || !strcasecmp(argv[0], "--help"))) {
 		opt = configOptions;
@@ -453,7 +474,7 @@ int config_init ( int argc, char **argv )
 	if (strcasecmp(config_name, "none")) {
 		char path[PATH_MAX + 1];
 		FILE *f = open_emu_file(config_name, "r", path);
-		printf("Using config file: %s (%s)" NL, config_name, f ? path : "CANNOT OPEN");
+		DEBUGPRINTF("Using config file: %s (%s)" NL, config_name, f ? path : "CANNOT OPEN");
 		if (f) {
 			if (load_config_file_stream(f, path)) {
 				fclose(f);
@@ -464,18 +485,31 @@ int config_init ( int argc, char **argv )
 			fprintf(stderr, "FATAL: Cannot open requested config file: %s" NL, config_name);
 			return 1;
 		} else
-			printf("Skipping default config file (cannot open), using built-in defaults." NL);
+			DEBUGPRINTF("Skipping default config file (cannot open), using built-in defaults." NL);
 	} else
-		printf("Using config file: DISABLED by command line" NL);
+		DEBUGPRINTF("Using config file: DISABLED by command line" NL);
 	/* parse command line ... */
 	if (parse_command_line(argc, argv))
 		return -1;
+	/* open debug file, if it was not requested via command line at the beginning ... */
+	if (!debug_file && strcmp(config_getopt_str(DEBUGFILE_OPT), "none")) {
+		debug_file = fopen(config_getopt_str(DEBUGFILE_OPT), "w");
+		DEBUGPRINTF("DEBUG: enable logging into file: %s" NL, config_getopt_str(DEBUGFILE_OPT));
+		if (!debug_file)
+                	ERROR_WINDOW("Cannot open debug messages log file requested: %s", config_getopt_str(DEBUGFILE_OPT));
+	}
+	if (debug_file)
+		INFO_WINDOW("Debug messages logging is active");
+	else
+		printf("No debug messages logging is active." NL);
+	/* test parsing mode? */
 	if (testparsing) {
 		printf(NL "--- TEST DUMP OF *PARSED* CONFIGURATION (requested)" NL NL);
 		dump_config(stdout);
 		printf(NL "--- END OF TEST PARSING MODE (requested)" NL);
 		exit(0);
 	}
+	DEBUG("End of configuration step." NL NL);
 	return 0;
 }
 

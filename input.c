@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ void mouse_reset_button ( void )
 
 void emu_mouse_button(Uint8 button, int press)
 {
-	printf("MOUSE BUTTON %d press = %d\n", button, press);
+	DEBUG("MOUSE BUTTON %d press = %d" NL, button, press);
 	_mouse_button_state = press;
 	if (press && _mouse_grab == 0) {
 		//emu_osd_msg("Mouse grab. Press ESC to exit.");
@@ -60,7 +60,7 @@ void emu_mouse_button(Uint8 button, int press)
 void emu_mouse_motion(int dx, int dy)
 {
 	if (!_mouse_grab) return; // not in mouse grab mode
-	printf("MOUSE MOTION event dx = %d dy = %d\n", dx, dy);
+	DEBUG("MOUSE MOTION event dx = %d dy = %d" NL, dx, dy);
 	_mouse_dx -= dx;
 	if (_mouse_dx > 127) _mouse_dx = 127;
 	else if (_mouse_dx < -128) _mouse_dx = -128;

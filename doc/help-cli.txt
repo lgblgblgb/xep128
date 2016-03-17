@@ -17,6 +17,8 @@ OPTIONS:
 	Use config file (or do not use the default one, if "none" is specified). This must be the first option if used!
 -audio
 	Enable audio output [default: 0]
+-debug
+	Enable debug messages written to a specified file [default: none]
 -fullscreen
 	Start in full screen [default: 0]
 -printfile

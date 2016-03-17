@@ -70,7 +70,7 @@ static int nick_addressing_init ( Uint32 *pixels_buffer, int line_size )
 		return 1;
 	}
 	//pixels_pitch = line_size - 736 * 4;
-	printf("NICK: first visible scanline = %d, last visible scanline = %d, line pitch pixels = %d\n", RASTER_FIRST_VISIBLE, RASTER_LAST_VISIBLE, 0);
+	DEBUG("NICK: first visible scanline = %d, last visible scanline = %d, line pitch pixels = %d" NL, RASTER_FIRST_VISIBLE, RASTER_LAST_VISIBLE, 0);
 #if 0
 	if (pixels)
 		pixels = (pixels_init - pixels) + pixels_buffer; // recalculate current position
@@ -93,7 +93,7 @@ Uint32 *nick_init ( void )
 	int a;
 	Uint32 *buf = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 4);
 #if 0
-	printf("NICK: SDL: emuscreen buffer width=%d height=%d PITCH=%d bytes/pixel=%d bits/pixel=%d alpha=%d\n",
+	DEBUG("NICK: SDL: emuscreen buffer width=%d height=%d PITCH=%d bytes/pixel=%d bits/pixel=%d alpha=%d" NL,
 		surface->w,
 		surface->h,
 		surface->pitch,
@@ -121,7 +121,7 @@ Uint32 *nick_init ( void )
 		b = (                 ((a >> 1) & 2) | ((a >> 5) & 1)) * 255 / 3;
 		//full_palette[a] = SDL_MapRGBA(SCREEN_FORMAT, r, g, b, 0xFF);
 		full_palette[a] = (0xFF << 24) | (r << 16) | (g << 8) | b;
-		//printf("PAL#%d = (%d,%d,%d) = %d\n", a, r, g, b, full_palette[a]);
+		//DEBUG("PAL#%d = (%d,%d,%d) = %d" NL, a, r, g, b, full_palette[a]);
 		// this is translation table for  4 colour modes
 		col4trans[a * 4 + 0] = ((a >> 2) & 2) | ((a >> 7) & 1);
 		col4trans[a * 4 + 1] = ((a >> 1) & 2) | ((a >> 6) & 1);
@@ -146,7 +146,7 @@ Uint32 *nick_init ( void )
 	scanlines = 0;
 	vsync = 0;
 	vram = memory + 0x3F0000;
-	printf("NICK: initialized.\n");
+	DEBUG("NICK: initialized." NL);
 	return buf;
 }
 
@@ -178,9 +178,9 @@ void nick_set_lptl ( Uint8 value )
 
 void nick_set_lpth ( Uint8 value )
 {
-	printf("NICK SET LPT-H!\n");
+	DEBUG("NICK SET LPT-H!" NL);
 	lpt_set = (lpt_set & 0x0FF0) | ((value & 0xF) << 12);
-	printf("NICK: LPT is set to %04Xh\n", lpt_set);
+	DEBUG("NICK: LPT is set to %04Xh" NL, lpt_set);
 	if (!(value & 128)) {
 		lpt_a = lpt_set;
 		slot = 0;
@@ -210,7 +210,7 @@ static inline void FILL( Uint32 colour )
 
 static inline void TODO(void) {
 	FILL(full_palette[1]);
-	printf("NO VM = %d CM = %d\n", vm, cm);
+	DEBUG("NO VM = %d CM = %d" NL, vm, cm);
 }
 
 
@@ -514,9 +514,9 @@ void nick_dump_lpt ( void )
 {
 	int a = lpt_set;
 	int scs = 0;
-	printf("Dumping LPT:\n");
+	DEBUG("Dumping LPT:" NL);
 	do {	
-		printf("%04X SC=%3d VINT=%d CM=%d VRES=%d VM=%d RELOAD=%d LM=%2d RM=%2d LD1=%04X LD2=%04X %s/%s\n",
+		DEBUG("%04X SC=%3d VINT=%d CM=%d VRES=%d VM=%d RELOAD=%d LM=%2d RM=%2d LD1=%04X LD2=%04X %s/%s" NL,
 			a,
 			256 - vram[a], // sc
 			vram[a + 1] >> 7, // vint
@@ -533,12 +533,12 @@ void nick_dump_lpt ( void )
 		);
 		scs += 256 - vram[a];
 		if (vram[a + 1] & 1) {
-			printf("Total scanlines = %d\n", scs);
+			DEBUG("Total scanlines = %d" NL, scs);
 			return;
 		}
 		a = (a + 16) & 0xFFFF;
 	} while (a != lpt_set);
-	printf("ERROR: LPT is endless!\n");
+	DEBUG("ERROR: LPT is endless!" NL);
 }
 
 
@@ -570,7 +570,7 @@ void nick_render_slot ( void )
 			if ((a & 128) != vint) {
 				vint = a & 128;
 				dave_int1(!vint);
-				printf("VINT: %d rasters=%d\n", vint, all_rasters);
+				DEBUG("VINT: %d rasters=%d" NL, vint, all_rasters);
 			}
 			//	if ((vint = a & 128))
 			//		dave_int1(); // "rising edge" of VINT bit in LPBs triggers Dave INT1
@@ -659,7 +659,7 @@ void nick_render_slot ( void )
 			// Nick does VRAM refresh here, and generates HSYNC, not so much needed in an emulator, though :)
 			break;
 		//case 14:
-		//	printf("TEST RENDER in slot %d, offset pixels = %d\n", slot, pixels -pixels_limit_up);
+		//	DEBUG("TEST RENDER in slot %d, offset pixels = %d" NL, slot, pixels -pixels_limit_up);
 		//	FILL(full_palette[255]);
 		//	break;
 		case  8: case  9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23: case 24: case 25: case 26: case 27: case 28:
@@ -681,6 +681,6 @@ void nick_render_slot ( void )
 			exit(1);
 			break;
 	}
-	//printf("Render slot = %d, raster = %d, frame = %d, visible = %d, vm = %d, lastbyte = %02Xh\n", slot, all_rasters, frames, visible, vm, nick_last_byte);
+	//DEBUG("Render slot = %d, raster = %d, frame = %d, visible = %d, vm = %d, lastbyte = %02Xh" NL, slot, all_rasters, frames, visible, vm, nick_last_byte);
 	slot++;
 }

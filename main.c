@@ -33,13 +33,17 @@ static int guarded_exit = 0;
 
 static void shutdown_sdl(void)
 {
+	if (debug_file) {
+		DEBUGPRINTF("Closing debug messages log file on exit." NL);
+		fclose(debug_file);
+	}
 	if (guarded_exit) {
 		audio_close();
 		printer_close();
 #ifdef CONFIG_W5300_SUPPORT
 		w5300_shutdown();
 #endif
-		fprintf(stderr, "Shutdown callback, return.\n");
+		DEBUGPRINTF("Shutdown callback, return." NL);
 	}
 	if (sdl_win)
 		SDL_DestroyWindow(sdl_win);
@@ -81,19 +85,19 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 	while (prefixes[a] != NULL)
 		if (strcmp(prefixes[a], "?")) {
 			sprintf(pathbuffer, "%s%s", prefixes[a], name_used);
-			printf("OPEN: trying file \"%s\" [%s] as path \"%s\" [%s]: ",
+			DEBUGPRINTF("OPEN: trying file \"%s\" [%s] as path \"%s\" [%s]: ",
 				name, mode, pathbuffer, policy
 			);
 			f = fopen(pathbuffer, mode);
 			if (f == NULL) {
 				a++;
-				printf("FAILED" NL);
+				DEBUGPRINTF("FAILED" NL);
 			} else {
-				printf("OK" NL);
+				DEBUGPRINTF("OK" NL);
 				return f;
 			}
 		}
-	printf("OPEN: no file could be open for \"%s\"" NL, name);
+	DEBUGPRINTF("OPEN: no file could be open for \"%s\"" NL, name);
 	strcpy(pathbuffer, name);
 	return NULL;
 }
@@ -130,13 +134,13 @@ static void emu_timekeeping_delay ( int td_em )
 	if (td_pc < 0) return; // time goes backwards? maybe time was modified on the host computer. Skip this delay cycle
 	//td_ep = 1000000 * rasters * 57 / NICK_SLOTS_PER_SEC; // microseconds would need for an EP128 to do this
 	td = td_em - td_pc; // the time difference (+X = PC is faster - real time EP emulation, -X = EP is faster - real time EP emulation is not possible)
-	printf("DELAY: pc=%d em=%d sleep=%d\n", td_pc, td_em, td);
+	DEBUG("DELAY: pc=%d em=%d sleep=%d" NL, td_pc, td_em, td);
 	/* for reporting only: BEGIN */
 	td_em_ALL += td_em;
 	td_pc_ALL += td_pc;
 	if (td_count_ALL == 50) {
 		char buf[256];
-		//fprintf(stderr, "STAT: count = %d, EM = %d, PC = %d, usage = %f%\n", td_count_ALL, td_em_ALL, td_pc_ALL, 100.0 * (double)td_pc_ALL / (double)td_em_ALL);
+		//DEBUG("STAT: count = %d, EM = %d, PC = %d, usage = %f%" NL, td_count_ALL, td_em_ALL, td_pc_ALL, 100.0 * (double)td_pc_ALL / (double)td_em_ALL);
 		sprintf(buf, "%s [%.2fMHz ~ %d%%]", WINDOW_TITLE " v" VERSION " ",
 			CPU_CLOCK / 1000000.0,
 			td_pc_ALL * 100 / td_em_ALL
@@ -160,14 +164,14 @@ static void emu_timekeeping_delay ( int td_em )
 	gettimeofday(&tv_old, NULL); // to calc
 	// calculate real time slept
 	td = (tv_old.tv_sec - tv_new.tv_sec) * 1000000 + (tv_old.tv_usec - tv_new.tv_usec);
-	printf("Really slept = %d\n", td);
+	DEBUG("Really slept = %d" NL, td);
 	if (td < 0) return; // invalid, sleep was about for _minus_ time? eh, give me that time machine, dude! :)
 	td_balancer -= td;
 	if (td_balancer >  1000000)
 		td_balancer = 0;
 	else if (td_balancer < -1000000)
 		td_balancer = 0;
-	printf("Balancer = %lf\n", td_balancer);
+	DEBUG("Balancer = %lf" NL, td_balancer);
 	//unix_time = tv_old.tv_sec; // publish current time
 }
 
@@ -199,7 +203,7 @@ void emu_one_frame(int rasters, int frameksip)
 		switch (e.type) {
 			case SDL_WINDOWEVENT:
 				if (!is_fullscreen && e.window.event == SDL_WINDOWEVENT_RESIZED) {
-					fprintf(stderr, "Window is resized to %d x %d\n",
+					DEBUG("UI: Window is resized to %d x %d" NL,
 						e.window.data1,
 						e.window.data2
 					);
@@ -235,7 +239,7 @@ void emu_one_frame(int rasters, int frameksip)
 					} else
 						emu_kbd(e.key.keysym, e.key.state == SDL_PRESSED);
 				} else if (e.key.repeat == 0)
-					fprintf(stderr, "NOT HANDLED KEY EVENT: repeat = %d windowid = %d [our win = %d]\n", e.key.repeat, e.key.windowID, sdl_winid);
+					DEBUG("UI: NOT HANDLED KEY EVENT: repeat = %d windowid = %d [our win = %d]" NL, e.key.repeat, e.key.windowID, sdl_winid);
 				break;
 			case SDL_MOUSEMOTION:
 				if (e.button.windowID == sdl_winid)
@@ -254,22 +258,22 @@ void emu_one_frame(int rasters, int frameksip)
 	ticks_new = SDL_GetTicks();
 	used = ticks_new - ticks;
 	usecs = usecs * 64 / 1000; // "usecs" for real are the raster counter got, however 64usec is one raster, then convert to msec
-	printf("usecs = %d used = %d\n", usecs, used);
+	DEBUG("usecs = %d used = %d" NL, usecs, used);
 	//usecs = usecs * 64 / 1000;
 	ticks = ticks_new;
 	if (used)
-		printf("Speed: %d%% TSTATES_ALL=%d\n", 100*usecs/used, tstates_all);
+		DEBUG("Speed: %d%% TSTATES_ALL=%d" NL, 100*usecs/used, tstates_all);
 	else
-		printf("DIVIDE BY ZERO!\n");
+		DEBUG("DIVIDE BY ZERO!" NL);
 	tstates_all = 0;
 	if (used > usecs) {
-		printf("Too slow! realtime=%d used=%d\n", usecs, used);
+		DEBUG("Too slow! realtime=%d used=%d" NL, usecs, used);
 		SDL_Delay(10);
 	} else {
-		printf("Delay: %d\n", usecs - used);
+		DEBUG("Delay: %d" NL, usecs - used);
 		int foo = SDL_GetTicks();
 		SDL_Delay(usecs - used);
-		printf("Real sleep was: %d\n", SDL_GetTicks() - foo);
+		DEBUG("Real sleep was: %d" NL, SDL_GetTicks() - foo);
 	}
 #endif
 }
@@ -289,7 +293,7 @@ int set_cpu_clock ( int hz )
 	if (hz > 12000000) hz = 12000000;
 	CPU_CLOCK = hz;
 	SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK;
-	fprintf(stderr, "CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
+	DEBUG("CPU: clock = %d scaler = %f" NL, CPU_CLOCK, SCALER);
 	dave_set_clock();
 	return hz;
 }
@@ -333,7 +337,7 @@ int main (int argc, char *argv[])
 	//memcpy(memory + rom_size, _xep_rom, sizeof _xep_rom);
 	xep_rom_seg = rom_size >> 14;
 	xep_rom_addr = rom_size;
-	fprintf(stderr, "XEP ROM segment will be %02Xh @ %06Xh\n", xep_rom_seg, xep_rom_addr);
+	DEBUG("XEP ROM segment will be %02Xh @ %06Xh" NL, xep_rom_seg, xep_rom_addr);
 	rom_size += 0x4000;
 	set_ep_ramsize(config_getopt_int("ram"));
 	mouse_entermice(0);	// 1=Entermice protocol (8 nibbles), 0=boxsoft (4 nibbles), also different lines
@@ -351,26 +355,27 @@ int main (int argc, char *argv[])
 #if 0
 	int last_optype = 0;
 #endif
-	//printf("CPU: clock = %d scaler = %f\n", CPU_CLOCK, SCALER);
+	//DEBUG("CPU: clock = %d scaler = %f" NL, CPU_CLOCK, SCALER);
 	set_cpu_clock(DEFAULT_CPU_CLOCK);
 	emu_timekeeping_start();
 	audio_start();
 	if (config_getopt_str("fullscreen"))
 		screen_set_fullscreen(1);
 	//osd_disable();
+	DEBUGPRINTF("EMU: entering into main emulation loop" NL);
 	while (running) {
 		int t;
 #if 0
 		char buffer[256];
 		int pc = z80ex_get_reg(z80, regPC);
-		////printf("PC=%04Xh\n", z80ex_get_reg(z80, regPC));
+		////DEBUG("PC=%04Xh" NL, z80ex_get_reg(z80, regPC));
 		//z80ex_dasm(buffer, sizeof(buffer) - 1, 0, &t_states, &t_states2, pc);
-		//printf("%04X %s\n", pc, buffer);
+		//DEBUG("%04X %s" NL, pc, buffer);
 		z80_dasm(buffer, pc, -1);
 #endif
 		if (nmi_pending) {
 			t = z80ex_nmi();
-			fprintf(stderr, "NMI: %d\n", t);
+			DEBUG("NMI: %d" NL, t);
 			if (t)
 				nmi_pending = 0;
 		} else
@@ -378,28 +383,28 @@ int main (int argc, char *argv[])
 		if ((t == 0) && (dave_int_read & 0xAA)) {
 			t = z80ex_int();
 			if (t)
-				printf("CPU: int and accepted = %d\n", t);
+				DEBUG("CPU: int and accepted = %d" NL, t);
 		} else
 			t = 0;
 		if (!t)
 			t = z80ex_step();
 		cpu_cycles_for_dave_sync += t;
-		//printf("DAVE: SYNC: CPU cycles = %d, Dave sync val = %d, limit = %d\n", t, cpu_cycles_for_dave_sync, cpu_cycles_per_dave_tick);
+		//DEBUG("DAVE: SYNC: CPU cycles = %d, Dave sync val = %d, limit = %d" NL, t, cpu_cycles_for_dave_sync, cpu_cycles_per_dave_tick);
 		while (cpu_cycles_for_dave_sync >= cpu_cycles_per_dave_tick) {
 			dave_tick();
 			cpu_cycles_for_dave_sync -= cpu_cycles_per_dave_tick;
 		}
 		balancer += t * SCALER;
 		//tstates_all += t;
-		//printf("%s [balance=%f t=%d]\n", buffer, balancer, t);
+		//DEBUG("%s [balance=%f t=%d]" NL, buffer, balancer, t);
 		while (balancer >= 0.5) {
 			nick_render_slot();
 			balancer -= 1.0;
 		}
-		//printf("[balance=%f t=%d]\n", balancer, t);
+		//DEBUG("[balance=%f t=%d]" NL, balancer, t);
 #if 0
 		if (!last_optype)
-			printf("%s [balance=%f t=%d] TYPE=%d\n", buffer, balancer, t, z80ex_last_op_type(z80));
+			DEBUG("%s [balance=%f t=%d] TYPE=%d" NL, buffer, balancer, t, z80ex_last_op_type(z80));
 		last_optype = z80ex_last_op_type(z80);
 #endif
 	}

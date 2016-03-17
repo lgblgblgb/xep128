@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@ void zxemu_switch ( Uint8 data )
 	if (data == zxemu_on)
 		return;
 	zxemu_on = data;
-	fprintf(stderr, "ZXEMU: emulation is turned %s.\n", zxemu_on ? "ON" : "OFF");
+	DEBUG("ZXEMU: emulation is turned %s." NL, zxemu_on ? "ON" : "OFF");
 	if (zxemu_on)
 		primo_switch(0);
         nmi_pending = 0;
@@ -50,8 +50,8 @@ void zxemu_write_ula ( Uint8 hiaddr, Uint8 data )
 	ports[0x42] = data;		// data on the bus
 	ports[0x43] = 0;		// ?? 0 = I/O kind of op
 	if (!zxemu_nmi())
-		fprintf(stderr, "ZXEMU: ULA write: no NMI (switched off)\n");
-	fprintf(stderr, "ZXEMU: writing ULA at %04Xh (data: %02Xh)\n", Z80_PC, data);
+		DEBUG("ZXEMU: ULA write: no NMI (switched off)" NL);
+	DEBUG("ZXEMU: writing ULA at %04Xh (data: %02Xh)" NL, Z80_PC, data);
 }
 
 
@@ -62,8 +62,8 @@ Uint8 zxemu_read_ula ( Uint8 hiaddr )
 	ports[0x42] = 0xFF; // ???????
 	ports[0x43] = 0;
 	if (!zxemu_nmi())
-		fprintf(stderr, "ZXEMU: ULA read: no NMI (switched off)\n");
-	fprintf(stderr, "ZXEMU: reading ULA at %04Xh\n", Z80_PC);
+		DEBUG("ZXEMU: ULA read: no NMI (switched off)" NL);
+	DEBUG("ZXEMU: reading ULA at %04Xh" NL, Z80_PC);
 	return zxemu_on ? 0xBF : 0xFF;
 }
 
@@ -76,6 +76,6 @@ void zxemu_attribute_memory_write ( Uint16 address, Uint8 data )
 	ports[0x42] = data;
 	ports[0x43] = 0x80;
 	zxemu_nmi();
-	fprintf(stderr, "ZXEMU: attrib-mem trap at %04Xh\n", address);
+	DEBUG("ZXEMU: attrib-mem trap at %04Xh" NL, address);
 }
 

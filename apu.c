@@ -172,7 +172,7 @@ static double _apu_pop_float()
 	if (exp & 128) data = -data;
 	if (exp & 64) exp = (exp & 63) - 64; else exp &= 63;
 	fdata = pow(2, exp) * ((double)data / 16777216.0);
-	//printf("APU: float is internally pop'ed: %f\n", fdata);
+	//DEBUG("APU: float is internally pop'ed: %f" NL, fdata);
 	return fdata;
 }
 
@@ -224,7 +224,7 @@ static void _apu_push_float(double data)
 		_apu_status |= _APU_F_SIGN; // negative flag
 	}
 	//if (data && (!(data & 0x800000)))
-	//	printf("APU: warning: irregular manitssa: ", data);
+	//	DEBUG("APU: warning: irregular manitssa: ", data);
 	// Pushing 8 bit bytes onto the APU stack
 	_apu_push8(i);
 	_apu_push8(i >> 8);
@@ -576,7 +576,7 @@ void apu_write_command ( Uint8 cmd )
 			break;
 
 		default:
-			printf("APU: not implemented/unknown Am9511 command: %02Xh\n", cmd);
+			DEBUG("APU: not implemented/unknown Am9511 command: %02Xh" NL, cmd);
 			clocks = 4; // no idea what happens.
 			break;
 	}

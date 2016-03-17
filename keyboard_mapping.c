@@ -212,14 +212,14 @@ void keymap_dump_config ( FILE *fp )
 int keymap_resolve_event ( SDL_Keysym sym, int press, Uint8 *matrix )
 {
 	int a;
-	printf("KEY: scan=%d sym=%d press=%d\n", sym.scancode, sym.sym, press);
+	DEBUG("KEY: scan=%d sym=%d press=%d" NL, sym.scancode, sym.sym, press);
 	for (a = 0; a < keyMappingTableSize; a++)
 		if (keyMappingTable[a].code == sym.scancode) {
 			if (press)
 				matrix[keyMappingTable[a].sel] &= 255 - keyMappingTable[a].mask;
 			else
 				matrix[keyMappingTable[a].sel] |= keyMappingTable[a].mask;
-			printf("  to EP key %dd mask=%02Xh\n", keyMappingTable[a].sel, keyMappingTable[a].mask);
+			DEBUG("  to EP key %dd mask=%02Xh" NL, keyMappingTable[a].sel, keyMappingTable[a].mask);
 			return 1;
 		}
 	return 0;

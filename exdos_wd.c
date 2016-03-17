@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -74,7 +74,7 @@ void wd_exdos_reset ( void )
 	driveSel = (disk != NULL); // drive is selected by default if there is disk image!
 	diskSide = 0;
 	diskInserted = (disk == NULL) ? 1 : 0; // 0 means inserted disk, 1 means = not inserted
-	printf("WD: reset\n");
+	DEBUG("WD: reset" NL);
 }
 
 
@@ -127,7 +127,7 @@ void wd_send_command ( Uint8 value )
 			wd_status = (wd_track == 0) ? 4 : 0;
                         break;
 		default:
-			printf("WD: unknown command: %d\n", value);
+			DEBUG("WD: unknown command: %d" NL, value);
 			wd_status = 4 | 8 | 16 | 64; // unimplemented command results in large set of problems reported :)
 			wd_interrupt = WDINT_ON;
 			break;

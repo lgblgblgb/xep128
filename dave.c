@@ -141,7 +141,7 @@ void dave_set_clock ( void )
 		cpu_cycles_per_dave_tick = 16; // 8MHz  (??)
 		dave_ticks_per_sample = 6;
 	}
-	//printf("DAVE: CLOCK: assumming %dMHz input, CPU clock divisor is %d, CPU cycles per Dave tick is %d\n", (ports[0xBF] & 2) ? 12 : 8, CPU_CLOCK / cpu_cycles_per_dave_tick, cpu_cycles_per_dave_tick);
+	//DEBUG("DAVE: CLOCK: assumming %dMHz input, CPU clock divisor is %d, CPU cycles per Dave tick is %d" NL, (ports[0xBF] & 2) ? 12 : 8, CPU_CLOCK / cpu_cycles_per_dave_tick, cpu_cycles_per_dave_tick);
 }
 
 
@@ -166,7 +166,7 @@ void dave_reset ( void )
 	//mem_ws_m1  = 0;
 	//NICK_SLOTS_PER_DAVE_TICK_HI = NICK_SLOTS_PER_SEC / 250000.0;
 	//_set_timing();
-	printf("Dave: reset\n");
+	DEBUG("DAVE: reset" NL);
 }
 
 //static int dave_int1_last = 0;
@@ -179,7 +179,7 @@ void dave_int1(int level)
 	} else {
 		// the truth is here, if previous level was set (falling edge), and int1 is enabled, then set latch!
 		if ((dave_int_read & 16) && (dave_int_write & 16)) {
-			printf("DAVE/VINT: LACTH is set!\n");
+			DEBUG("DAVE/VINT: LACTH is set!" NL);
 			dave_int_read |= 32; // set latch
 			if (primo_on)
 				nmi_pending = primo_nmi_enabled;
@@ -256,7 +256,7 @@ void dave_tick ( void )
 		if (dave_int_write & 4)
 			dave_int_read |= 8; // set latch, if 1Hz int source is enabled
 		dave_int_read ^= 4; // negate 1Hz interrupt level bit (actually the freq is 0.5Hz, but int is generated on each edge, thus 1Hz)
-		//printf("DAVE: 1HZ interrupt level: %d\n", dave_int_read & 4);
+		//DEBUG("DAVE: 1HZ interrupt level: %d" NL, dave_int_read & 4);
 	}
 	// SOUND
 	if (audio) {

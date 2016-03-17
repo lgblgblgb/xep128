@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -114,7 +114,7 @@ void primo_switch ( Uint8 data )
 			return;
 		primo_on = 0;
 	}
-	fprintf(stderr, "PRIMOEMU: emulation is turned %s.\n", primo_on ? "ON" : "OFF");
+	DEBUG("PRIMOEMU: emulation is turned %s." NL, primo_on ? "ON" : "OFF");
 	nmi_pending = 0;
 }
 

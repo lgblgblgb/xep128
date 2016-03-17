@@ -215,7 +215,7 @@ static void xep_exos_command_trap ( void )
 	Uint8 c = Z80_C, b = Z80_B;
 	Uint16 de = Z80_DE;
 	*COBUF = 0; // no ans by def
-	printf("XEP: TRAP: C=%02Xh, B=%02Xh, DE=%04Xh\n", c, b, de);
+	DEBUG("XEP: TRAP: C=%02Xh, B=%02Xh, DE=%04Xh" NL, c, b, de);
 	switch (c) {
 		case 2: // EXOS command
 			if (exos_cmd_name_match("XEP", de + 1)) {
@@ -270,7 +270,7 @@ static void xep_exos_command_trap ( void )
 	// set answer size for XEP ROM
 	de = strlen(COBUF);
 	if (de)
-		fprintf(stderr, "XEP ANSWER [%d bytes] = \"%s\"\n", de, COBUF);
+		DEBUG("XEP ANSWER [%d bytes] = \"%s\"" NL, de, COBUF);
 	if (de > 2045) {
 		ERROR_WINDOW("FATAL: XEP ROM answer is too large, %d bytes.", de);
 		exit(1);
@@ -282,7 +282,7 @@ static void xep_exos_command_trap ( void )
 
 void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 {
-	printf("XEP: ROM trap at PC=%04Xh OPC=%02Xh\n", pc, opcode);
+	DEBUG("XEP: ROM trap at PC=%04Xh OPC=%02Xh" NL, pc, opcode);
 	switch (opcode) {
 		case 0xBC:
 			xep_exos_command_trap();

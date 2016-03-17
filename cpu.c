@@ -56,7 +56,7 @@ void set_ep_cpu ( int type )
 			ERROR_WINDOW("Unknown CPU type was requested: %d", type);
 			exit(1);
 	}
-	fprintf(stderr, "CPU: set to %s %s\n",
+	DEBUG("CPU: set to %s %s\n",
 		z80ex.z180 ? "Z180" : "Z80",
 		z80ex.nmos ? "NMOS" : "CMOS"
 	);
@@ -71,13 +71,13 @@ int set_ep_ramsize(int kbytes)
 	kbytes &= 0xFF0;
 	if (rom_size + (kbytes << 10) > 0x400000) {
 		kbytes = (0x400000 - rom_size) >> 10;
-		fprintf(stderr, "ERROR: too large memory, colliding with ROM image, maximazing RAM size to %dKbytes.\n", kbytes);
+		DEBUGPRINTF("ERROR: too large memory, colliding with ROM image, maximazing RAM size to %dKbytes." NL, kbytes);
 	}
 	memset(memory + rom_size, 0xFF, 0x400000 - rom_size);
 	ram_start = 0x400000 - (kbytes << 10);
 	for (a = 0; a < 0x100; a++)
 		used_mem_segments[a] = a >= (0x100 - (kbytes >> 4));
-	printf("Config: %d Kbytes RAM, starting at %Xh\n", kbytes, ram_start);
+	DEBUG("Config: %d Kbytes RAM, starting at %Xh" NL, kbytes, ram_start);
 	return kbytes;
 }
 
@@ -134,7 +134,7 @@ void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 		sdext_write_cart(phys & 0xFFFF, value);
 #endif
 	else
-		printf("WRITE to NON-decoded memory area %08X\n", phys);
+		DEBUG("WRITE to NON-decoded memory area %08X" NL, phys);
 }
 
 
@@ -151,7 +151,6 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 	port = port16 & 0xFF;
 	if (port < primo_on)
 		return primo_read_io(port);
-	//printf("IO: READ: IN (%02Xh)\n", port);
 	switch (port) {
 #ifdef CONFIG_W5300_SUPPORT
 		case W5300_IO_BASE + 0: return w5300_read_mr0();
@@ -184,7 +183,7 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 #endif
 		/* ZX Spectrum emulator */
 		case 0x40: case 0x41: case 0x42: case 0x43: case 0x44:
-			fprintf(stderr, "ZXEMU: reading port %02Xh\n", port);
+			DEBUG("ZXEMU: reading port %02Xh" NL, port);
 			return ports[port];
 
 		case 0x50:
@@ -218,7 +217,7 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 		case 0xFE:
 			return zxemu_read_ula(IO16_HI_BYTE(port16));
 	}
-	fprintf(stderr, "IO: READ: unhandled port %02Xh read\n", port);
+	DEBUG("IO: READ: unhandled port %02Xh read" NL, port);
 	return 0xFF;
 	//return ports[port];
 }
@@ -242,8 +241,7 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 		return primo_write_io(port, value);
 	old_value = ports[port];
 	ports[port] = value;
-	//printf("IO: WRITE: OUT (%02Xh),%02Xh\n", port, value);
-	//if ((port & 0xF0) == 0x80) printf("NICK WRITE!\n");
+	//DEBUG("IO: WRITE: OUT (%02Xh),%02Xh" NL, port, value);
 	switch (port) {
 #ifdef CONFIG_W5300_SUPPORT
 		case W5300_IO_BASE + 0: w5300_write_mr0(value); break;
@@ -281,7 +279,7 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 #endif
 		case 0x32:
 		case 0x3F:
-			fprintf(stderr, "Z180: ignored <no Z180 emulation is active> for writing port = %02Xh, data = %02Xh.\n", port, value);
+			DEBUG("Z180: ignored <no Z180 emulation is active> for writing port = %02Xh, data = %02Xh." NL, port, value);
 			break;
 
 		case 0x44:
@@ -336,12 +334,12 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 		case 0xB5:
 			kbd_selector = ((value & 15) < 10) ? (value & 15) : -1;
 			/*if ((old_value & 16) != (value & 16))
-				fprintf(stderr, "PRINTER STROBE: %d -> %d\n", old_value & 16, value & 16);*/
+				DEBUG("PRINTER STROBE: %d -> %d" NL, old_value & 16, value & 16);*/
 			if ((old_value & 16) && (!(value & 16)))
 				printer_send_data(ports[0xB6]);
 			break;
 		case 0xB6:
-			// fprintf(stderr, "PRINTER DATA: %d\n", value);
+			// DEBUG("PRINTER DATA: %d" NL, value);
 			break;
 		case 0xB7:
 			mouse_check_data_shift(value);
@@ -360,7 +358,7 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 				mem_ws_m1  = 0;
 			}
 			dave_set_clock();
-			fprintf(stderr, "BF register is written -> W_ALL=%d W_M1=%d CLOCK=%dMhz\n", mem_ws_all, mem_ws_m1, (value & 2) ? 12 : 8);
+			DEBUG("BF register is written -> W_ALL=%d W_M1=%d CLOCK=%dMhz" NL, mem_ws_all, mem_ws_m1, (value & 2) ? 12 : 8);
 			break;
 		/* NICK registers */
 		case 0x80: case 0x84: case 0x88: case 0x8C:
@@ -384,7 +382,7 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 			zxemu_write_ula(IO16_HI_BYTE(port16), value);
 			break;
 		default:
-			fprintf(stderr, "IO: WRITE: unhandled port %02Xh write with data %02Xh\n", port, value);
+			DEBUG("IO: WRITE: unhandled port %02Xh write with data %02Xh" NL, port, value);
 			break;
 	}
 }
@@ -456,7 +454,7 @@ void z80_reset ( void )
 	Z80_BC_	= rand() & 0xFFFF;
 	Z80_DE_	= rand() & 0xFFFF;
 	Z80_HL_	= rand() & 0xFFFF;
-	printf("Z80: reset\n");
+	DEBUG("Z80: reset" NL);
 }
 
 

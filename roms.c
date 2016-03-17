@@ -40,7 +40,7 @@ int roms_load ( void )
 			int lseg = seg;
 			FILE *f;
 			config_getopt_pointed(option, &name);
-			printf("CONFIG: ROM: segment %02Xh file %s" NL, seg, name);
+			DEBUG("CONFIG: ROM: segment %02Xh file %s" NL, seg, name);
 			f = open_emu_file(name, "rb", path);
 			if (f == NULL) {
 				ERROR_WINDOW("Cannot open ROM image \"%s\" (to be used from segment %02Xh): %s", name, seg, ERRSTR());
@@ -48,7 +48,7 @@ int roms_load ( void )
 				}
 				return -1;
 			}
-			printf("CONFIG: ROM: ... file path is %s" NL, path);
+			DEBUG("CONFIG: ROM: ... file path is %s" NL, path);
 			for (;;) {
 				int ret;
 				if (lseg >= ROM_SEG_LIMIT) {
@@ -63,7 +63,7 @@ int roms_load ( void )
 				}
 				ret = fread(memory + (lseg << 14), 1, 0x4000, f);
 				if (ret)
-					printf("CONFIG: ROM: ... trying read 0x4000 bytes in segment %02Xh, result is %d" NL, lseg, ret);
+					DEBUG("CONFIG: ROM: ... trying read 0x4000 bytes in segment %02Xh, result is %d" NL, lseg, ret);
 				if (ret < 0) {
 					ERROR_WINDOW("Cannot read ROM image \"%s\" (to be used in segment %02Xh): %s", path, lseg, ERRSTR());
 					fclose(f);
@@ -104,7 +104,7 @@ int roms_load ( void )
 	}
 	rom_desc = realloc(rom_desc, strlen(rom_desc) + 1);
 	check_malloc(rom_desc);
-	printf("CONFIG: ROM: DONE :-) Last used segment is %02Xh." NL, last);
+	DEBUG("CONFIG: ROM: DONE :-) Last used segment is %02Xh." NL, last);
 	return last << 14;
 }
 

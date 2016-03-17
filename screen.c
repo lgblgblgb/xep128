@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -137,7 +137,7 @@ void screen_grab ( SDL_bool state )
 		warn_for_mouse_grab = 0;
 	} else if (state == SDL_TRUE)
 		OSD("Mouse grab\nPress ESC to leave.");
-	printf("GRAB: %d\n", state);
+	DEBUG("UI: GRAB: %d" NL, state);
 	SDL_SetRelativeMouseMode(state);
 	SDL_SetWindowGrab(sdl_win, state);
 }
@@ -153,7 +153,7 @@ void screen_window_resized ( int new_xsize, int new_ysize )
 		return;
 	if (new_xsize == win_xsize && new_ysize == win_ysize)
 		return;
-	fprintf(stderr, "UI: window geometry change from %d x %d to %d x %d\n", win_xsize, win_ysize, new_xsize, new_ysize);
+	DEBUG("UI: window geometry change from %d x %d to %d x %d" NL, win_xsize, win_ysize, new_xsize, new_ysize);
 	if (new_ysize == 0) new_ysize = 1;
 	ratio = (float)new_xsize / (float)new_ysize;
 	if (new_xsize * new_ysize > win_xsize * win_ysize) {	// probably user means making window larger (area of window increased)
@@ -188,7 +188,7 @@ void screen_set_fullscreen ( int state )
 			ERROR_WINDOW("Cannot enter fullscreen: %s", SDL_GetError());
 			is_fullscreen = 0;
 		} else {
-			fprintf(stderr, "UI: entering full screen mode\n");
+			DEBUG("UI: entering full screen mode" NL);
 			OSD("Full screen");
 		}
 		SDL_RaiseWindow(sdl_win);
@@ -196,7 +196,7 @@ void screen_set_fullscreen ( int state )
 		SDL_SetWindowFullscreen(sdl_win, 0);
 		SDL_SetWindowSize(sdl_win, win_xsize, win_ysize); // restore window size saved on entering fullscreen, there can be some bugs ...
 		SDL_RaiseWindow(sdl_win); // also I had problems with having the window behind other windows on exit fullscreen. Make sure to raise the window
-		fprintf(stderr, "UI: leaving full screen mode\n");
+		DEBUG("UI: leaving full screen mode" NL);
 	}
 }
 
@@ -206,7 +206,7 @@ void screen_present_frame (Uint32 *ep_pixels)
 	if (resize_counter == 10) {
 		if (win_size_changed) {
 			SDL_SetWindowSize(sdl_win, win_xsize, win_ysize);
-			fprintf(stderr, "UI: correcting window size to %d x %d\n", win_xsize, win_ysize);
+			DEBUG("UI: correcting window size to %d x %d" NL, win_xsize, win_ysize);
 			win_size_changed = 0;
 		}
 		resize_counter = 0;
@@ -226,7 +226,7 @@ void screen_present_frame (Uint32 *ep_pixels)
 			_osd_set_alpha(osd_fade);
 		} else {
 			osd_on = 0; // faded off, switch OSD texture rendering off
-			fprintf(stderr, "OSD: turned off on fading out\n");
+			DEBUG("OSD: turned off on fading out" NL);
 		}
 	}
 }
@@ -277,7 +277,7 @@ static void set_app_icon ( SDL_Window *win, const void *app_icon )
 {
 	SDL_Surface *surf = SDL_CreateRGBSurfaceFrom((void*)app_icon,96,96,32,96*4,0x000000ff,0x0000ff00,0x00ff0000,0xff000000);
 	if (surf == NULL)
-		fprintf(stderr, "Cannot create surface for window icon: %s\n", SDL_GetError());
+		DEBUG("Cannot create surface for window icon: %s" NL, SDL_GetError());
 	else {
 		SDL_SetWindowIcon(win, surf);
 		SDL_FreeSurface(surf);
@@ -329,7 +329,7 @@ int screen_init ( void )
 	} else
 		ERROR_WINDOW("Not enough memory for OSD pixel buffer. OSD won't work");
         sdl_winid = SDL_GetWindowID(sdl_win);
-	fprintf(stderr, "SDL: everything seems to be OK ...\n");
+	DEBUG("SDL: everything seems to be OK ..." NL);
 	return 0;
 }
 

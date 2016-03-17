@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -40,8 +40,8 @@ static const Uint8 _z180_ports_default[0x40] = {
 void z80ex_z180_cb (Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76)
 {
 	z180_ports[0x34] = (z180_ports[0x34] & 0x3F) | itc76; // set ITC register up
-	fprintf(stderr, "Z180: setting ICT register to: %02Xh\n", z180_ports[0x34]);
-	fprintf(stderr, "Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]\n",
+	DEBUG("Z180: setting ICT register to: %02Xh" NL, z180_ports[0x34]);
+	DEBUG("Z180: Invalid Z180 opcode <prefix=%02Xh series=%02Xh opcode=%02Xh> at PC=%04Xh [%02Xh:%04Xh]" NL,
 		prefix, series, opcode,
 		pc,
 		ports[0xB0 | (pc >> 14)],
@@ -70,14 +70,14 @@ void z180_internal_reset ( void )
 
 void z180_port_write ( Uint8 port, Uint8 value )
 {
-	fprintf(stderr, "Z180: write internal port (%02Xh/%02Xh) data = %02Xh\n", port, port | z180_port_start, value);
+	DEBUG("Z180: write internal port (%02Xh/%02Xh) data = %02Xh" NL, port, port | z180_port_start, value);
 	switch (port) {
 		case 0x34:	// ITC register
 			value = (z180_ports[port] & 0x07) | 0x38; // change was: 47->07 in hex
 			break;
 		case 0x3F:	// I/O control register (ICR)
 			z180_port_start = value & 0xC0;
-			fprintf(stderr, "Z180: internal ports are moved to %02Xh-%02Xh\n", z180_port_start, z180_port_start + 0x3F);
+			DEBUG("Z180: internal ports are moved to %02Xh-%02Xh" NL, z180_port_start, z180_port_start + 0x3F);
 			value = (value & 0xE0) | 0x1F;	// only first three bits are interpreted, the rest are '1' for read
 			break;
 	}
@@ -87,7 +87,7 @@ void z180_port_write ( Uint8 port, Uint8 value )
 
 Uint8 z180_port_read ( Uint8 port )
 {
-	fprintf(stderr, "Z180: read internal port (%02Xh/%02Xh)\n", port, port | z180_port_start);
+	DEBUG("Z180: read internal port (%02Xh/%02Xh)" NL, port, port | z180_port_start);
 	return z180_ports[port];
 }
 

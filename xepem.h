@@ -78,6 +78,18 @@ int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
 int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
 #define QUESTION_WINDOW(items, msg) _sdl_emu_secured_modal_box_(items, msg)
 
+extern FILE *debug_file;
+#define DEBUG(...) do {	\
+	if (debug_file)	\
+		fprintf(debug_file, __VA_ARGS__);	\
+} while(0)
+#define DEBUGPRINTF(...) do {	\
+	printf(__VA_ARGS__);	\
+	DEBUG(__VA_ARGS__);	\
+} while(0)
+
+
+
 //#define ERRSTR() sys_errlist[errno]
 #define ERRSTR() strerror(errno)
 

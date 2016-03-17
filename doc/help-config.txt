@@ -7,6 +7,7 @@
 # Generic, simple options
 
 audio = 0	# Enable audio output
+debug = none	# Enable debug messages written to a specified file
 fullscreen = 0	# Start in full screen
 printfile = @print.out	# Printing into this file
 ram = 128	# RAM size in Kbytes

@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
    Partial Wiznet W5300 emulation, using the host OS (which runs the emulator)
@@ -96,18 +96,18 @@ void w5300_reset ( void )
 	wregs[0x1F] = 8; 			// RCR retransmission retry-count register
 	memset(wregs + 0x20, 8, 16);		// TX and RX mem size conf
 	wregs[0x31] = 0xFF;			// MTYPER1
-	fprintf(stderr, "W5300: reset\n");
+	DEBUG("W5300: reset" NL);
 }
 
 void w5300_init ( void (*cb)(int) )
 {
 	interrupt_cb = cb ? cb : default_interrupt_callback;
-	fprintf(stderr, "W5300: init\n");
+	DEBUG("W5300: init" NL);
 }
 
 void w5300_shutdown ( void )
 {
-	fprintf(stderr, "W5300: shutdown pending connections (if any)\n");
+	DEBUG("W5300: shutdown pending connections (if any)" NL);
 }
 
 void w5300_write_mr0 ( Uint8 data ) {		// high byte of MR

@@ -1,5 +1,5 @@
 /* Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
-   Copyright (C)2015 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+   Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
    http://xep128.lgb.hu/
 
 This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ void printer_close ( void )
 	if (fp) {
 		write_printer_buffer();
 		fclose(fp);
-		fprintf(stderr, "Closing printer output file.\n");
+		DEBUG("Closing printer output file." NL);
 		fp_to_open = 1;
 		fp = NULL;
 	}
@@ -55,7 +55,7 @@ void printer_close ( void )
 
 void printer_send_data ( Uint8 data )
 {
-	//fprintf(stderr, "PRINTER GOT DATA: %d\n", data);
+	//DEBUG("PRINTER GOT DATA: %d" NL, data);
 	if (fp_to_open) {
 		const char *printfile = config_getopt_str("printfile");
 		char path[PATH_MAX + 1];
