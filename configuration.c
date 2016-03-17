@@ -68,6 +68,14 @@ FILE *debug_file = NULL;
 
 
 
+static const char *disclaimer =
+	"LICENSE: " WINDOW_TITLE " is a GNU/GPL version 2 (or later) software. <http://gnu.org/licenses/gpl.html>" NL
+	"LICENSE: This is free software; you are free to change and redistribute it." NL
+	"LICENSE: There is NO WARRANTY, to the extent permitted by law.";
+
+
+
+
 FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 {
 	const char *name_used = name;
@@ -494,9 +502,10 @@ int config_init ( int argc, char **argv )
 			printf("-%s" NL "\t%s [default: %s]" NL, opt->name, opt->help, opt->defval ? opt->defval : "-");
 			opt++;
 		}
-		printf(NL);
+		printf(NL "%s" NL, disclaimer);
 		exit(0);
 	}
+	DEBUGPRINT("%s" NL NL, disclaimer);
 	if (argc && !strcasecmp(argv[0], "-testparsing")) {
 		testparsing = 1;
 		argc--; argv++;
