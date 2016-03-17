@@ -132,7 +132,7 @@ distclean:
 
 help:
 	$(MAKE) $(PRG)
-	./$(PRG) -help | grep -v '^GIT ' > doc/help-cli.txt
+	./$(PRG) -help | grep -Ev '^(PATH:|Platform:|GIT) ' > doc/help-cli.txt
 	./$(PRG) -testparsing -config none | sed -e '1,/^--- /d' -e '/^--- /,$$d' > doc/help-config.txt
 
 commit:

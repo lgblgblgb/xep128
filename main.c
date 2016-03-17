@@ -34,7 +34,7 @@ static int guarded_exit = 0;
 static void shutdown_sdl(void)
 {
 	if (debug_file) {
-		DEBUGPRINTF("Closing debug messages log file on exit." NL);
+		DEBUGPRINT("Closing debug messages log file on exit." NL);
 		fclose(debug_file);
 	}
 	if (guarded_exit) {
@@ -43,7 +43,7 @@ static void shutdown_sdl(void)
 #ifdef CONFIG_W5300_SUPPORT
 		w5300_shutdown();
 #endif
-		DEBUGPRINTF("Shutdown callback, return." NL);
+		DEBUGPRINT("Shutdown callback, return." NL);
 	}
 	if (sdl_win)
 		SDL_DestroyWindow(sdl_win);
@@ -85,19 +85,19 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 	while (prefixes[a] != NULL)
 		if (strcmp(prefixes[a], "?")) {
 			sprintf(pathbuffer, "%s%s", prefixes[a], name_used);
-			DEBUGPRINTF("OPEN: trying file \"%s\" [%s] as path \"%s\" [%s]: ",
+			DEBUGPRINT("OPEN: trying file \"%s\" [%s] as path \"%s\" [%s]: ",
 				name, mode, pathbuffer, policy
 			);
 			f = fopen(pathbuffer, mode);
 			if (f == NULL) {
 				a++;
-				DEBUGPRINTF("FAILED" NL);
+				DEBUGPRINT("FAILED" NL);
 			} else {
-				DEBUGPRINTF("OK" NL);
+				DEBUGPRINT("OK" NL);
 				return f;
 			}
 		}
-	DEBUGPRINTF("OPEN: no file could be open for \"%s\"" NL, name);
+	DEBUGPRINT("OPEN: no file could be open for \"%s\"" NL, name);
 	strcpy(pathbuffer, name);
 	return NULL;
 }
@@ -362,7 +362,7 @@ int main (int argc, char *argv[])
 	if (config_getopt_str("fullscreen"))
 		screen_set_fullscreen(1);
 	//osd_disable();
-	DEBUGPRINTF("EMU: entering into main emulation loop" NL);
+	DEBUGPRINT("EMU: entering into main emulation loop" NL);
 	while (running) {
 		int t;
 #if 0

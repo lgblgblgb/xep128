@@ -61,14 +61,10 @@ static const struct configOption_st configOptions[] = {
 
 static struct configSetting_st *config = NULL;
 static int config_size = 0;
-
 char *app_pref_path, *app_base_path;
 char current_directory[PATH_MAX + 1];
-
 SDL_version sdlver_compiled, sdlver_linked;
-
 FILE *debug_file = NULL;
-
 
 
 
@@ -276,7 +272,7 @@ static int load_config_file_stream ( FILE *f, const char *name )
 			int subopt = separate_key(buffer, cleankey);
 			//str_rstrip(buffer);
 			//printf("[%d][%s]%s = %s\n", lineno, orig_line, key, val);
-			DEBUGPRINTF("CONFIG: FILE: %s@%d = %s" NL, cleankey, subopt, val);
+			DEBUG("CONFIG: FILE: %s@%d = %s" NL, cleankey, subopt, val);
 			if (subopt < -1 || config_set_user(cleankey, subopt, val, 1)) {
 				ERROR_WINDOW("Config file %s has invalid option key/value at lineno %d: %s = %s", name, lineno, key, val);
 				return 1;
@@ -300,7 +296,7 @@ static int parse_command_line ( int argc , char **argv )
 			return 1;
 		}
 		subopt = separate_key(argv[0] + 1, cleankey);
-		printf("CONFIG: CLI: %s@%d = %s" NL, cleankey, subopt, argv[1]);
+		DEBUG("CONFIG: CLI: %s@%d = %s" NL, cleankey, subopt, argv[1]);
 		if (subopt < -1 || config_set_user(cleankey, subopt, argv[1], 0)) {
 			fprintf(stderr, "FATAL: Command line error: invalid key/value %s %s" NL, argv[0], argv[1]);
 			return 1;
@@ -363,7 +359,7 @@ static void save_sample_config ( const char *name )
 	FILE *f = open_emu_file(name, "r", path);
 	if (f) {
 		fclose(f);
-		printf("CONFIG: sample configuration %s (%s) already existis, skipping to create." NL, name, path);
+		DEBUGPRINT("CONFIG: sample configuration %s (%s) already existis, skipping to create." NL, name, path);
 		return;
 	}
 	f = open_emu_file(name, "w", path);
@@ -401,7 +397,7 @@ int config_init ( int argc, char **argv )
 	while (testparsing < argc) {
 		if (!strcmp(argv[testparsing], "-" DEBUGFILE_OPT) && testparsing != argc - 1 && strcmp(argv[testparsing + 1], "none")) {
 			debug_file = fopen(argv[testparsing + 1], "w");
-			DEBUGPRINTF("DEBUG: enable logging into file: %s" NL, argv[testparsing + 1]);
+			DEBUGPRINT("DEBUG: enable logging into file: %s" NL, argv[testparsing + 1]);
 			if (debug_file == NULL)
 				fprintf(stderr, "Cannot open debug logging file: %s" NL, argv[testparsing + 1]);
 			break;
@@ -411,26 +407,30 @@ int config_init ( int argc, char **argv )
 	/* end of ugly hack */
 	/* let's continue with the info block ... */
 	testparsing = 0;
-	DEBUGPRINTF("%s Enterprise-128 Emulator v%s %s %s" NL
+	DEBUGPRINT("%s %s v%s %s %s" NL
 		"GIT %s compiled by %s at %s with %s %s" NL
-		"Platform: (%s), video: (%s), audio: (%s), "
+		"Platform: (%s) (%d-bit), video: (%s), audio: (%s), "
 		"SDL version compiled: (%d.%d.%d) and linked: (%d.%d.%d)" NL NL,
-		WINDOW_TITLE, VERSION, COPYRIGHT, PROJECT_PAGE,
+		WINDOW_TITLE, DESCRIPTION, VERSION, COPYRIGHT, PROJECT_PAGE,
 		BUILDINFO_GIT, BUILDINFO_ON, BUILDINFO_AT, CC_TYPE, BUILDINFO_CC,
-		SDL_GetPlatform(), SDL_GetCurrentVideoDriver(), SDL_GetCurrentAudioDriver(),
+		SDL_GetPlatform(), ARCH_BITS, SDL_GetCurrentVideoDriver(), SDL_GetCurrentAudioDriver(),
 		sdlver_compiled.major, sdlver_compiled.minor, sdlver_compiled.patch,
 		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch
 	);
-	DEBUGPRINTF("PATH: executable: %s" NL, exe);
+	DEBUGPRINT("PATH: executable: %s" NL, exe);
 	/* SDL path info block printout */
-	DEBUGPRINTF("PATH: SDL base path: %s" NL, app_base_path);
-	DEBUGPRINTF("PATH: SDL pref path: %s" NL, app_pref_path);
+	DEBUGPRINT("PATH: SDL base path: %s" NL, app_base_path);
+	DEBUGPRINT("PATH: SDL pref path: %s" NL, app_pref_path);
 #ifndef _WIN32
-	DEBUGPRINTF("PATH: data directory: %s/" NL, DATADIR);
+	DEBUGPRINT("PATH: data directory: %s/" NL, DATADIR);
 #endif
-	DEBUGPRINTF("PATH: Current directory: %s" NL NL, current_directory);
+	DEBUGPRINT("PATH: Current directory: %s" NL NL, current_directory);
 	/* Look the very basic command line switches first */
-	if (argc && (!strcasecmp(argv[0], "-h") || !strcasecmp(argv[0], "--h") || !strcasecmp(argv[0], "-help") || !strcasecmp(argv[0], "--help"))) {
+	if (argc && (
+		!strcasecmp(argv[0], "-h")	|| !strcasecmp(argv[0], "--h")		||
+		!strcasecmp(argv[0], "-help")	|| !strcasecmp(argv[0], "--help")	||
+		!strcasecmp(argv[0], "-?")	|| !strcasecmp(argv[0], "--?")
+	)) {
 		opt = configOptions;
 		printf("USAGE:" NL NL
 			"\t%s -optname optval -optname2 optval2 ..." NL NL "OPTIONS:" NL NL
@@ -474,7 +474,7 @@ int config_init ( int argc, char **argv )
 	if (strcasecmp(config_name, "none")) {
 		char path[PATH_MAX + 1];
 		FILE *f = open_emu_file(config_name, "r", path);
-		DEBUGPRINTF("Using config file: %s (%s)" NL, config_name, f ? path : "CANNOT OPEN");
+		DEBUGPRINT("Using config file: %s (%s)" NL, config_name, f ? path : "CANNOT OPEN");
 		if (f) {
 			if (load_config_file_stream(f, path)) {
 				fclose(f);
@@ -485,16 +485,16 @@ int config_init ( int argc, char **argv )
 			fprintf(stderr, "FATAL: Cannot open requested config file: %s" NL, config_name);
 			return 1;
 		} else
-			DEBUGPRINTF("Skipping default config file (cannot open), using built-in defaults." NL);
+			DEBUGPRINT("Skipping default config file (cannot open), using built-in defaults." NL);
 	} else
-		DEBUGPRINTF("Using config file: DISABLED by command line" NL);
+		DEBUGPRINT("Using config file: DISABLED by command line" NL);
 	/* parse command line ... */
 	if (parse_command_line(argc, argv))
 		return -1;
 	/* open debug file, if it was not requested via command line at the beginning ... */
 	if (!debug_file && strcmp(config_getopt_str(DEBUGFILE_OPT), "none")) {
 		debug_file = fopen(config_getopt_str(DEBUGFILE_OPT), "w");
-		DEBUGPRINTF("DEBUG: enable logging into file: %s" NL, config_getopt_str(DEBUGFILE_OPT));
+		DEBUGPRINT("DEBUG: enable logging into file: %s" NL, config_getopt_str(DEBUGFILE_OPT));
 		if (!debug_file)
                 	ERROR_WINDOW("Cannot open debug messages log file requested: %s", config_getopt_str(DEBUGFILE_OPT));
 	}

@@ -33,7 +33,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <sys/time.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 
+#define DESCRIPTION "Enterprise-128 Emulator"
 #define WINDOW_TITLE "Xep128"
 #define VERSION "0.3"
 #define COPYRIGHT "(C)2015,2016 LGB Gabor Lenart"
@@ -56,11 +58,37 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define DEFAULT_CONFIG_FILE "@config"
 #define DEFAULT_CONFIG_SAMPLE_FILE "@config-sample"
 
+#if UINT_MAX >= 0xffffffffffffffff
+#define ARCH_64BIT
+#define ARCH_BITS 64
+#else
+#define ARCH_32BIT
+#define ARCH_BITS 32
+#endif
+
+#ifdef _WIN32
+#define DIRSEP "\\"
+#define NL "\r\n"
+#else
+#define DIRSEP "/"
+#define NL "\n"
+#endif
+
+extern FILE *debug_file;
+
+#define DEBUG(...) do { \
+        if (debug_file) \
+                fprintf(debug_file, __VA_ARGS__);       \
+} while(0)
+#define DEBUGPRINT(...) do {   \
+        printf(__VA_ARGS__);    \
+        DEBUG(__VA_ARGS__);     \
+} while(0)
 
 #define OSD(...) do { \
 	char _buf_for_win_msg_[4096]; \
 	sprintf(_buf_for_win_msg_, __VA_ARGS__); \
-	fprintf(stderr, "OSD: %s\n", _buf_for_win_msg_); \
+	DEBUGPRINT("OSD: %s" NL, _buf_for_win_msg_); \
 	osd_notification(_buf_for_win_msg_); \
 } while(0)
 
@@ -68,7 +96,7 @@ int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
 #define _REPORT_WINDOW_(sdlflag, str, ...) do { \
 	char _buf_for_win_msg_[4096]; \
 	sprintf(_buf_for_win_msg_, __VA_ARGS__); \
-	fprintf(stderr, str ": %s\n", _buf_for_win_msg_); \
+	DEBUGPRINT(str ": %s" NL, _buf_for_win_msg_); \
 	_sdl_emu_secured_message_box_(sdlflag, _buf_for_win_msg_); \
 } while(0)
 #define INFO_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_INFORMATION, "INFO", __VA_ARGS__)
@@ -78,28 +106,8 @@ int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
 int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
 #define QUESTION_WINDOW(items, msg) _sdl_emu_secured_modal_box_(items, msg)
 
-extern FILE *debug_file;
-#define DEBUG(...) do {	\
-	if (debug_file)	\
-		fprintf(debug_file, __VA_ARGS__);	\
-} while(0)
-#define DEBUGPRINTF(...) do {	\
-	printf(__VA_ARGS__);	\
-	DEBUG(__VA_ARGS__);	\
-} while(0)
-
-
-
 //#define ERRSTR() sys_errlist[errno]
 #define ERRSTR() strerror(errno)
-
-#ifdef _WIN32
-#define DIRSEP "\\"
-#define NL "\r\n"
-#else
-#define DIRSEP "/"
-#define NL "\n"
-#endif
 
 #define SCREEN_WIDTH	736
 #define SCREEN_HEIGHT	288

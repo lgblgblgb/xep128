@@ -56,7 +56,7 @@ void set_ep_cpu ( int type )
 			ERROR_WINDOW("Unknown CPU type was requested: %d", type);
 			exit(1);
 	}
-	DEBUG("CPU: set to %s %s\n",
+	DEBUG("CPU: set to %s %s" NL,
 		z80ex.z180 ? "Z180" : "Z80",
 		z80ex.nmos ? "NMOS" : "CMOS"
 	);
@@ -71,7 +71,7 @@ int set_ep_ramsize(int kbytes)
 	kbytes &= 0xFF0;
 	if (rom_size + (kbytes << 10) > 0x400000) {
 		kbytes = (0x400000 - rom_size) >> 10;
-		DEBUGPRINTF("ERROR: too large memory, colliding with ROM image, maximazing RAM size to %dKbytes." NL, kbytes);
+		DEBUGPRINT("ERROR: too large memory, colliding with ROM image, maximazing RAM size to %dKbytes." NL, kbytes);
 	}
 	memset(memory + rom_size, 0xFF, 0x400000 - rom_size);
 	ram_start = 0x400000 - (kbytes << 10);
