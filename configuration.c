@@ -68,6 +68,59 @@ FILE *debug_file = NULL;
 
 
 
+FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
+{
+	const char *name_used = name;
+	const char *policy = "guessing";
+	const char *prefixes[] = {
+		current_directory,	// try in the current directory first
+#ifndef _WIN32
+		DATADIR "/",		// try in the DATADIR, it makes sense on UNIX like sys
+#endif
+		app_base_path,		// try at base path (where executable is)
+		app_pref_path,		// try at pref path (user writable area)
+		NULL
+	};
+	int a = 0;
+	FILE *f;
+	// try to detect absolue path, Win32 related part tries to detect the possibility of X:\... syntax
+	if (
+		name[0] == DIRSEP[0]
+#ifdef _WIN32
+		|| (strlen(name) > 3 && name[1] == ':' && name[2] == DIRSEP[0])
+#endif
+	) {
+		prefixes[0] = "";
+		prefixes[1] = NULL;
+		policy = "absolue";
+	} else if (name[0] == '@') {		// @ means user preference directory related path names
+		prefixes[0] = app_pref_path;
+		prefixes[1] = NULL;
+		name_used = name + 1;
+		policy = "pref-dir";
+	}
+	while (prefixes[a] != NULL)
+		if (strcmp(prefixes[a], "?")) {
+			sprintf(pathbuffer, "%s%s", prefixes[a], name_used);
+			DEBUGPRINT("OPEN: trying file \"%s\" [mode: %s] as path \"%s\" [%s]: ",
+				name, mode, pathbuffer, policy
+			);
+			f = fopen(pathbuffer, mode);
+			if (f == NULL) {
+				a++;
+				DEBUGPRINT("*FAILED*: %s" NL, ERRSTR());
+			} else {
+				DEBUGPRINT("(fd=%d) OK" NL, fileno(f));
+				return f;
+			}
+		}
+	DEBUGPRINT("OPEN: no file could be open for \"%s\"" NL, name);
+	strcpy(pathbuffer, name);
+	return NULL;
+}
+
+
+
 static const struct configOption_st *search_opt ( const char *name, int subopt )
 {
 	const struct configOption_st *opt = configOptions;

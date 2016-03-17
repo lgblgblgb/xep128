@@ -20,14 +20,21 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 
 static Uint32 *ep_pixels;
-
 int rom_size;
 int CPU_CLOCK = DEFAULT_CPU_CLOCK;
-
 static const int _cpu_speeds[4] = { 4000000, 6000000, 7120000, 10000000 };
 static int _cpu_speed_index = 0;
-
 static int guarded_exit = 0;
+static unsigned int ticks;
+static int running;
+//static int tstates_all = 0;
+static int cpu_cycles_for_dave_sync = 0;
+static double td_balancer = 0;
+//time_t unix_time;
+static struct timeval tv_old;
+static int td_em_ALL = 0, td_pc_ALL = 0, td_count_ALL = 0;
+static double balancer;
+static double SCALER;
 
 
 
@@ -51,75 +58,6 @@ static void shutdown_sdl(void)
 }
 
 
-FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
-{
-	const char *name_used = name;
-	const char *policy = "guessing";
-	const char *prefixes[] = {
-		current_directory,	// try in the current directory first
-#ifndef _WIN32
-		DATADIR "/",		// try in the DATADIR, it makes sense on UNIX like sys
-#endif
-		app_base_path,		// try at base path (where executable is)
-		app_pref_path,		// try at pref path (user writable area)
-		NULL
-	};
-	int a = 0;
-	FILE *f;
-	// try to detect absolue path, Win32 related part tries to detect the possibility of X:\... syntax
-	if (
-		name[0] == DIRSEP[0]
-#ifdef _WIN32
-		|| (strlen(name) > 3 && name[1] == ':' && name[2] == DIRSEP[0])
-#endif
-	) {
-		prefixes[0] = "";
-		prefixes[1] = NULL;
-		policy = "absolue";
-	} else if (name[0] == '@') {		// @ means user preference directory related path names
-		prefixes[0] = app_pref_path;
-		prefixes[1] = NULL;
-		name_used = name + 1;
-		policy = "pref-dir";
-	}
-	while (prefixes[a] != NULL)
-		if (strcmp(prefixes[a], "?")) {
-			sprintf(pathbuffer, "%s%s", prefixes[a], name_used);
-			DEBUGPRINT("OPEN: trying file \"%s\" [%s] as path \"%s\" [%s]: ",
-				name, mode, pathbuffer, policy
-			);
-			f = fopen(pathbuffer, mode);
-			if (f == NULL) {
-				a++;
-				DEBUGPRINT("FAILED" NL);
-			} else {
-				DEBUGPRINT("OK" NL);
-				return f;
-			}
-		}
-	DEBUGPRINT("OPEN: no file could be open for \"%s\"" NL, name);
-	strcpy(pathbuffer, name);
-	return NULL;
-}
-
-
-
-static unsigned int ticks;
-static int running;
-
-
-
-//static int tstates_all = 0;
-static int cpu_cycles_for_dave_sync = 0;
-
-static double td_balancer = 0;
-
-//time_t unix_time;
-
-
-static struct timeval tv_old;
-
-static int td_em_ALL = 0, td_pc_ALL = 0, td_count_ALL = 0;
 
 /* This is the emulation timing stuff
  * Should be called at the END of the emulation loop.
@@ -278,13 +216,6 @@ void emu_one_frame(int rasters, int frameksip)
 #endif
 }
 
-
-static double balancer;
-//static float SCALER = 1.1228070175438596 * 2;
-//static float SCALER = 5.685098823006883;
-//static float SCALER = 0.2217543859649123;
-//static float SCALER = 0.2223;
-static double SCALER;
 
 
 int set_cpu_clock ( int hz )
