@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 
 
+
 int primo_on = 0;
 int primo_nmi_enabled = 0;
 int primo_rom_seg = -1;
@@ -135,12 +136,16 @@ Uint8 primo_read_io ( Uint8 port )
 }
 
 
+#define LD1HI_PV1 (((PRIMO_VID_SEG << 6) + 0x28) & 0xFF)
+#define LD1HI_PV0 (((PRIMO_VID_SEG << 6) + 0x08) & 0xFF)
+
+
 void primo_write_io ( Uint8 port, Uint8 data )
 {
 	// Primo does the  very same for all I/O ports in the range of 0-3F!
 	primo_nmi_enabled = data & 128;				// bit 7: NMI enabled, this variable is "cloned" as nmi_pending by VINT in dave.c
 	ports[0xA8] = ports[0xAC] = (data & 16) ? 63 : 0;	// bit 4, speaker control, pass to Dave in D/A mode
-	memory[0x3F4005] = (data & 8) ? 0x28 : 0x08;		// bit 3: display page: set LPB LD1 high (LPB should be at segment 0xFD, and 0xFC is for primo 0xC000-0xFFFF)
+	memory[(PRIMO_LPT_SEG << 14) + 5] = (data & 8) ? LD1HI_PV1 : LD1HI_PV0;		// bit 3: display page: set LPB LD1 high (LPB should be at segment 0xFD, and 0xFC is for primo 0xC000-0xFFFF)
 }
 
 
@@ -190,9 +195,10 @@ void primo_emulator_exit ( void )
 	primo_switch(0);	// turn Primo mode OFF
 	//z80ex.int = 1;		// enable interrupts (?)
 	//memcpy(&z80ex, &z80ex_backup, sizeof(Z80EX_CONTEXT));
-	//z80ex.prefix = 0;	// turn of prefix, because last opc was the ED trap for XEP ROM!
+	//z80ex.prefix = 0;	// turn prefix off, because last opc was the ED trap for XEP ROM!
 	//Z80_PC--; // nah ...
 	//xep_accept_trap = 0;
+	set_cpu_clock(DEFAULT_CPU_CLOCK);
 }
 
 
@@ -208,20 +214,25 @@ void primo_emulator_execute ( void )
 //	memcpy();	// save Nick registers
 
 	/* set an LPT */
-	memcpy(memory + 0x3F4000, primo_lpt, sizeof primo_lpt);
-	z80ex_pwrite_cb(0x82, 0);	// LPT address, low byte
-	z80ex_pwrite_cb(0x83, 4 | 64 | 128);
+	memcpy(memory + (PRIMO_LPT_SEG << 14), primo_lpt, sizeof primo_lpt);
+	z80ex_pwrite_cb(0x82, (PRIMO_LPT_SEG << 10) & 0xFF);	// LPT address, low byte
+	z80ex_pwrite_cb(0x83, ((PRIMO_LPT_SEG << 2) & 0xF));
+	z80ex_pwrite_cb(0x83, ((PRIMO_LPT_SEG << 2) & 0xF) | 64);
+	z80ex_pwrite_cb(0x83, ((PRIMO_LPT_SEG << 2) & 0xF) | 64 | 128);
 	z80ex_pwrite_cb(0x81, 0);	// border color
 	/* do our stuffs ... */
 	z80ex_pwrite_cb(0xA7, 8 | 16);	// D/A mode for Dave audio
 	for (a = 0xA8; a < 0xB0; a++)
 		z80ex_pwrite_cb(a, 0);	// volumes of L/H channels
 	z80ex_pwrite_cb(0xB4, 0xAA);	// disable all interrupts on Dave (z80 won't get INT but the cloned NMI directly from Nick "translated" from VINT) and reset latches
-	z80ex_pwrite_cb(0xB0, primo_rom_seg);	// first segment is the Primo ROM now
-	z80ex_pwrite_cb(0xB1, 0xFA);	// normal RAM segment
-	z80ex_pwrite_cb(0xB2, 0xFB);	// normal RAM segment
-	z80ex_pwrite_cb(0xB3, 0xFC);	// a video segment as the Primo video RAM
+	z80ex_pwrite_cb(0xB0, PRIMO_ROM_SEG);	// first segment is the Primo ROM now
+	z80ex_pwrite_cb(0xB1, PRIMO_MEM1_SEG);	// normal RAM segment
+	z80ex_pwrite_cb(0xB2, PRIMO_MEM2_SEG);	// normal RAM segment
+	z80ex_pwrite_cb(0xB3, PRIMO_VID_SEG);	// a video segment as the Primo video RAM
 	primo_switch(128 | 64);		// turn on Primo I/O mode
 	Z80_PC = 0;			// Z80 reset address to the Primo ROM
+	z80ex_reset();			// reset the CPU only!!
+	set_ep_cpu(CPU_Z80);		// good old Z80 NMOS CPU is selected
+	set_cpu_clock(2500000);
 }
 

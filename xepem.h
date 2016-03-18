@@ -232,6 +232,11 @@ void primo_emulator_execute ( void );
 void primo_emulator_exit ( void );
 int primo_search_rom ( void );
 extern int primo_rom_seg;
+#define PRIMO_LPT_SEG   0xFF
+#define PRIMO_VID_SEG   0xFC
+#define PRIMO_MEM2_SEG  0xFD
+#define PRIMO_MEM1_SEG  0xFE
+#define PRIMO_ROM_SEG   primo_rom_seg
 
 extern Uint8 memory[0x400000];
 extern Uint8 ports[0x100];

@@ -166,7 +166,7 @@ int roms_load ( void )
 		DEBUGPRINT("CONFIG: ROM: XEP internal ROM image installed in segment %02Xh" NL, last);
 	}
 	if (xep_rom_seg == -1) {
-		ERROR_WINDOW("XEP internal ROM image cannot be installed. Xep128 will work, but :XEP comamnds won't!");
+		ERROR_WINDOW("XEP internal ROM image cannot be installed. Xep128 will work, but :XEP commands won't!");
 	}
 	/* end of the game :) */
 	DEBUGPRINT("CONFIG: ROM: DONE. Last used segment is %02Xh." NL, last);

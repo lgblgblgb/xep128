@@ -49,6 +49,7 @@ static const struct configOption_st configOptions[] = {
 	{ "audio",	CONFITEM_BOOL,	"0",		0, "Enable audio output"	},
 	{ DEBUGFILE_OPT,CONFITEM_STR,	"none",		0, "Enable debug messages written to a specified file" },
 	{ "fullscreen",	CONFITEM_BOOL,	"0",		0, "Start in full screen"	},
+	{ "primo",	CONFITEM_STR,	"none",		0, "Start in Primo emulator mode (if not \"none\")" },
 	{ "printfile",	CONFITEM_STR,	PRINT_OUT_FN,	0, "Printing into this file"	},
 	{ "ram",	CONFITEM_STR,	"128",		0, "RAM size in Kbytes (decimal) or segment specification(s) prefixed with @ in hex (VRAM is always assumed), like: @C0-CF,E0,E3-E7" 	},
 	{ "rom",	CONFITEM_STR,	NULL,		1, "ROM image, format is \"rom@xx=filename\" (xx=start segment in hex), use rom@00 for EXOS or combined ROM set" },
@@ -495,7 +496,7 @@ int config_init ( int argc, char **argv )
 		opt = configOptions;
 		printf("USAGE:" NL NL
 			"\t%s -optname optval -optname2 optval2 ..." NL NL "OPTIONS:" NL NL
-			"-config" NL "\tUse config file (or do not use the default one, if \"none\" is specified). This must be the first option if used!" NL,
+			"-config" NL "\tUse config file (or do not use the default one, if \"none\" is specified). This must be the first option if used! [default: @config]" NL,
 			exe
 		);
 		while (opt->name) {

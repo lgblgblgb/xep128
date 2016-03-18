@@ -9,6 +9,7 @@
 audio = 0	# Enable audio output
 debug = none	# Enable debug messages written to a specified file
 fullscreen = 0	# Start in full screen
+primo = none	# Start in Primo emulator mode (if not "none")
 printfile = @print.out	# Printing into this file
 ram = 128	# RAM size in Kbytes (decimal) or segment specification(s) prefixed with @ in hex (VRAM is always assumed), like: @C0-CF,E0,E3-E7
 sdimg = sdcard.img	# SD-card disk image (VHD) file name/path

@@ -299,6 +299,11 @@ int main (int argc, char *argv[])
 	//osd_disable();
 	DEBUGPRINT(NL "EMU: entering into main emulation loop" NL);
 	sram_ready = 1;
+	if (strcmp(config_getopt_str("primo"), "none")) {
+		// TODO: da stuff ...
+		primo_emulator_execute();
+		OSD("Primo Emulator Mode");
+	}
 	while (running) {
 		int t;
 #if 0

@@ -8,13 +8,15 @@ USAGE:
 OPTIONS:
 
 -config
-	Use config file (or do not use the default one, if "none" is specified). This must be the first option if used!
+	Use config file (or do not use the default one, if "none" is specified). This must be the first option if used! [default: @config]
 -audio
 	Enable audio output [default: 0]
 -debug
 	Enable debug messages written to a specified file [default: none]
 -fullscreen
 	Start in full screen [default: 0]
+-primo
+	Start in Primo emulator mode (if not "none") [default: none]
 -printfile
 	Printing into this file [default: @print.out]
 -ram
