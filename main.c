@@ -34,6 +34,7 @@ static struct timeval tv_old;
 static int td_em_ALL = 0, td_pc_ALL = 0, td_count_ALL = 0;
 static double balancer;
 static double SCALER;
+static int sram_ready = 0;
 
 
 
@@ -49,6 +50,8 @@ static void shutdown_sdl(void)
 #ifdef CONFIG_W5300_SUPPORT
 		w5300_shutdown();
 #endif
+		if (sram_ready)
+			sram_save_all_segments();
 		DEBUGPRINT("Shutdown callback, return." NL);
 	}
 	if (sdl_win)
@@ -295,6 +298,7 @@ int main (int argc, char *argv[])
 		screen_set_fullscreen(1);
 	//osd_disable();
 	DEBUGPRINT(NL "EMU: entering into main emulation loop" NL);
+	sram_ready = 1;
 	while (running) {
 		int t;
 #if 0

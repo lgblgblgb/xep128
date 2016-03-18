@@ -329,11 +329,15 @@ extern const char *BUILDINFO_CC;
 
 int roms_load ( void );
 extern const char *rom_name_tab[0x100];
+int sram_save_segment ( int seg );
+int sram_load_segment ( int seg );
+int sram_save_all_segments ( void );
 
 extern const char *memory_segment_map[0x100];
 extern const char ROM_SEGMENT[];
 extern const char RAM_SEGMENT[];
 extern const char VRAM_SEGMENT[];
+extern const char SRAM_SEGMENT[];
 extern const char UNUSED_SEGMENT[];
 
 #endif

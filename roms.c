@@ -25,8 +25,65 @@ static const Uint8 xep_rom_image[] = {
 int xep_rom_seg = -1;
 int xep_rom_addr;
 const char *rom_name_tab[0x100];
-static const char xep_rom_description[] = "<Xep128-internal>";
+static const char xep_rom_description[] = "(Xep128-internal)";
 
+
+
+static FILE *sram_open ( int seg, const char *mode, char *path )
+{
+	char fn[64];
+	sprintf(fn, "@sram-%02X.seg", seg);
+	return open_emu_file(fn, mode, path);
+}
+
+
+
+int sram_save_segment ( int seg )
+{
+	int a;
+	char path[PATH_MAX + 1];
+	FILE *f = sram_open(seg, "wb", path);
+	DEBUGPRINT("MEM: SRAM: saving SRAM segment %02Xh to file %s" NL, seg, path);
+	if (!f) {
+		ERROR_WINDOW("Cannot create file for saving SRAM segment %02Xh because of file I/O error: %s\nFile name was: %s", seg, ERRSTR(), path);
+		return 1;
+	}
+	a = fwrite(memory + (seg << 14), 0x4000, 1, f);
+	if (a != 1)
+		ERROR_WINDOW("Cannot save SRAM segment %02Xh because of file I/O error: %s\nFile name was: %s", seg, ERRSTR(), path);
+	fclose(f);
+	return a != 1;
+}
+
+
+
+int sram_load_segment ( int seg )
+{
+	int a;
+	char path[PATH_MAX + 1];
+	FILE *f = sram_open(seg, "rb", path);
+	DEBUGPRINT("MEM: SRAM: loading SRAM segment %02Xh from file %s" NL, seg, path);
+	if (!f) {
+		ERROR_WINDOW("Cannot open file for loading SRAM segment %02Xh because of file I/O error: %s\nFile name was: %s", seg, ERRSTR(), path);
+		return 1;
+	}
+	a = fread(memory + (seg << 14), 0x4000, 1, f);
+	if (a != 1)
+		ERROR_WINDOW("Cannot load SRAM segment %02Xh because of file I/O error: %s\nFile name was: %s", seg, ERRSTR(), path);
+	fclose(f);
+	return a != 1;
+}
+
+
+
+int sram_save_all_segments ( void )
+{
+	int a, ret = 0;
+	for (a = 0; a < 0x100; a++ )
+		if (memory_segment_map[a] == SRAM_SEGMENT)
+			ret += sram_save_segment(a);
+	return ret;
+}
 
 
 
@@ -99,18 +156,14 @@ int roms_load ( void )
 		}
 	}
 	/* search place for XEP ROM */
-	for (seg = 0; seg < 0x100; seg++) {
-		if (memory_segment_map[seg] == UNUSED_SEGMENT) {	// TODO: XEP ROM may not work with non-Zozo EXOSes as they check only some segments with special alignments
-			xep_rom_seg = seg;
-			xep_rom_addr = seg << 14;
-			memcpy(memory + xep_rom_addr, xep_rom_image, sizeof xep_rom_image);
-			memory_segment_map[seg] = ROM_SEGMENT;
-			rom_name_tab[seg] = xep_rom_description;
-			DEBUG("CONFIG: ROM: XEP internal ROM image installed in segment %02Xh" NL, seg);
-			if (seg > last)
-				last = seg;
-			break;
-		}
+	if (memory_segment_map[last + 1] == UNUSED_SEGMENT) {	// TODO: XEP ROM may not work with non-Zozo EXOSes as they check only some segments with special alignments
+		last++;
+		xep_rom_seg = last;
+		xep_rom_addr = last << 14;
+		memcpy(memory + xep_rom_addr, xep_rom_image, sizeof xep_rom_image);
+		memory_segment_map[last] = ROM_SEGMENT;
+		rom_name_tab[last] = xep_rom_description;
+		DEBUGPRINT("CONFIG: ROM: XEP internal ROM image installed in segment %02Xh" NL, last);
 	}
 	if (xep_rom_seg == -1) {
 		ERROR_WINDOW("XEP internal ROM image cannot be installed. Xep128 will work, but :XEP comamnds won't!");

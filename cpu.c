@@ -31,6 +31,7 @@ int nmi_pending = 0;
 const char ROM_SEGMENT[] = "ROM";
 const char RAM_SEGMENT[] = "RAM";
 const char VRAM_SEGMENT[] = "VRAM";
+const char SRAM_SEGMENT[] = "SRAM";
 const char UNUSED_SEGMENT[] = "unused";
 
 char *mem_desc = NULL;
@@ -69,13 +70,15 @@ void set_ep_cpu ( int type )
 
 
 
-static inline void add_ram_segs ( int seg, int seg_end )
+static inline void add_ram_segs ( int seg, int seg_end, const char *type )
 {
 	while (seg <= seg_end) {
-		if (memory_segment_map[seg] == UNUSED_SEGMENT)
-			memory_segment_map[seg] = RAM_SEGMENT;
-		else
-			DEBUG("CONFIG: RAM: segment %02Xh cannot be defined as RAM since it's %s" NL, seg, memory_segment_map[seg]);
+		if (memory_segment_map[seg] == UNUSED_SEGMENT) {
+			memory_segment_map[seg] = type;
+			if (type == SRAM_SEGMENT)
+				sram_load_segment(seg);
+		} else
+			DEBUGPRINT("CONFIG: RAM: segment %02Xh cannot be defined as %s since it's already %s" NL, seg, type, memory_segment_map[seg]);
 		seg++;
 	}
 }
@@ -87,6 +90,10 @@ int ep_set_ram_config ( const char *spec )
 {
 	int a;
 	for (a = 0; a < 0xFC; a++) {
+		if (memory_segment_map[a] == SRAM_SEGMENT) {
+			sram_save_segment(a);	// that is, we *HAD* configured SRAM before, so save it, before drop it ...
+			memory_segment_map[a] = UNUSED_SEGMENT;
+		}
 		if (memory_segment_map[a] == RAM_SEGMENT)
 			memory_segment_map[a] = UNUSED_SEGMENT;
 		if (memory_segment_map[a] == VRAM_SEGMENT || memory_segment_map[a] == UNUSED_SEGMENT)
@@ -95,17 +102,27 @@ int ep_set_ram_config ( const char *spec )
 	if (*spec == '@') {	// segment list format is requested ...
 		while (spec && *spec) {
 			int sb, se;
+			const char *type;
 			spec++;
+			if (*spec == '=') {
+				type = SRAM_SEGMENT;
+				spec++;
+			} else
+				type = RAM_SEGMENT;
 			switch (sscanf(spec, "%x-%x,", &sb, &se)) {
 				case 1:
-					DEBUG("CONFIG: RAM: requesting single segment %02Xh as RAM" NL, sb);
+					DEBUG("CONFIG: RAM: requesting single segment %02Xh as %s" NL, sb, type);
 					if (sb >= 0 && sb < 0x100)
-						add_ram_segs(sb, sb);
+						add_ram_segs(sb, sb, type);
+					else
+						DEBUGPRINT("CONFIG: RAM: WARNING: ignoring bad single %s segment definition %02X" NL, type, sb);
 					break;
 				case 2:
-					DEBUG("CONFIG: RAM: requesting segment range %02Xh-%02Xh as RAM" NL, sb, se);
+					DEBUG("CONFIG: RAM: requesting segment range %02Xh-%02Xh as %s" NL, sb, se, type);
 					if (se >= sb && sb >= 0 && se < 0x100)
-						add_ram_segs(sb, se);
+						add_ram_segs(sb, se, type);
+					else
+						DEBUGPRINT("CONFIG: RAM: WARNING: ignoring bad %s segment range definition %02X-%02X" NL, type, sb, se);
 					break;
 			}
 			spec = strchr(spec, ',');
@@ -118,7 +135,7 @@ int ep_set_ram_config ( const char *spec )
 			es = 252;
 		DEBUG("CONFIG: RAM: requesting simple memory range as RAM for %d segments" NL, es);
 		if (es)
-			add_ram_segs(0xFC - es, 0xFB);
+			add_ram_segs(0xFC - es, 0xFB, RAM_SEGMENT);
 	}
 	return ep_init_ram();
 }
@@ -134,9 +151,11 @@ int ep_init_ram ( void )
 		*mem_desc = '\0';
 	for (a = 0; a < 0x101; a++) {	// yeah, 0x101 is by intent!!
 		if (a < 0x100) {
-			is_ram_seg[a] = (memory_segment_map[a] == RAM_SEGMENT || memory_segment_map[a] == VRAM_SEGMENT);
+			int is_sram = (memory_segment_map[a] == SRAM_SEGMENT);
+			is_ram_seg[a] = (memory_segment_map[a] == RAM_SEGMENT || memory_segment_map[a] == VRAM_SEGMENT || is_sram);
 			if (is_ram_seg[a]) {
-				memset(memory + (a << 14), 0xFF, 0x4000);
+				if (!is_sram)
+					memset(memory + (a << 14), 0xFF, 0x4000);
 				sum++;
 			}
 		}
