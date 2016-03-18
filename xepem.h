@@ -115,20 +115,20 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
 
 extern char *app_pref_path, *app_base_path;
 extern char current_directory[PATH_MAX + 1];
-extern char *rom_desc;
 extern char sdimg_path[PATH_MAX + 1];
 
 
 void xep_rom_install ( int offset );
 
 extern int CPU_CLOCK;
-int set_ep_ramsize(int kbytes);
+int ep_set_ram_config ( const char *spec );
+extern char *mem_desc;
 int set_cpu_clock ( int hz );
 int set_cpu_clock_with_osd ( int hz );
 void z80_reset ( void );
 void ep_reset ( void );
-void ep_clear_ram ( void );
-extern int rom_size, xep_rom_seg, xep_rom_addr, ram_start;
+int ep_init_ram ( void );
+extern int xep_rom_seg, xep_rom_addr;
 FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer );
 Uint8 read_cpu_byte ( Uint16 addr );
 void set_ep_cpu ( int type );
@@ -328,5 +328,12 @@ extern const char *BUILDINFO_CC;
 #endif
 
 int roms_load ( void );
+extern const char *rom_name_tab[0x100];
+
+extern const char *memory_segment_map[0x100];
+extern const char ROM_SEGMENT[];
+extern const char RAM_SEGMENT[];
+extern const char VRAM_SEGMENT[];
+extern const char UNUSED_SEGMENT[];
 
 #endif

@@ -18,9 +18,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
 
-static const Uint8 xep_rom_image[] = {
-#include "xep_rom.hex"
-};
 #include "xep_rom_syms.h"
 
 struct commands_st {
@@ -40,25 +37,31 @@ static const char *_dave_ws_descrs[4] = {
 	"all", "M1", "no", "no"
 };
 
+
+
 static void cmd_ram ( void ) {
-	if (*carg) {
-		int ms = atoi(carg);
-		if (ms >= 64 && ms < 4096 - 32) {
-			INFO_WINDOW("Setting RAM size to %dKbytes\nEP will reboot now.", set_ep_ramsize(ms));
-			ep_clear_ram();
+	switch (*carg) {
+		case 0:
+			sprintf(COBUF, "%s\r\nDave: WS=%s CLK=%dMHz P=%02X/%02X/%02X/%02X\r\n\r\n",
+				mem_desc,
+				_dave_ws_descrs[(ports[0xBF] >> 2) & 3],
+				ports[0xBF] & 1 ? 12 : 8,
+				ports[0xB0], ports[0xB1], ports[0xB2], ports[0xB3]
+			);
+			break;
+		case '!':
+			INFO_WINDOW("Setting total sum of RAM size to %dKbytes\nEP will reboot now!\nYou can use :XEP EMU command then to check the result.", ep_set_ram_config(carg + 1) << 4);
 			ep_reset();
-		} else
-			sprintf(COBUF, "**** Invalid memory size (K): %s\r\n", carg);
-		return;
+			return;
+		default:
+			sprintf(COBUF,
+				"*** Bad command syntax.\r\nUse no parameter to query or !128 to set 128K memory, "
+				"or even !@E0,E3-E5 (no spaces ever!) to specify given RAM segments. Using '!' is "
+				"only for safity not to re-configure or re-boot your EP with no intent. Not so "
+				"much error handling is done on the input!\r\n"
+			);
+			break;
 	}
-	sprintf(COBUF, "MEM : RAM=%dK ROM=%dK HOLE=%dK\r\n      S:P0=%02Xh S:XEP=%02Xh\r\nDave: WS=%s IN_CLK=%dMHz\r\n",
-		(0x400000 - ram_start) >> 10,
-		rom_size >> 10,
-		(ram_start - rom_size) >> 10,
-		ram_start >> 14, xep_rom_seg,
-		_dave_ws_descrs[(ports[0xBF] >> 2) & 3],
-		ports[0xBF] & 1 ? 12 : 8
-	);
 }
 
 
@@ -117,7 +120,7 @@ static void cmd_emu ( void )
 	gethostname(buf, sizeof buf);
 #define OS_KIND "POSIX"
 #endif
-	sprintf(COBUF, "Run by: %s@%s %s %s\r\nDrivers: %s %s\r\nSDL c/l: %d.%d.%d %d.%d.%d\r\nBase path: %s\r\nPref path: %s\r\nStart dir: %s\r\nSD img: %s [%ldM]\r\n\r\n%s\r\n",
+	sprintf(COBUF, "Run by: %s@%s %s %s\r\nDrivers: %s %s\r\nSDL c/l: %d.%d.%d %d.%d.%d\r\nBase path: %s\r\nPref path: %s\r\nStart dir: %s\r\nSD img: %s [%ldM]\r\n",
 #ifdef _WIN32
 		getenv("USERNAME"),
 #else
@@ -127,7 +130,7 @@ static void cmd_emu ( void )
 		sdlver_compiled.major, sdlver_compiled.minor, sdlver_compiled.patch,
 		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch,
 		app_base_path, app_pref_path, current_directory,
-		sdimg_path, sd_card_size >> 20, rom_desc
+		sdimg_path, sd_card_size >> 20
 	);
 }
 
@@ -291,12 +294,5 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 			ERROR_WINDOW("FATAL: Unknown ED-trap opcode in XEP ROM: PC=%04Xh ED_OP=%02Xh", pc, opcode);
 			exit(1);
 	}
-}
-
-
-void xep_rom_install ( int offset )
-{
-        memset(memory + offset, 0, 0x4000);
-        memcpy(memory + offset, xep_rom_image, sizeof xep_rom_image);
 }
 

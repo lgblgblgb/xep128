@@ -147,9 +147,12 @@ void primo_write_io ( Uint8 port, Uint8 data )
 int primo_search_rom ( void )
 {
 	int a;
-	for (a = 0x168; a < rom_size; a += 0x4000)
-		if (!memcmp(memory + a, "PRIMO", 5))
-			return a >> 14;
+	for (a = 0; a < 0xFC; a++)
+		if (memory_segment_map[a] == ROM_SEGMENT && !memcmp(memory + (a << 14) + 0x168, "PRIMO", 5)) {
+			DEBUG("PRIMO: found Primo ROM in segment %02Xh, good" NL, a);
+			return a;
+		}
+	DEBUG("PRIMO: not found Primo ROM in the loaded ROMs ..." NL);
 	return -1;
 }
 

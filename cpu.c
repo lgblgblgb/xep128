@@ -21,14 +21,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 Z80EX_CONTEXT z80ex;
 static int memsegs[4];
-int ram_start;
 Uint8 memory[0x400000];
 Uint8 ports[0x100];
-static int used_mem_segments[0x100];
+const char *memory_segment_map[0x100];
+static int is_ram_seg[0x100];
 static int mem_ws_all, mem_ws_m1;
-int xep_rom_seg = -1;
-int xep_rom_addr;
 int nmi_pending = 0;
+
+const char ROM_SEGMENT[] = "ROM";
+const char RAM_SEGMENT[] = "RAM";
+const char VRAM_SEGMENT[] = "VRAM";
+const char UNUSED_SEGMENT[] = "unused";
+
+char *mem_desc = NULL;
 
 
 // TODO: this should be written ... it's called when VRAM access, or $80...$8F I/O ports are accessed
@@ -63,31 +68,102 @@ void set_ep_cpu ( int type )
 }
 
 
-int set_ep_ramsize(int kbytes)
+
+static inline void add_ram_segs ( int seg, int seg_end )
 {
-	int a;
-	if (kbytes < 64) kbytes = 64;
-	if (kbytes >= 4096) kbytes = 4095;
-	kbytes &= 0xFF0;
-	if (rom_size + (kbytes << 10) > 0x400000) {
-		kbytes = (0x400000 - rom_size) >> 10;
-		DEBUGPRINT("ERROR: too large memory, colliding with ROM image, maximazing RAM size to %dKbytes." NL, kbytes);
+	while (seg <= seg_end) {
+		if (memory_segment_map[seg] == UNUSED_SEGMENT)
+			memory_segment_map[seg] = RAM_SEGMENT;
+		else
+			DEBUG("CONFIG: RAM: segment %02Xh cannot be defined as RAM since it's %s" NL, seg, memory_segment_map[seg]);
+		seg++;
 	}
-	memset(memory + rom_size, 0xFF, 0x400000 - rom_size);
-	ram_start = 0x400000 - (kbytes << 10);
-	for (a = 0; a < 0x100; a++)
-		used_mem_segments[a] = a >= (0x100 - (kbytes >> 4));
-	DEBUG("Config: %d Kbytes RAM, starting at %Xh" NL, kbytes, ram_start);
-	return kbytes;
 }
 
 
-void ep_clear_ram ( void )
+
+
+int ep_set_ram_config ( const char *spec )
 {
-	memset(memory + ram_start, 0xFF, 0x400000 - ram_start);
+	int a;
+	for (a = 0; a < 0xFC; a++) {
+		if (memory_segment_map[a] == RAM_SEGMENT)
+			memory_segment_map[a] = UNUSED_SEGMENT;
+		if (memory_segment_map[a] == VRAM_SEGMENT || memory_segment_map[a] == UNUSED_SEGMENT)
+			memset(memory + (a << 14), 0xFF, 0x4000);
+	}
+	if (*spec == '@') {	// segment list format is requested ...
+		while (spec && *spec) {
+			int sb, se;
+			spec++;
+			switch (sscanf(spec, "%x-%x,", &sb, &se)) {
+				case 1:
+					DEBUG("CONFIG: RAM: requesting single segment %02Xh as RAM" NL, sb);
+					if (sb >= 0 && sb < 0x100)
+						add_ram_segs(sb, sb);
+					break;
+				case 2:
+					DEBUG("CONFIG: RAM: requesting segment range %02Xh-%02Xh as RAM" NL, sb, se);
+					if (se >= sb && sb >= 0 && se < 0x100)
+						add_ram_segs(sb, se);
+					break;
+			}
+			spec = strchr(spec, ',');
+		}
+	} else {
+		int es = (atoi(spec) - 64) >> 4;
+		if (es < 0)
+			es = 0;
+		else if (es > 252)
+			es = 252;
+		DEBUG("CONFIG: RAM: requesting simple memory range as RAM for %d segments" NL, es);
+		if (es)
+			add_ram_segs(0xFC - es, 0xFB);
+	}
+	return ep_init_ram();
+}
+
+
+
+int ep_init_ram ( void )
+{
+	int a, sum = 0, from;
+	const char *type = NULL;
+	char dbuf[PATH_MAX + 80];
+	if (mem_desc)
+		*mem_desc = '\0';
+	for (a = 0; a < 0x101; a++) {	// yeah, 0x101 is by intent!!
+		if (a < 0x100) {
+			is_ram_seg[a] = (memory_segment_map[a] == RAM_SEGMENT || memory_segment_map[a] == VRAM_SEGMENT);
+			if (is_ram_seg[a]) {
+				memset(memory + (a << 14), 0xFF, 0x4000);
+				sum++;
+			}
+		}
+		if (a == 0x100 || type != memory_segment_map[a] || rom_name_tab[a]) {
+			if (type) {
+				int s;
+				sprintf(dbuf, "%02X-%02X %s %s", from, a - 1, type, rom_name_tab[from] ? rom_name_tab[from] : "");
+				DEBUGPRINT("CONFIG: MEM: %s" NL, dbuf);
+				strcat(dbuf, "\r\n");
+				s = mem_desc ? strlen(mem_desc) : 0;
+				mem_desc = realloc(mem_desc, s + strlen(dbuf) + 256);
+				check_malloc(mem_desc);
+				if (!s)
+					*mem_desc = '\0';
+				strcat(mem_desc, dbuf);
+			}
+			type = memory_segment_map[a];
+			from = a;
+		}
+	}
+	sprintf(dbuf, "RAM:  %d segments (%d Kbytes)", sum, sum << 4);
+	strcat(mem_desc, dbuf);
+	DEBUGPRINT("CONFIG: MEM: found %s" NL, dbuf);
 #ifdef CONFIG_SDEXT_SUPPORT
 	sdext_clear_ram();
 #endif
+	return sum;
 }
 
 
@@ -95,6 +171,7 @@ void ep_clear_ram ( void )
 
 Z80EX_BYTE z80ex_mread_cb(Z80EX_WORD addr, int m1_state) {
 	register int phys = memsegs[addr >> 14] + addr;
+	//DEBUG("M1 state at PC=%04Xh Phys=%08Xh seg=%02Xh" NL, addr, phys, ports[0xB0 | (addr >> 14)]);
 	if (phys >= 0x3F0000) { // VRAM access, no "$BF port" wait states ever, BUT TODO: Nick CPU clock strechting ...
 		nick_clock_align();
 		return memory[phys];
@@ -127,7 +204,8 @@ void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 	}
 	if (mem_ws_all) 
 		z80ex_w_states(1);
-	if (phys >= ram_start)
+	//if (phys >= ram_start)
+	if (is_ram_seg[phys >> 14])
 		memory[phys] = value;
 #ifdef CONFIG_SDEXT_SUPPORT
 	else if ((phys & 0x3F0000) == sdext_cart_enabler)

@@ -18,7 +18,7 @@ OPTIONS:
 -printfile
 	Printing into this file [default: @print.out]
 -ram
-	RAM size in Kbytes [default: 128]
+	RAM size in Kbytes (decimal) or segment specification(s) prefixed with @ in hex (VRAM is always assumed), like: @C0-CF,E0,E3-E7 [default: 128]
 -rom
 	ROM image, format is "rom@xx=filename" (xx=start segment in hex), use rom@00 for EXOS or combined ROM set [default: -]
 -sdimg

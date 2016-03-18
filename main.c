@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 
 static Uint32 *ep_pixels;
-int rom_size;
 int CPU_CLOCK = DEFAULT_CPU_CLOCK;
 static const int _cpu_speeds[4] = { 4000000, 6000000, 7120000, 10000000 };
 static int _cpu_speed_index = 0;
@@ -174,7 +173,7 @@ void emu_one_frame(int rasters, int frameksip)
 							case 0xFC:	// RESET, default key PAUSE
 								if (e.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT)) {
 									zxemu_on = 0;
-									ep_clear_ram();
+									(void)ep_init_ram();
 								}
 								ep_reset();
 								break;
@@ -269,19 +268,10 @@ int main (int argc, char *argv[])
 	ep_pixels = nick_init();
 	if (ep_pixels == NULL)
 		return 1;
-	//rom_size = load_roms(COMBINED_ROM_FN, rom_path_hack);
-	rom_size = roms_load();
-	if (rom_size <= 0)
+	if (roms_load() <= 0)
 		return 1;
 	primo_rom_seg = primo_search_rom();
-	xep_rom_install(rom_size);
-	//memset(memory + rom_size, 0, 0x4000);
-	//memcpy(memory + rom_size, _xep_rom, sizeof _xep_rom);
-	xep_rom_seg = rom_size >> 14;
-	xep_rom_addr = rom_size;
-	DEBUG("XEP ROM segment will be %02Xh @ %06Xh" NL, xep_rom_seg, xep_rom_addr);
-	rom_size += 0x4000;
-	set_ep_ramsize(config_getopt_int("ram"));
+	ep_set_ram_config(config_getopt_str("ram"));
 	mouse_entermice(0);	// 1=Entermice protocol (8 nibbles), 0=boxsoft (4 nibbles), also different lines
 	ep_reset();
 	kbd_matrix_reset();
@@ -304,7 +294,7 @@ int main (int argc, char *argv[])
 	if (config_getopt_str("fullscreen"))
 		screen_set_fullscreen(1);
 	//osd_disable();
-	DEBUGPRINT("EMU: entering into main emulation loop" NL);
+	DEBUGPRINT(NL "EMU: entering into main emulation loop" NL);
 	while (running) {
 		int t;
 #if 0

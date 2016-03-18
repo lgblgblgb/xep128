@@ -9,10 +9,10 @@ BINDIR	= $(PREFIX)/bin
 DATADIR	= $(PREFIX)/lib/xep128
 CC	= $(CC_NATIVE)
 DEBUG	=
-CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\" -DZ80EX_USER_HEADER=\"z80ex_config.h\"
-ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell sdl2-config --cflags | cut -f1 -d' ') $(DEBUG) 
+CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell $(SDLCFG_NATIVE) --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\" -DZ80EX_USER_HEADER=\"z80ex_config.h\"
+ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG_NATIVE) --cflags | cut -f1 -d' ') $(DEBUG) 
 CPPFLAGS= -Iz80ex -I.
-LDFLAGS	= $(shell sdl2-config --libs) -lm $(DEBUG)
+LDFLAGS	= $(shell $(SDLCFG_NATIVE) --libs) -lm $(DEBUG)
 LIBS	=
 INCS	= xepem.h z80ex_config.h
 SRCS	= $(LINSRCS) $(SRCS_COMMON)
@@ -57,7 +57,9 @@ ui-gtk.o: ui-gtk.c
 
 screen.o: app_icon.c
 
-emu_rom_interface.o: xep_rom_syms.h xep_rom.hex
+emu_rom_interface.o: xep_rom_syms.h
+
+roms.o: xep_rom.hex
 
 xep_rom.rom: xep_rom.asm
 	sjasm -s xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom xep_rom.lst xep_rom.sym ; false; }

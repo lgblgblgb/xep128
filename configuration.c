@@ -50,7 +50,7 @@ static const struct configOption_st configOptions[] = {
 	{ DEBUGFILE_OPT,CONFITEM_STR,	"none",		0, "Enable debug messages written to a specified file" },
 	{ "fullscreen",	CONFITEM_BOOL,	"0",		0, "Start in full screen"	},
 	{ "printfile",	CONFITEM_STR,	PRINT_OUT_FN,	0, "Printing into this file"	},
-	{ "ram",	CONFITEM_INT,	"128",		0, "RAM size in Kbytes" 	},
+	{ "ram",	CONFITEM_STR,	"128",		0, "RAM size in Kbytes (decimal) or segment specification(s) prefixed with @ in hex (VRAM is always assumed), like: @C0-CF,E0,E3-E7" 	},
 	{ "rom",	CONFITEM_STR,	NULL,		1, "ROM image, format is \"rom@xx=filename\" (xx=start segment in hex), use rom@00 for EXOS or combined ROM set" },
 	{ "sdimg",	CONFITEM_STR,	SDCARD_IMG_FN,	0, "SD-card disk image (VHD) file name/path" },
 	/* should be the last on the list, as this is handled specially not in the config storage for real */
@@ -469,7 +469,7 @@ int config_init ( int argc, char **argv )
 	/* let's continue with the info block ... */
 	testparsing = 0;
 	DEBUGPRINT("%s %s v%s %s %s" NL
-		"GIT %s compiled by %s at %s with %s %s" NL
+		"GIT %s compiled by (%s) at (%s) with (%s)-(%s)" NL
 		"Platform: (%s) (%d-bit), video: (%s), audio: (%s), "
 		"SDL version compiled: (%d.%d.%d) and linked: (%d.%d.%d)" NL NL,
 		WINDOW_TITLE, DESCRIPTION, VERSION, COPYRIGHT, PROJECT_PAGE,
@@ -547,9 +547,9 @@ int config_init ( int argc, char **argv )
 			fprintf(stderr, "FATAL: Cannot open requested config file: %s" NL, config_name);
 			return 1;
 		} else
-			DEBUGPRINT("Skipping default config file (cannot open), using built-in defaults." NL);
+			DEBUGPRINT("CONFIG: Skipping default config file (cannot open), using built-in defaults." NL);
 	} else
-		DEBUGPRINT("Using config file: DISABLED by command line" NL);
+		DEBUGPRINT("CONFIG: Using config file: DISABLED in command line" NL);
 	/* parse command line ... */
 	if (parse_command_line(argc, argv))
 		return -1;
@@ -561,9 +561,9 @@ int config_init ( int argc, char **argv )
                 	ERROR_WINDOW("Cannot open debug messages log file requested: %s", config_getopt_str(DEBUGFILE_OPT));
 	}
 	if (debug_file)
-		INFO_WINDOW("Debug messages logging is active");
+		INFO_WINDOW("DEBUG: Debug messages logging is active");
 	else
-		printf("No debug messages logging is active." NL);
+		printf("DEBUG: No debug messages logging is active." NL);
 	/* test parsing mode? */
 	if (testparsing) {
 		printf(NL "--- TEST DUMP OF *PARSED* CONFIGURATION (requested)" NL NL);
@@ -571,7 +571,7 @@ int config_init ( int argc, char **argv )
 		printf(NL "--- END OF TEST PARSING MODE (requested)" NL);
 		exit(0);
 	}
-	DEBUG("End of configuration step." NL NL);
+	DEBUG("CONFIG: End of configuration step." NL NL);
 	return 0;
 }
 
