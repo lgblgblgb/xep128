@@ -6,18 +6,18 @@ include Makefile.common
 
 CC	= $(CC_WIN32)
 DEBUG	=
-CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --cflags) $(DEBUG)
+CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell $(SDLCFG_WIN32) --cflags) -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(DEBUG)
 CPPFLAGS= -Iz80ex -I.
-ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -DWORDS_LITTLE_ENDIAN -DZ80EX_ED_TRAPPING_SUPPORT -DZ80EX_Z180_SUPPORT $(DEBUG)
+ZCFLAGS = -ansi -fno-common -Wall -pipe -O3 -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG_WIN32) --cflags | cut -f1 -d' ') $(DEBUG)
 #LDFLAGS= -Wl,-Bstatic $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --libs) -Wl,-Bdynamic $(DEBUG)
 LDFLAGS	= $(shell /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config --libs) $(DEBUG)
 LIBS	= 
 
-INCS	= xepem.h
+INCS	= xepem.h z80ex_config.h
 SRCS	= $(WINSRCS) $(SRCS_COMMON)
 OBJS	= $(SRCS:.c=.o)
 PRG_EXE	= xep128.exe
-ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/z80ex_dasm.h z80ex/z80ex.h z80ex/z180ex.c
+ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/z80ex_dasm.h z80ex/z80ex.h z80ex/z180ex.c z80ex_config.h
 ARCH	= win32
 
 all:

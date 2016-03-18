@@ -9,12 +9,12 @@ BINDIR	= $(PREFIX)/bin
 DATADIR	= $(PREFIX)/lib/xep128
 CC	= $(CC_NATIVE)
 DEBUG	=
-CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\"
-ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -DWORDS_LITTLE_ENDIAN -DZ80EX_ED_TRAPPING_SUPPORT -DZ80EX_Z180_SUPPORT $(DEBUG)
+CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell sdl2-config --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\" -DZ80EX_USER_HEADER=\"z80ex_config.h\"
+ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell sdl2-config --cflags | cut -f1 -d' ') $(DEBUG) 
 CPPFLAGS= -Iz80ex -I.
 LDFLAGS	= $(shell sdl2-config --libs) -lm $(DEBUG)
 LIBS	=
-INCS	= xepem.h
+INCS	= xepem.h z80ex_config.h
 SRCS	= $(LINSRCS) $(SRCS_COMMON)
 OBJS	= $(SRCS:.c=.o)
 PRG	= xep128
@@ -25,7 +25,7 @@ ROM	= combined.rom
 DLL	= SDL2.dll
 DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
 ZIP32	= xep128-win32.zip
-ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/z80ex_dasm.h z80ex/z80ex.h z80ex/z180ex.c
+ZDEPS	= z80ex/ptables.c z80ex/z80ex.c z80ex/opcodes/opcodes_ed.c z80ex/opcodes/opcodes_fdcb.c z80ex/opcodes/opcodes_base.c z80ex/opcodes/opcodes_fd.c z80ex/opcodes/opcodes_cb.c z80ex/opcodes/opcodes_ddcb.c z80ex/opcodes/opcodes_dd.c z80ex/opcodes/opcodes_dasm.c z80ex/z80ex_dasm.c z80ex/macros.h z80ex/z80ex_dasm.h z80ex/z80ex.h z80ex/z180ex.c z80ex_config.h
 ARCH	= native
 
 all:

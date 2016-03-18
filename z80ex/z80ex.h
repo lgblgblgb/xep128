@@ -12,6 +12,10 @@
 #ifndef _Z80EX_H_INCLUDED
 #define _Z80EX_H_INCLUDED
 
+#ifdef Z80EX_USER_HEADER
+#include Z80EX_USER_HEADER
+#endif
+
 #ifdef Z80EX_TSTATE_CALLBACK_ALWAYS
 #	define IS_TSTATE_CB 1
 #	define Z80EX_TSTATE_CALLBACK
@@ -22,6 +26,9 @@
 #	endif
 #endif
 
+#ifndef Z80EX_TYPES_DEFINED
+#define Z80EX_TYPES_DEFINED
+#warning "User did not define Z80EX types ..."
 #if defined(__SYMBIAN32__)
 typedef unsigned char Z80EX_BYTE;
 typedef signed char Z80EX_SIGNED_BYTE;
@@ -44,11 +51,13 @@ typedef signed char Z80EX_SIGNED_BYTE;
 typedef unsigned short Z80EX_WORD;
 typedef unsigned int Z80EX_DWORD;
 #endif
+#endif
 
 /* Union allowing a register pair to be accessed as bytes or as a word */
 typedef union {
-#ifdef WORDS_BIG_ENDIAN
+#ifdef Z80EX_WORDS_BIG_ENDIAN
 	struct { Z80EX_BYTE h,l; } b;
+#warning "Z80Ex big endian support is not tested with the modified Z80Ex by me!"
 #else
 	struct { Z80EX_BYTE l,h; } b;
 #endif
@@ -177,20 +186,22 @@ extern Z80EX_CONTEXT z80ex;
 
 /* statically linked callbacks */
 
+#ifdef Z80EX_CALLBACK_PROTOTYPE
 #ifdef Z80EX_TSTATE_CALLBACK
-void z80ex_tstate_cb ( void );
+Z80EX_CALLBACK_PROTOTYPE void z80ex_tstate_cb ( void );
 #endif
-Z80EX_BYTE z80ex_mread_cb ( Z80EX_WORD addr, int m1_state );
-void z80ex_mwrite_cb ( Z80EX_WORD addr, Z80EX_BYTE value );
-Z80EX_BYTE z80ex_pread_cb ( Z80EX_WORD port );
-void z80ex_pwrite_cb ( Z80EX_WORD port, Z80EX_BYTE value);
-Z80EX_BYTE z80ex_intread_cb(void);
-void z80ex_reti_cb ( void );
+Z80EX_CALLBACK_PROTOTYPE Z80EX_BYTE z80ex_mread_cb ( Z80EX_WORD addr, int m1_state );
+Z80EX_CALLBACK_PROTOTYPE void z80ex_mwrite_cb ( Z80EX_WORD addr, Z80EX_BYTE value );
+Z80EX_CALLBACK_PROTOTYPE Z80EX_BYTE z80ex_pread_cb ( Z80EX_WORD port );
+Z80EX_CALLBACK_PROTOTYPE void z80ex_pwrite_cb ( Z80EX_WORD port, Z80EX_BYTE value);
+Z80EX_CALLBACK_PROTOTYPE Z80EX_BYTE z80ex_intread_cb(void);
+Z80EX_CALLBACK_PROTOTYPE void z80ex_reti_cb ( void );
 #ifdef Z80EX_ED_TRAPPING_SUPPORT
-int z80ex_ed_cb (Z80EX_BYTE opcode);
+Z80EX_CALLBACK_PROTOTYPE int z80ex_ed_cb (Z80EX_BYTE opcode);
 #endif
 #ifdef Z80EX_Z180_SUPPORT
-void z80ex_z180_cb (Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76);
+Z80EX_CALLBACK_PROTOTYPE void z80ex_z180_cb (Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76);
+#endif
 #endif
 
 /*create and initialize CPU*/

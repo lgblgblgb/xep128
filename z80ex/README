@@ -52,6 +52,20 @@ Z80EX_Z180_SUPPORT
 	Ability to have run-time switchable Z180 support
 	(very limited, still Z80 timing, just some Z180
 	opcodes and banned "undocumented" Z80 ones removed)
+Z80EX_CALLBACK_PROTOTYPE
+	If not defined, callback prototypes won't be defined
+	in Z80ex. Useful if you plan to use macros. If defined,
+	the value is inserted before the prototypes.
+Z80EX_TYPES_DEFINED
+	If defined, Z80e won't define its byte/etc types, you
+	should do it!
+Z80EX_WORDS_BIG_ENDIAN
+	Define it for big-endian systems, do not define otherwise.
+Z80EX_USER_HEADER
+	If defined, it's used to include by z80ex.h
+	So you can have your own type definitions, static inline
+	or macro representation of callbacks, etc. You can also
+	use the header included to define the other Z80EX_* macros.
 
 ---------------------------------------------------------
 
