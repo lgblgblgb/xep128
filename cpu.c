@@ -276,6 +276,7 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 #else
 		case 0x10: case 0x14: case 0x11: case 0x15: case 0x12: case 0x16: case 0x13: case 0x17:
 		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
+			DEBUG("EXDOS: not implemented, port read %02X" NL, port);
 			return 0xFF;
 #endif
 		/* ZX Spectrum emulator */
@@ -372,6 +373,7 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 #else
 		case 0x10: case 0x14: case 0x11: case 0x15: case 0x12: case 0x16: case 0x13: case 0x17:
 		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
+			DEBUG("EXDOS: not implemented, port write %02X with value %02X" NL, port, value);
 			break;
 #endif
 		case 0x32:
