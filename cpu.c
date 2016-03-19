@@ -406,7 +406,8 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 		/* DAVE audio etc related registers */
 		case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
 		case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
-			printer_disable_covox();	// disable COVOX mode
+			printer_disable_covox();	// disable COVOX mode, if any
+			audio_source = AUDIO_SOURCE_DAVE;
 			break;
 
 		/* DAVE registers */
@@ -479,6 +480,11 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 		case 0x83: case 0x87: case 0x8B: case 0x8F:
 			nick_clock_align();
 			nick_set_lpth(value);
+			break;
+		/* DTM DAC 4 channel */
+		case 0xF0: case 0xF1: case 0xF2: case 0xF3:
+			printer_disable_covox();        // disable COVOX mode, if any
+			audio_source = AUDIO_SOURCE_DTM_DAC4;
 			break;
 		/* ZXemu card */
 		case 0xFE:

@@ -142,6 +142,13 @@ void z180_port_write ( Uint8 port, Uint8 value );
 Uint8 z180_port_read ( Uint8 port );
 extern int z180_port_start;
 
+#define AUDIO_SOURCE_DAVE               0
+#define AUDIO_SOURCE_PRINTER_COVOX      1
+#define AUDIO_SOURCE_DTM_DAC4           2
+
+extern int audio_source;
+
+
 void audio_init ( int enable );
 void audio_start ( void );
 void audio_stop ( void );
@@ -219,7 +226,6 @@ void printer_port_strobe(void);
 void printer_close(void);
 void printer_disable_covox ( void );
 extern Uint8 printer_data_byte;
-extern int printer_is_covox;
 
 
 void zxemu_write_ula ( Uint8 hiaddr, Uint8 data );

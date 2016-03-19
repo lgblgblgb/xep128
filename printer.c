@@ -29,7 +29,7 @@ static Uint8 buffer[BUFFER_SIZE];
 static int buffer_pos;
 static int strobes_missed = 0;
 Uint8 printer_data_byte = 0xFF;
-int printer_is_covox = 0;
+static int printer_is_covox = 0;
 static int covox_to_warn = 1;
 
 
@@ -73,6 +73,7 @@ void printer_port_set_data ( Uint8 data )
 				covox_to_warn = 0;
 				INFO_WINDOW("COVOX on printer port has been activated. There will be no further messages on this.");
 			}
+			audio_source = AUDIO_SOURCE_PRINTER_COVOX;
 		}
 	} else
 		strobes_missed++;
@@ -110,6 +111,7 @@ void printer_port_strobe ( void )
 	if (printer_is_covox) {
 		DEBUG("PRINTER: COVOX: covox mode has been disabled on STROBE, data byte %02Xh is sent for printing" NL, printer_data_byte);
 		printer_is_covox = 0;
+		audio_source = AUDIO_SOURCE_DAVE;
 	}
 	send_data_to_printer(printer_data_byte);
 }

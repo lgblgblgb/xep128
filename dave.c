@@ -28,6 +28,10 @@ static int _state_tg0, _state_tg1, _state_tg2;
 int kbd_selector;
 int cpu_cycles_per_dave_tick;
 
+
+int audio_source = AUDIO_SOURCE_DAVE;
+
+
 static SDL_AudioDeviceID audio = 0;
 static SDL_AudioSpec audio_spec;
 #define AUDIO_BUFFER_SIZE 0x4000
@@ -39,28 +43,26 @@ static int dave_ticks_per_sample = 6;
 
 
 
-static void dave_render_audio_sample ( void )
+static inline Uint16 dave_render_audio_sample ( void )
 {
 	int left, right;
-	if (printer_is_covox) {
-		left = right = printer_data_byte;
-	} else {
-		/* TODO: missing noise channel, polynom counters/ops, modulation, etc */
-		if (ports[0xA7] &  8)
-			left  = (ports[0xA8] & 63) << 2;	// left ch is in D/A mode
-		else {						// left ch is in "normal" mode
-			left  = _state_tg0 * (ports[0xA8] & 63) +
-				_state_tg1 * (ports[0xA9] & 63) +
-				_state_tg2 * (ports[0xAA] & 63);
-		}
-		if (ports[0xA7] & 16)
-			right = (ports[0xAC] & 63) << 2;	// right ch is in D/A mode
-		else {						// right ch is in "normal" mode
-			right = _state_tg0 * (ports[0xAC] & 63) +
-				_state_tg1 * (ports[0xAD] & 63) +
-				_state_tg2 * (ports[0xAE] & 63);
-		}
+	/* TODO: missing noise channel, polynom counters/ops, modulation, etc */
+	if (ports[0xA7] &  8)
+		left  = (ports[0xA8] & 63) << 2;	// left ch is in D/A mode
+	else {						// left ch is in "normal" mode
+		left  = _state_tg0 * (ports[0xA8] & 63) +
+			_state_tg1 * (ports[0xA9] & 63) +
+			_state_tg2 * (ports[0xAA] & 63);
 	}
+	if (ports[0xA7] & 16)
+		right = (ports[0xAC] & 63) << 2;	// right ch is in D/A mode
+	else {						// right ch is in "normal" mode
+		right = _state_tg0 * (ports[0xAC] & 63) +
+			_state_tg1 * (ports[0xAD] & 63) +
+			_state_tg2 * (ports[0xAE] & 63);
+	}
+	return (left << 8) | right;
+#if 0
 	/* store sample now! */
 	//daveAudioBufferLRec[daveAudioBufferWPos] = left  / 126 - 1;
 	//daveAudioBufferRRec[daveAudioBufferWPos] = right / 126 - 1;
@@ -70,7 +72,22 @@ static void dave_render_audio_sample ( void )
 	*(audio_buffer_w++) = right ;
 	if (audio_buffer_w == audio_buffer + AUDIO_BUFFER_SIZE)
 		audio_buffer_w = audio_buffer;
+#endif
 }
+
+
+
+static void audio_fill_stereo ( Uint16 stereo_sample )
+{
+	*(Uint16*)(audio_buffer_w) = stereo_sample;
+	audio_buffer_w += 2;
+	if (audio_buffer_w == audio_buffer + AUDIO_BUFFER_SIZE)
+		audio_buffer_w = audio_buffer;
+}
+
+
+
+
 
 
 static void audio_callback(void *userdata, Uint8 *stream, int len)
@@ -265,7 +282,23 @@ void dave_tick ( void )
 	// SOUND
 	if (audio) {
 		if ((--dave_ticks_per_sample_counter) < 0) {
-			dave_render_audio_sample();
+			switch (audio_source) {
+				case AUDIO_SOURCE_DAVE:
+					audio_fill_stereo(dave_render_audio_sample());
+					break;
+				case AUDIO_SOURCE_PRINTER_COVOX:
+					audio_fill_stereo((printer_data_byte << 8) | printer_data_byte);	// both stereo channels has the same byte ...
+					break;
+				case AUDIO_SOURCE_DTM_DAC4:
+					audio_fill_stereo(
+						((ports[0xF0] + ports[0xF1]) >> 1) |	// left
+						(((ports[0xF2] + ports[0xF3]) >> 1) << 8)	// right
+					);
+					break;
+				default:
+					ERROR_WINDOW("Audio source renderer %d is not known!", audio_source);
+					exit(1);
+			}
 			dave_ticks_per_sample_counter = dave_ticks_per_sample - 1;
 		}
 	}
