@@ -44,4 +44,7 @@ xep_rom_syms.h
 screenshot*.png
 .depend
 .*.swp
+wiki
+*.img
+*.bak
 
