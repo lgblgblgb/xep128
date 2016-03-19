@@ -275,7 +275,7 @@ int main (int argc, char *argv[])
 		return 1;
 	primo_rom_seg = primo_search_rom();
 	ep_set_ram_config(config_getopt_str("ram"));
-	mouse_entermice(0);	// 1=Entermice protocol (8 nibbles), 0=boxsoft (4 nibbles), also different lines
+	mouse_setup(config_getopt_int("mousemode"));
 	ep_reset();
 	kbd_matrix_reset();
 #ifdef CONFIG_SDEXT_SUPPORT

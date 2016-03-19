@@ -9,6 +9,7 @@
 audio = 0	# Enable audio output
 debug = none	# Enable debug messages written to a specified file
 fullscreen = 0	# Start in full screen
+mousemode = 1	# Set mouse mode, 1-3 = J-column 2,4,8 bytes and 4-6 the same for K-column
 primo = none	# Start in Primo emulator mode (if not "none")
 printfile = @print.out	# Printing into this file
 ram = 128	# RAM size in Kbytes (decimal) or segment specification(s) prefixed with @ in hex (VRAM is always assumed), like: @C0-CF,E0,E3-E7

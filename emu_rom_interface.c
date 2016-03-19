@@ -142,20 +142,20 @@ static void cmd_exit ( void )
 }
 
 
-static void cmd_entermice ( void )
+static void cmd_mouse ( void )
 {
-	switch (*carg) {
-		case '0':
-		case '1':
-			mouse_entermice(*carg - '0');
+	int c = *carg;
+	switch (c) {
+		case '1': case '2': case '3': case '4': case '5': case '6':
+			mouse_setup(c - '0');
 			break;
-		case 0:
+		case '\0':
 			break;
 		default:
-			sprintf(COBUF, "*** Give 0 or 1 to set/clear EnterMice mode, or no parameter for query.\r\n");
+			sprintf(COBUF, "*** Give values 1 ... 6 for mode, or no parameter for query.\r\n");
 			return;
 	}
-	sprintf(COBUF, "Mouse mode is %s\r\n", mouse_entermice(-1) ? "EnterMice" : "BoxSoft");
+	sprintf(COBUF, "Mouse mode is %d\r\n", mouse_setup(-1));
 }
 
 
@@ -182,7 +182,7 @@ static const struct commands_st commands[] = {
 	{ "cpu",	"Set/query CPU type/clock", cmd_cpu },
 	{ "ram",        "Set RAM size/report", cmd_ram },
 	{ "emu",	"Emulation info", cmd_emu },
-	{ "emice",	"Set on/off and query entermice mode", cmd_entermice },
+	{ "mouse",	"Configure or query mouse mode", cmd_mouse },
 	{ "help",	"This help screen", cmd_help },
 	{ "exit",	"Exit Xep128", cmd_exit },
 	{ "primo",	"Primo emulation", cmd_primo },

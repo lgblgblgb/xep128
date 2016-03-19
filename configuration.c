@@ -49,6 +49,7 @@ static const struct configOption_st configOptions[] = {
 	{ "audio",	CONFITEM_BOOL,	"0",		0, "Enable audio output"	},
 	{ DEBUGFILE_OPT,CONFITEM_STR,	"none",		0, "Enable debug messages written to a specified file" },
 	{ "fullscreen",	CONFITEM_BOOL,	"0",		0, "Start in full screen"	},
+	{ "mousemode",	CONFITEM_INT,	"1",		0, "Set mouse mode, 1-3 = J-column 2,4,8 bytes and 4-6 the same for K-column" },
 	{ "primo",	CONFITEM_STR,	"none",		0, "Start in Primo emulator mode (if not \"none\")" },
 	{ "printfile",	CONFITEM_STR,	PRINT_OUT_FN,	0, "Printing into this file"	},
 	{ "ram",	CONFITEM_STR,	"128",		0, "RAM size in Kbytes (decimal) or segment specification(s) prefixed with @ in hex (VRAM is always assumed), like: @C0-CF,E0,E3-E7" 	},
