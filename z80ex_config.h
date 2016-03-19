@@ -24,30 +24,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define Z80EX_ED_TRAPPING_SUPPORT
 #define Z80EX_CALLBACK_PROTOTYPE extern
 
-/* Types, from original Z80Ex for now ... */
+/* Types, instead of Z80ex's own, we want our SDL ones */
+#include "SDL_types.h"
 #define Z80EX_TYPES_DEFINED
-#if defined(__SYMBIAN32__)
-typedef unsigned char Z80EX_BYTE;
-typedef signed char Z80EX_SIGNED_BYTE;
-typedef unsigned short Z80EX_WORD;
-typedef unsigned int Z80EX_DWORD;
-#elif defined(__GNUC__)
-#include <stdint.h>
-typedef uint8_t Z80EX_BYTE;
-typedef int8_t Z80EX_SIGNED_BYTE;
-typedef uint16_t Z80EX_WORD;
-typedef uint32_t Z80EX_DWORD;
-#elif defined(_MSC_VER)
-typedef unsigned __int8 Z80EX_BYTE;
-typedef signed __int8 Z80EX_SIGNED_BYTE;
-typedef unsigned __int16 Z80EX_WORD;
-typedef unsigned __int32 Z80EX_DWORD;
-#else
-typedef unsigned char Z80EX_BYTE;
-typedef signed char Z80EX_SIGNED_BYTE;
-typedef unsigned short Z80EX_WORD;
-typedef unsigned int Z80EX_DWORD;
-#endif
+#define Z80EX_BYTE		Uint8
+#define Z80EX_SIGNED_BYTE	Sint8
+#define Z80EX_WORD		Uint16
+#define Z80EX_DWORD		Uint32
 
 /* Endian related stuffs for Z80ex */
 #include "SDL_endian.h"
@@ -58,10 +41,14 @@ typedef unsigned int Z80EX_DWORD;
 #	ifdef Z80EX_WORDS_BIG_ENDIAN
 #		undef Z80EX_WORDS_BIG_ENDIAN
 #	endif
-#else
+#	define ENDIAN_GOOD
+#elif SDL_BYTEORDER == SDL_BIG_ENDIAN
 #	ifndef Z80EX_WORDS_BIG_ENDIAN
 #		define Z80EX_WORDS_BIG_ENDIAN
 #	endif
+#	define ENDIAN_UGLY
+#else
+#	error "SDL_BYTEORDER is not SDL_LIL_ENDIAN neither SDL_BIG_ENDIAN"
 #endif
 
 #endif
