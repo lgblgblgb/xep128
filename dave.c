@@ -42,20 +42,24 @@ static int dave_ticks_per_sample = 6;
 static void dave_render_audio_sample ( void )
 {
 	int left, right;
-	/* TODO: missing noise channel, polynom counters/ops, modulation, etc */
-	if (ports[0xA7] &  8)
-		left  = (ports[0xA8] & 63) << 2;	// left ch is in D/A mode
-	else {						// left ch is in "normal" mode
-		left  = _state_tg0 * (ports[0xA8] & 63) +
-			_state_tg1 * (ports[0xA9] & 63) +
-			_state_tg2 * (ports[0xAA] & 63);
-	}
-	if (ports[0xA7] & 16)
-		right = (ports[0xAC] & 63) << 2;	// right ch is in D/A mode
-	else {						// right ch is in "normal" mode
-		right = _state_tg0 * (ports[0xAC] & 63) +
-			_state_tg1 * (ports[0xAD] & 63) +
-			_state_tg2 * (ports[0xAE] & 63);
+	if (printer_is_covox) {
+		left = right = printer_data_byte;
+	} else {
+		/* TODO: missing noise channel, polynom counters/ops, modulation, etc */
+		if (ports[0xA7] &  8)
+			left  = (ports[0xA8] & 63) << 2;	// left ch is in D/A mode
+		else {						// left ch is in "normal" mode
+			left  = _state_tg0 * (ports[0xA8] & 63) +
+				_state_tg1 * (ports[0xA9] & 63) +
+				_state_tg2 * (ports[0xAA] & 63);
+		}
+		if (ports[0xA7] & 16)
+			right = (ports[0xAC] & 63) << 2;	// right ch is in D/A mode
+		else {						// right ch is in "normal" mode
+			right = _state_tg0 * (ports[0xAC] & 63) +
+				_state_tg1 * (ports[0xAD] & 63) +
+				_state_tg2 * (ports[0xAE] & 63);
+		}
 	}
 	/* store sample now! */
 	//daveAudioBufferLRec[daveAudioBufferWPos] = left  / 126 - 1;

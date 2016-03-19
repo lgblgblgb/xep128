@@ -23,9 +23,16 @@ static FILE *fp = NULL;
 static int fp_to_open = 1;
 
 #define BUFFER_SIZE 1024
+#define COVOX_ACTIVATION_LIMIT 0x100
 
 static Uint8 buffer[BUFFER_SIZE];
 static int buffer_pos;
+static int strobes_missed = 0;
+Uint8 printer_data_byte = 0xFF;
+int printer_is_covox = 0;
+static int covox_to_warn = 1;
+
+
 
 
 static void write_printer_buffer ( void )
@@ -41,6 +48,7 @@ static void write_printer_buffer ( void )
 }
 
 
+
 void printer_close ( void )
 {
 	if (fp) {
@@ -53,7 +61,26 @@ void printer_close ( void )
 }
 
 
-void printer_send_data ( Uint8 data )
+
+void printer_port_set_data ( Uint8 data )
+{
+	printer_data_byte = data;
+	if (strobes_missed > COVOX_ACTIVATION_LIMIT) {
+		if (!printer_is_covox) {
+			DEBUG("PRINTER: COVOX: covox mode has been activated on more than %d writes without STROBE" NL, COVOX_ACTIVATION_LIMIT);
+			printer_is_covox = 1;
+			if (covox_to_warn) {
+				covox_to_warn = 0;
+				INFO_WINDOW("COVOX on printer port has been activated. There will be no further messages on this.");
+			}
+		}
+	} else
+		strobes_missed++;
+}
+
+
+
+static void send_data_to_printer ( Uint8 data )
 {
 	//DEBUG("PRINTER GOT DATA: %d" NL, data);
 	if (fp_to_open) {
@@ -72,6 +99,29 @@ void printer_send_data ( Uint8 data )
 		if (buffer_pos == BUFFER_SIZE)
 			write_printer_buffer();
 		// fprintf(fp, "%c", data);
+	}
+}
+
+
+
+void printer_port_strobe ( void )
+{
+	strobes_missed = 0;
+	if (printer_is_covox) {
+		DEBUG("PRINTER: COVOX: covox mode has been disabled on STROBE, data byte %02Xh is sent for printing" NL, printer_data_byte);
+		printer_is_covox = 0;
+	}
+	send_data_to_printer(printer_data_byte);
+}
+
+
+
+void printer_disable_covox ( void )
+{
+	if (printer_is_covox) {
+		printer_is_covox = 0;
+		strobes_missed = 0;
+		DEBUG("PRINTER: COVOX: covox mode has been disabled on emulator event." NL);
 	}
 }
 

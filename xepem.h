@@ -214,8 +214,13 @@ void rtc_write_reg(Uint8 val);
 Uint8 rtc_read_reg(void);
 extern int rtc_update_trigger;
 
-void printer_send_data(Uint8 data);
+void printer_port_set_data(Uint8 data);
+void printer_port_strobe(void);
 void printer_close(void);
+void printer_disable_covox ( void );
+extern Uint8 printer_data_byte;
+extern int printer_is_covox;
+
 
 void zxemu_write_ula ( Uint8 hiaddr, Uint8 data );
 Uint8 zxemu_read_ula ( Uint8 hiaddr );

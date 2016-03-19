@@ -406,6 +406,7 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 		/* DAVE audio etc related registers */
 		case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
 		case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
+			printer_disable_covox();	// disable COVOX mode
 			break;
 
 		/* DAVE registers */
@@ -435,10 +436,13 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 			/*if ((old_value & 16) != (value & 16))
 				DEBUG("PRINTER STROBE: %d -> %d" NL, old_value & 16, value & 16);*/
 			if ((old_value & 16) && (!(value & 16)))
-				printer_send_data(ports[0xB6]);
+				printer_port_strobe();
+			//	printer_send_data(ports[0xB6]);
+			//printer_port_strobe((old_value & 16) != (value & 16));	// storbe event
 			break;
 		case 0xB6:
 			// DEBUG("PRINTER DATA: %d" NL, value);
+			printer_port_set_data(value);
 			break;
 		case 0xB7:
 			mouse_check_data_shift(value);
