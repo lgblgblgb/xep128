@@ -177,7 +177,7 @@ void nick_dump_lpt ( void );
 
 void set_ep_memseg(int seg, int val);
 void port_write ( Z80EX_WORD port, Z80EX_BYTE value );
-
+extern int mem_wait_states;
 
 int emu_kbd(SDL_Keysym sym, int press);
 void emu_mouse_button(Uint8 button, int press);

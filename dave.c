@@ -27,6 +27,7 @@ static int _cnt_1hz, _cnt_50hz, _cnt_31khz, _cnt_1khz, _cnt_tg0, _cnt_tg1, _cnt_
 static int _state_tg0, _state_tg1, _state_tg2;
 int kbd_selector;
 int cpu_cycles_per_dave_tick;
+int mem_wait_states;
 
 
 int audio_source = AUDIO_SOURCE_DAVE;
@@ -163,6 +164,7 @@ void dave_set_clock ( void )
 		dave_ticks_per_sample = 6;
 	}
 	//DEBUG("DAVE: CLOCK: assumming %dMHz input, CPU clock divisor is %d, CPU cycles per Dave tick is %d" NL, (ports[0xBF] & 2) ? 12 : 8, CPU_CLOCK / cpu_cycles_per_dave_tick, cpu_cycles_per_dave_tick);
+	mem_wait_states = (CPU_CLOCK > 4000000) ? 2 : 1; // memory wait states (non-VRAM only!) asked by BF port is 1, but 2 for "turbo" Z80 solutions
 }
 
 

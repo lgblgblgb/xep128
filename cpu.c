@@ -196,7 +196,7 @@ Z80EX_BYTE z80ex_mread_cb(Z80EX_WORD addr, int m1_state) {
 		return memory[phys];
 	}
 	if (mem_ws_all || (m1_state && mem_ws_m1))
-		z80ex_w_states(1);
+		z80ex_w_states(mem_wait_states);
 #ifdef CONFIG_SDEXT_SUPPORT
 	if ((phys & 0x3F0000) == sdext_cart_enabler)
 		return sdext_read_cart(phys & 0xFFFF);
@@ -222,7 +222,7 @@ void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 		return;
 	}
 	if (mem_ws_all) 
-		z80ex_w_states(1);
+		z80ex_w_states(mem_wait_states);
 	//if (phys >= ram_start)
 	if (is_ram_seg[phys >> 14])
 		memory[phys] = value;
