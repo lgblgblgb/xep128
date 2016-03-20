@@ -67,6 +67,7 @@ char *app_pref_path, *app_base_path;
 char current_directory[PATH_MAX + 1];
 SDL_version sdlver_compiled, sdlver_linked;
 FILE *debug_file = NULL;
+int sdl_v204;
 
 
 
@@ -436,6 +437,14 @@ static void save_sample_config ( const char *name )
 
 
 
+
+#if !SDL_VERSION_ATLEAST(2, 0, 2)
+#	error "We need SDL2 version 2.0.2 at least!"
+#endif
+
+
+
+
 int config_init ( int argc, char **argv )
 {
 	const char *config_name = DEFAULT_CONFIG_FILE;	// name of the used config file, can be overwritten via CLI
@@ -446,6 +455,7 @@ int config_init ( int argc, char **argv )
 	argc--; argv++;
 	SDL_VERSION(&sdlver_compiled);
 	SDL_GetVersion(&sdlver_linked);
+	sdl_v204 = (sdlver_linked.major >= 2 && (sdlver_linked.patch >= 4 || sdlver_linked.minor)); // used to work-around linked/compiled mismatch and using 2.0.4 features ...
 	/* SDL info on paths */
 	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
 	app_base_path = SDL_GetBasePath();
@@ -473,12 +483,12 @@ int config_init ( int argc, char **argv )
 	DEBUGPRINT("%s %s v%s %s %s" NL
 		"GIT %s compiled by (%s) at (%s) with (%s)-(%s)" NL
 		"Platform: (%s) (%d-bit), video: (%s), audio: (%s), "
-		"SDL version compiled: (%d.%d.%d) and linked: (%d.%d.%d)" NL NL,
+		"SDL version compiled: (%d.%d.%d) and linked: (%d.%d.%d) rev (%s)" NL NL,
 		WINDOW_TITLE, DESCRIPTION, VERSION, COPYRIGHT, PROJECT_PAGE,
 		BUILDINFO_GIT, BUILDINFO_ON, BUILDINFO_AT, CC_TYPE, BUILDINFO_CC,
 		SDL_GetPlatform(), ARCH_BITS, SDL_GetCurrentVideoDriver(), SDL_GetCurrentAudioDriver(),
 		sdlver_compiled.major, sdlver_compiled.minor, sdlver_compiled.patch,
-		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch
+		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch, SDL_GetRevision()
 	);
 	DEBUGPRINT("PATH: executable: %s" NL, exe);
 	/* SDL path info block printout */
