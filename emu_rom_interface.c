@@ -155,7 +155,8 @@ static void cmd_mouse ( void )
 			sprintf(COBUF, "*** Give values 1 ... 6 for mode, or no parameter for query.\r\n");
 			return;
 	}
-	sprintf(COBUF, "Mouse mode is %d\r\n", mouse_setup(-1));
+	mouse_mode_description(0, buffer);
+	sprintf(COBUF, "%s\r\n", buffer);
 }
 
 

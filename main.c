@@ -193,8 +193,19 @@ void emu_one_frame(int rasters, int frameksip)
 					DEBUG("UI: NOT HANDLED KEY EVENT: repeat = %d windowid = %d [our win = %d]" NL, e.key.repeat, e.key.windowID, sdl_winid);
 				break;
 			case SDL_MOUSEMOTION:
-				if (e.button.windowID == sdl_winid)
+				if (e.motion.windowID == sdl_winid)
 					emu_mouse_motion(e.motion.xrel, e.motion.yrel);
+				break;
+			case SDL_MOUSEWHEEL:
+				if (e.wheel.windowID == sdl_winid)
+					emu_mouse_wheel(
+						e.wheel.x, e.wheel.y,
+#if SDL_VERSION_ATLEAST(2, 0, 4)
+						sdl_v204 ? e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED : 0
+#else
+						0
+#endif
+					);
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 			case SDL_MOUSEBUTTONUP:

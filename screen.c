@@ -133,9 +133,9 @@ void osd_replay ( int fade )
 void screen_grab ( SDL_bool state )
 {
 	if (warn_for_mouse_grab) {
-		INFO_WINDOW("Clicking in emulator window causes to enter BoxSoft mouse emulation mode.\nThis will try to grab your mouse pointer. To exit, press key ESC.\nYou won't get this notice next time within this session of Xep128");
+		//INFO_WINDOW("Clicking in emulator window causes to enter BoxSoft mouse emulation mode.\nThis will try to grab your mouse pointer. To exit, press key ESC.\nYou won't get this notice next time within this session of Xep128");
 		warn_for_mouse_grab = 0;
-	} else if (state == SDL_TRUE)
+	} /*else*/ if (state == SDL_TRUE)
 		OSD("Mouse grab\nPress ESC to leave.");
 	DEBUG("UI: GRAB: %d" NL, state);
 	SDL_SetRelativeMouseMode(state);

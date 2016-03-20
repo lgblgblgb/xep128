@@ -161,7 +161,6 @@ void dave_tick ( void );
 extern int cpu_cycles_per_dave_tick;
 void kbd_matrix_reset ( void );
 void mouse_reset_button ( void );
-int mouse_is_enabled ( void );
 //extern int mem_ws_all, mem_ws_m1;
 
 //int z80_disasm(char *buffer, int buffer_size, int flags, int *t_states, int *t_states_2, Uint16 pc, int seg);
@@ -180,9 +179,11 @@ void port_write ( Z80EX_WORD port, Z80EX_BYTE value );
 extern int mem_wait_states;
 
 int emu_kbd(SDL_Keysym sym, int press);
-void emu_mouse_button(Uint8 button, int press);
+void emu_mouse_button(Uint8 sdl_button, int press);
 void emu_mouse_motion(int dx, int dy);
-Uint8 mouse_read(void);
+void emu_mouse_wheel ( int x, int y, int flipped);
+int mouse_mode_description ( int cfg, char *buffer );
+Uint8 read_port_b6(void);
 void mouse_check_data_shift(Uint8 val);
 void mouse_reset(void);
 int mouse_setup ( int cfg );
@@ -325,6 +326,7 @@ static inline const char *config_getopt_str ( const char *name ) {
 	return s;
 }
 extern SDL_version sdlver_compiled, sdlver_linked;
+extern int sdl_v204;
 
 extern const char *BUILDINFO_ON;
 extern const char *BUILDINFO_AT;
