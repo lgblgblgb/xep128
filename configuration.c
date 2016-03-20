@@ -548,7 +548,7 @@ int config_init ( int argc, char **argv )
 	if (strcasecmp(config_name, "none")) {
 		char path[PATH_MAX + 1];
 		FILE *f = open_emu_file(config_name, "r", path);
-		DEBUGPRINT("Using config file: %s (%s)" NL, config_name, f ? path : "CANNOT OPEN");
+		DEBUGPRINT("CONFIG: config file: %s (%s)" NL, config_name, f ? path : "*** CANNOT OPEN, NOT USING CONFIG FILE ***");
 		if (f) {
 			if (load_config_file_stream(f, path)) {
 				fclose(f);
