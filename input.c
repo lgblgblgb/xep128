@@ -18,7 +18,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
 
-static int move_dx, move_dy, _mouse_grab = 0, nibble_counter;
+static int move_dx, move_dy, nibble_counter;
+int mouse_grab = 0;
 static int wheel_dx, wheel_dy;
 static Uint8 nibble, mouse_data_row0;
 static int _mouse_last_shift = -1;
@@ -171,14 +172,14 @@ int mouse_mode_description ( int cfg, char *buffer )
 
 static int mouse_is_enabled ( void )
 {
-	if (!_mouse_grab && _mouse_pulse) {
+	if (!mouse_grab && _mouse_pulse) {
 		if (_mouse_wait_warn) {
 			OSD("Application may wait for mouse\nLeft click for grabbing, please!");
 			_mouse_wait_warn = 0;
 			warn_for_mouse_grab = 0;
 		}
 	}
-	return _mouse_grab || _mouse_pulse;
+	return mouse_grab || _mouse_pulse;
 }
 
 
@@ -235,10 +236,10 @@ void emu_mouse_button ( Uint8 sdl_button, int press )
 		DEBUG("MOUSE: unknown mouse button on SDL level (see previous MOUSE: line)!!" NL);
 		return;	// unknown mouse button??
 	}
-	if (sdl_button == SDL_BUTTON_LEFT && press && _mouse_grab == 0) {
+	if (sdl_button == SDL_BUTTON_LEFT && press && mouse_grab == 0) {
 		//emu_osd_msg("Mouse grab. Press ESC to exit.");
 		screen_grab(SDL_TRUE);
-		_mouse_grab = 1;
+		mouse_grab = 1;
 		mouse_reset_button();
 	}
 	switch (mode->buttons[id]) {
@@ -267,7 +268,7 @@ void emu_mouse_button ( Uint8 sdl_button, int press )
 
 void emu_mouse_motion ( int dx, int dy )
 {
-	if (!_mouse_grab) return; // not in mouse grab mode
+	if (!mouse_grab) return; // not in mouse grab mode
 	DEBUG("MOUSE MOTION event dx = %d dy = %d" NL, dx, dy);
 	move_dx -= dx;
 	if (move_dx > 127) move_dx = 127;
@@ -294,7 +295,7 @@ void emu_mouse_wheel ( int x, int y, int flipped )
 
 void mouse_reset ( void )
 {
-	// _mouse_grab = 0; // fix to comment our: reset pressed with grabbed mouse
+	// mouse_grab = 0; // fix to comment our: reset pressed with grabbed mouse
 	nibble_counter = 0;
 	//if (_mouse_last_shift == -1)
 	_mouse_last_shift = 0;
@@ -426,8 +427,8 @@ int emu_kbd(SDL_Keysym sym, int press)
 	if (show_keys && press) {
 		OSD("SDL scancode is \"%s\"", SDL_GetScancodeName(sym.scancode));
 	}
-	if (_mouse_grab && sym.scancode == SDL_SCANCODE_ESCAPE && press) {
-		_mouse_grab = 0;
+	if (mouse_grab && sym.scancode == SDL_SCANCODE_ESCAPE && press) {
+		mouse_grab = 0;
 		screen_grab(SDL_FALSE);
 	} else {
 		const struct keyMappingTable_st *ke = keymap_resolve_event(sym);
@@ -444,81 +445,4 @@ int emu_kbd(SDL_Keysym sym, int press)
 		}
 	}
 	return 0;	// no kbd should be handled by the caller ...
-}
-
-
-/* The rest of the file should be moved to an UI related source file if it worth later ... */
-
-
-void check_malloc ( const void *p )
-{
-	if (p == NULL) {
-		ERROR_WINDOW("Memory allocation error. Not enough memory?");
-		exit(1);
-	}
-}
-
-
-
-int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
-{
-        int mg = _mouse_grab, r;
-        kbd_matrix_reset();
-        mouse_reset_button();
-	audio_stop();
-	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
-	r = SDL_ShowSimpleMessageBox(sdlflag, "Xep128", msg, sdl_win);
-	if (mg == SDL_TRUE) screen_grab(mg);
-	audio_start();
-	return r;
-}
-
-
-
-int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
-{
-	char items_buf[512], *items = items_buf;
-	int buttonid, mg = _mouse_grab;
-	SDL_MessageBoxButtonData buttons[16];
-	SDL_MessageBoxData messageboxdata = {
-		SDL_MESSAGEBOX_INFORMATION, /* .flags */
-		sdl_win, /* .window */
-		"Xep128", /* .title */
-		msg, /* .message */
-		0,	/* number of buttons, will be updated! */
-		buttons,
-		NULL	// &colorScheme
-	};
-	strcpy(items_buf, items_in);
-	for (;;) {
-		char *p = strchr(items, '|');
-		switch (*items) {
-			case '!':
-				buttons[messageboxdata.numbuttons].flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
-				items++;
-				break;
-			case '?':
-				buttons[messageboxdata.numbuttons].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
-				items++;
-				break;
-			default:
-				buttons[messageboxdata.numbuttons].flags = 0;
-				break;
-		}
-		buttons[messageboxdata.numbuttons].text = items;
-		buttons[messageboxdata.numbuttons].buttonid = messageboxdata.numbuttons;
-		messageboxdata.numbuttons++;
-		if (p == NULL) break;
-		*p = 0;
-		items = p + 1;
-	}
-	/* win grab, kbd/mouse emu reset etc before the window! */
-	kbd_matrix_reset();
-	mouse_reset_button();
-	audio_stop();
-	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
-	SDL_ShowMessageBox(&messageboxdata, &buttonid);
-	if (mg == SDL_TRUE) screen_grab(mg);
-	audio_start();
-	return buttonid;
 }

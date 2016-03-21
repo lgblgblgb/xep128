@@ -333,3 +333,77 @@ int screen_init ( void )
 	return 0;
 }
 
+
+
+void check_malloc ( const void *p )
+{
+	if (p == NULL) {
+		ERROR_WINDOW("Memory allocation error. Not enough memory?");
+		exit(1);
+	}
+}
+
+
+
+int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
+{
+        int mg = mouse_grab, r;
+        kbd_matrix_reset();
+        mouse_reset_button();
+	audio_stop();
+	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
+	r = SDL_ShowSimpleMessageBox(sdlflag, WINDOW_TITLE, msg, sdl_win);
+	if (mg == SDL_TRUE) screen_grab(mg);
+	audio_start();
+	return r;
+}
+
+
+
+int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
+{
+	char items_buf[512], *items = items_buf;
+	int buttonid, mg = mouse_grab;
+	SDL_MessageBoxButtonData buttons[16];
+	SDL_MessageBoxData messageboxdata = {
+		SDL_MESSAGEBOX_INFORMATION, /* .flags */
+		sdl_win, /* .window */
+		WINDOW_TITLE, /* .title */
+		msg, /* .message */
+		0,	/* number of buttons, will be updated! */
+		buttons,
+		NULL	// &colorScheme
+	};
+	strcpy(items_buf, items_in);
+	for (;;) {
+		char *p = strchr(items, '|');
+		switch (*items) {
+			case '!':
+				buttons[messageboxdata.numbuttons].flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+				items++;
+				break;
+			case '?':
+				buttons[messageboxdata.numbuttons].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+				items++;
+				break;
+			default:
+				buttons[messageboxdata.numbuttons].flags = 0;
+				break;
+		}
+		buttons[messageboxdata.numbuttons].text = items;
+		buttons[messageboxdata.numbuttons].buttonid = messageboxdata.numbuttons;
+		messageboxdata.numbuttons++;
+		if (p == NULL) break;
+		*p = 0;
+		items = p + 1;
+	}
+	/* win grab, kbd/mouse emu reset etc before the window! */
+	kbd_matrix_reset();
+	mouse_reset_button();
+	audio_stop();
+	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
+	SDL_ShowMessageBox(&messageboxdata, &buttonid);
+	if (mg == SDL_TRUE) screen_grab(mg);
+	audio_start();
+	return buttonid;
+}
