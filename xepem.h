@@ -179,6 +179,7 @@ void port_write ( Z80EX_WORD port, Z80EX_BYTE value );
 extern int mem_wait_states;
 
 int emu_kbd(SDL_Keysym sym, int press);
+extern int show_keys;
 void emu_mouse_button(Uint8 sdl_button, int press);
 void emu_mouse_motion(int dx, int dy);
 void emu_mouse_wheel ( int x, int y, int flipped);

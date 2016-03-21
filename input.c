@@ -27,6 +27,8 @@ static int _mouse_wait_warn = 1;
 extern Uint32 raster_time; // we use Nick's raster_time "timing source" because it's kinda free without introducing another timer source
 static Uint32 watchdog;		// watchdog value (compared to raster_time)
 
+int show_keys = 0;
+
 // Currently we don't modify this, so it's a macro (upper 5 bits of port B6 on read), tape in '1' for top bits
 #define port_b6_misc 0xC0
 
@@ -421,6 +423,9 @@ int mouse_setup ( int cfg )
 
 int emu_kbd(SDL_Keysym sym, int press)
 {
+	if (show_keys && press) {
+		OSD("SDL scancode is \"%s\"", SDL_GetScancodeName(sym.scancode));
+	}
 	if (_mouse_grab && sym.scancode == SDL_SCANCODE_ESCAPE && press) {
 		_mouse_grab = 0;
 		screen_grab(SDL_FALSE);

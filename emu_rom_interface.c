@@ -176,6 +176,13 @@ static void cmd_primo ( void )
 }
 
 
+static void cmd_showkeys ( void )
+{
+	show_keys = !show_keys;
+	sprintf(COBUF, "SDL show keys info has been turned %s.\r\n", show_keys ? "ON" : "OFF");
+}
+
+
 static void cmd_help ( void );
 
 static const struct commands_st commands[] = {
@@ -187,6 +194,7 @@ static const struct commands_st commands[] = {
 	{ "help",	"This help screen", cmd_help },
 	{ "exit",	"Exit Xep128", cmd_exit },
 	{ "primo",	"Primo emulation", cmd_primo },
+	{ "showkeys",	NULL, cmd_showkeys },
 	{ NULL,		NULL, NULL }
 };
 
@@ -198,7 +206,8 @@ static void cmd_help ( void ) {
 		BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT, CC_TYPE, BUILDINFO_CC
 	) + COBUF;
         while (cmds->cmd) {
-                p += sprintf(p, "%s\t%s\r\n", cmds->cmd, cmds->help);
+		if (cmds->help)
+	                p += sprintf(p, "%s\t%s\r\n", cmds->cmd, cmds->help);
                 cmds++;
         }
 }
