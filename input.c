@@ -326,31 +326,32 @@ static void check_watchdog ( void )
 // Called from cpu.c in case of read port 0xB6
 Uint8 read_port_b6 ( void )
 {
-	_mouse_pulse = 0;
+	int ena = mouse_is_enabled();
+	 _mouse_pulse = 0;
 	switch (kbd_selector) {
 		/* joystick-1 or mouse related */
 		case  0:
-			if (mouse_is_enabled())
+			if (ena)
 				return mouse_data_row0 | port_b6_misc;
 			else
 				return ( kbd_matrix[10]       & 1) | 6 | port_b6_misc;
 		case  1:
-			if (mouse_is_enabled())
+			if (ena)
 				return ((nibble & 1) ? mode->data_mask : 0) | (7 - mode->data_mask) | port_b6_misc;
 			else
 				return ((kbd_matrix[10] >> 1) & 1) | 6 | port_b6_misc;
 		case  2:
-			if (mouse_is_enabled())
+			if (ena)
 				return ((nibble & 2) ? mode->data_mask : 0) | (7 - mode->data_mask) | port_b6_misc;
 			else
 				return ((kbd_matrix[10] >> 2) & 1) | 6 | port_b6_misc;
 		case  3:
-			if (mouse_is_enabled())
+			if (ena)
 				return ((nibble & 4) ? mode->data_mask : 0) | (7 - mode->data_mask) | port_b6_misc;
 			else
 				return ((kbd_matrix[10] >> 3) & 1) | 6 | port_b6_misc;
 		case  4:
-			if (mouse_is_enabled())
+			if (ena)
 				return ((nibble & 8) ? mode->data_mask : 0) | (7 - mode->data_mask) | port_b6_misc;
 			else
 				return ((kbd_matrix[10] >> 4) & 1) | 6 | port_b6_misc;
