@@ -107,10 +107,12 @@ win32:	$(DLL) xep_rom.hex xep_rom_syms.h
 	$(MAKE) -f Makefile.win32
 	@ls -l $(PRG_EXE)
 	@file $(PRG_EXE)
+
+$(ZIP32): $(PRG_EXE) $(ROM) $(DLL)
 	zip $(ZIP32) $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE
 	@ls -l $(ZIP32)
 
-publish:
+publish: $(ZIP32)
 	test -f rom/$(ROM) && cp rom/$(ROM) www/files/ || true
 	test -f $(ZIP32) && cp $(ZIP32) www/files/ || true
 	@ls -l www/files/
