@@ -184,7 +184,8 @@ void emu_mouse_button(Uint8 sdl_button, int press);
 void emu_mouse_motion(int dx, int dy);
 void emu_mouse_wheel ( int x, int y, int flipped);
 int mouse_mode_description ( int cfg, char *buffer );
-Uint8 read_port_b6(void);
+Uint8 read_control_port_bits (void);
+#define PORT_B6_READ_OTHERS 0xC0
 void mouse_check_data_shift(Uint8 val);
 void mouse_reset(void);
 int mouse_setup ( int cfg );

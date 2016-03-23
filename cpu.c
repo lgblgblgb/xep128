@@ -305,7 +305,7 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 		case 0xB5:
 			return (kbd_selector == -1) ? 0xFF : kbd_matrix[kbd_selector];
 		case 0xB6:
-			return read_port_b6();	// used for control ports (joystick/mouse) but also some misc features as input (tape in, printer status in, serial in)
+			return read_control_port_bits() | PORT_B6_READ_OTHERS;	// used for control ports (joystick/mouse) but also some misc features as input (tape in, printer status in, serial in)
 		case 0xFE:
 			return zxemu_read_ula(IO16_HI_BYTE(port16));
 	}

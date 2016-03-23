@@ -51,7 +51,7 @@ static int vm, cm;
 static Uint8 col4trans[256 * 4], col16trans[256 * 2];
 static int chs, msbalt, lsbalt;
 static Uint8 balt_mask, chm, chb, altind;
-Uint32 raster_time = 0;
+Uint32 raster_time = 1;
 
 
 #define RASTER_FIRST_VISIBLE 25
