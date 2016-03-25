@@ -43,3 +43,8 @@ z180test.asm
   Enteprise-128 equipped with Z180 CPU instead of Z80. It's used
   to test the result on my emulator and compared with a real
   EP/Z180 (thanks, Zozo!).
+
+z80-emulated-cpu-speed-test.c
+
+  A lame little (native, not Z80) program which links to z80ex.
+  It tries to messure the speed of Z80 emulation.
