@@ -361,4 +361,13 @@ extern const char VRAM_SEGMENT[];
 extern const char SRAM_SEGMENT[];
 extern const char UNUSED_SEGMENT[];
 
+void *alloc_xep_aligned_mem ( size_t size );
+
+#define VARALIGN __attribute__ ((aligned (__BIGGEST_ALIGNMENT__)))
+
+void console_close_window ( void );
+void console_close_window_on_exit ( void );
+void console_open_window ( void );
+extern int console_is_open;
+
 #endif

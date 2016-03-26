@@ -47,6 +47,9 @@ struct configSetting_st {
 /* Default keyboard mapping can be found in keyboard_mapping.c */
 static const struct configOption_st configOptions[] = {
 	{ "audio",	CONFITEM_BOOL,	"0",		0, "Enable audio output"	},
+#ifdef _WIN32
+	{ "conwin",	CONFITEM_BOOL,	"0",		0, "Keep (1) console window open" },
+#endif
 	{ DEBUGFILE_OPT,CONFITEM_STR,	"none",		0, "Enable debug messages written to a specified file" },
 	{ "fullscreen",	CONFITEM_BOOL,	"0",		0, "Start in full screen"	},
 	{ "mousemode",	CONFITEM_INT,	"1",		0, "Set mouse mode, 1-3 = J-column 2,4,8 bytes and 4-6 the same for K-column" },
@@ -68,6 +71,7 @@ char current_directory[PATH_MAX + 1];
 SDL_version sdlver_compiled, sdlver_linked;
 FILE *debug_file = NULL;
 int sdl_v204;
+
 
 
 
@@ -437,10 +441,29 @@ static void save_sample_config ( const char *name )
 
 
 
-
 #if !SDL_VERSION_ATLEAST(2, 0, 2)
 #	error "We need SDL2 version 2.0.2 at least!"
 #endif
+
+
+
+int is_help_request_option ( const char *opt )
+{
+	char c = *(opt++);
+	if ((
+			c == '-' || c ==  '/'
+		) && (
+			!strcasecmp(opt, "h")    || !strcasecmp(opt, "-h")    ||
+			!strcasecmp(opt, "help") || !strcasecmp(opt, "-help") ||
+			!strcasecmp(opt, "?")    || !strcasecmp(opt, "-?")
+	)) {
+		if (c == '/')
+			ERROR_WINDOW("Plesse note that you MUST use - instead of / with options!\nSo use -h or -? instead of ugly /h or /?");
+		return 1;
+	}
+	return 0;
+}
+
 
 
 
@@ -453,6 +476,9 @@ int config_init ( int argc, char **argv )
 	int default_config = 1;
 	int testparsing = 0;
 	argc--; argv++;
+#ifdef _WIN32
+	console_open_window();
+#endif
 	SDL_VERSION(&sdlver_compiled);
 	SDL_GetVersion(&sdlver_linked);
 	sdl_v204 = (sdlver_linked.major >= 2 && (sdlver_linked.patch >= 4 || sdlver_linked.minor)); // used to work-around linked/compiled mismatch and using 2.0.4 features ...
@@ -499,11 +525,7 @@ int config_init ( int argc, char **argv )
 #endif
 	DEBUGPRINT("PATH: Current directory: %s" NL NL, current_directory);
 	/* Look the very basic command line switches first */
-	if (argc && (
-		!strcasecmp(argv[0], "-h")	|| !strcasecmp(argv[0], "--h")		||
-		!strcasecmp(argv[0], "-help")	|| !strcasecmp(argv[0], "--help")	||
-		!strcasecmp(argv[0], "-?")	|| !strcasecmp(argv[0], "--?")
-	)) {
+	if (argc && is_help_request_option(argv[0])) {
 		opt = configOptions;
 		printf("USAGE:" NL NL
 			"\t%s -optname optval -optname2 optval2 ..." NL NL "OPTIONS:" NL NL
@@ -515,6 +537,10 @@ int config_init ( int argc, char **argv )
 			opt++;
 		}
 		printf(NL "%s" NL, disclaimer);
+#ifdef _WIN32
+		if (!console_is_open)
+			ERROR_WINDOW("Could not dump help, since console couldn't be allocated.");
+#endif
 		exit(0);
 	}
 	DEBUGPRINT("%s" NL NL, disclaimer);
@@ -584,6 +610,11 @@ int config_init ( int argc, char **argv )
 		exit(0);
 	}
 	DEBUG("CONFIG: End of configuration step." NL NL);
+#ifdef _WIN32
+	/* Close console, unless user requested it with the -conwin option */
+	if (!config_getopt_str("conwin"))
+		console_close_window();
+#endif
 	return 0;
 }
 

@@ -38,6 +38,7 @@ static int sram_ready = 0;
 
 
 
+
 static void shutdown_sdl(void)
 {
 	if (debug_file) {
@@ -56,6 +57,7 @@ static void shutdown_sdl(void)
 	}
 	if (sdl_win)
 		SDL_DestroyWindow(sdl_win);
+	console_close_window_on_exit();
 	SDL_Quit();
 }
 
