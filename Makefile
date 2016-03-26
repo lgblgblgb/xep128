@@ -9,8 +9,8 @@ BINDIR	= $(PREFIX)/bin
 DATADIR	= $(PREFIX)/lib/xep128
 CC	= $(CC_NATIVE)
 DEBUG	=
-CFLAGS	= -Wall -O3 -ffast-math -pipe $(shell $(SDLCFG_NATIVE) --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\" -DZ80EX_USER_HEADER=\"z80ex_config.h\"
-ZCFLAGS	= -ansi -fno-common -Wall -pipe -O3 -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG_NATIVE) --cflags | cut -f1 -d' ') $(DEBUG) 
+CFLAGS	= -falign-functions=16 -falign-loops=16 -Wall -Ofast -ffast-math -pipe $(shell $(SDLCFG_NATIVE) --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\" -DZ80EX_USER_HEADER=\"z80ex_config.h\"
+ZCFLAGS	= -ansi -falign-functions=16 -falign-loops=16 -fno-common -Wall -pipe -Ofast -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG_NATIVE) --cflags | cut -f1 -d' ') $(DEBUG) 
 CPPFLAGS= -Iz80ex -I.
 LDFLAGS	= $(shell $(SDLCFG_NATIVE) --libs) -lm $(DEBUG)
 LIBS	=

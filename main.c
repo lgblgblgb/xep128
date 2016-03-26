@@ -39,6 +39,22 @@ static int sram_ready = 0;
 
 
 
+/* Ugly indeed, but it seems some architecture/OS does not support "standard"
+   aligned allocations or give strange error codes ... Note: this one only
+   works, if you don't want to free() the result pointer!! */
+void *alloc_xep_aligned_mem ( size_t size )
+{
+	int o;
+	Uint8 *p = malloc(size + 15);
+	if (p == NULL)
+		return p;
+	o = 16 - ((int)p & 0xF);
+	DEBUG("ALIGNED-ALLOC: base_pointer=%p o=%d" NL, p, o);
+	return p + o;
+}
+
+
+
 static void shutdown_sdl(void)
 {
 	if (debug_file) {

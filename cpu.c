@@ -19,12 +19,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
 
-Z80EX_CONTEXT z80ex;
-static int memsegs[4];
-Uint8 memory[0x400000];
-Uint8 ports[0x100];
+Z80EX_CONTEXT z80ex VARALIGN;
+static int memsegs[4] VARALIGN;
+Uint8 memory[0x400000] VARALIGN;
+Uint8 ports[0x100] VARALIGN;
 const char *memory_segment_map[0x100];
-static int is_ram_seg[0x100];
+static int is_ram_seg[0x100] VARALIGN;
 static int mem_ws_all, mem_ws_m1;
 int nmi_pending = 0;
 

@@ -39,6 +39,8 @@ static int osd_on = 0, osd_fade = 0;
 extern const Uint16 font_16x16[];
 
 
+
+
 static void _osd_set_alpha ( int alpha )
 {
 	if (alpha > 0xFF)
@@ -315,7 +317,7 @@ int screen_init ( void )
 		ERROR_WINDOW("Cannot create SDL texture: %s", SDL_GetError());
 		return 1;
 	}
-	osd_pixels = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 4);
+	osd_pixels = alloc_xep_aligned_mem(SCREEN_WIDTH * SCREEN_HEIGHT * 4);
 	if (osd_pixels != NULL) {
 		sdl_osdtex = SDL_CreateTexture(sdl_ren, SCREEN_FORMAT, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 		if (sdl_osdtex == NULL) {

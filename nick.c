@@ -33,9 +33,9 @@ static int slot, visible, scanlines, max_scanlines;
 static Uint8 *vram;
 static Uint32 *pixels, *pixels_init, *pixels_limit_up, *pixels_limit_bottom, *pixels_limit_vsync_shortest, *pixels_limit_vsync_long_force;
 static int pixels_gap;
-static Uint32 palette[16];
+static Uint32 palette[16] VARALIGN;
+static Uint32 full_palette[256] VARALIGN;
 static Uint32 *palette_bias = palette + 8;
-static Uint32 full_palette[256];
 static Uint32 border;
 static Uint8 nick_last_byte;
 //static Uint32 line_storage[736], *line;
@@ -48,7 +48,7 @@ int vsync;
 static int frameskip;
 static int lm, rm;
 static int vm, cm;
-static Uint8 col4trans[256 * 4], col16trans[256 * 2];
+static Uint8 col4trans[256 * 4] VARALIGN, col16trans[256 * 2] VARALIGN;
 static int chs, msbalt, lsbalt;
 static Uint8 balt_mask, chm, chb, altind;
 Uint32 raster_time = 1;
@@ -92,7 +92,7 @@ static int nick_addressing_init ( Uint32 *pixels_buffer, int line_size )
 Uint32 *nick_init ( void )
 {
 	int a;
-	Uint32 *buf = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 4);
+	Uint32 *buf = alloc_xep_aligned_mem(SCREEN_WIDTH * SCREEN_HEIGHT * 4);
 #if 0
 	DEBUG("NICK: SDL: emuscreen buffer width=%d height=%d PITCH=%d bytes/pixel=%d bits/pixel=%d alpha=%d" NL,
 		surface->w,
