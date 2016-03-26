@@ -63,6 +63,9 @@ roms.o: xep_rom.hex
 xep_rom.rom: xep_rom.asm
 	sjasm -s xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom xep_rom.lst xep_rom.sym ; false; }
 
+xep_rom.sym:
+	$(MAKE) xep_rom.rom
+
 xep_rom_syms.h: xep_rom.sym
 	awk '$$1 ~ /xepsym_[^:. ]+:/ { gsub(":$$","",$$1); gsub("h$$","",$$3); print "#define " $$1 " 0x" $$3 }' xep_rom.sym > xep_rom_syms.h
 

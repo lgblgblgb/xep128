@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+; Note, symbols having name starting with "xepsym_" are extracted
+; into a .h file can can be used by Xep128 itself!
+
 
 	ORG 0xC000
 	DB "EXOS_ROM"
@@ -33,11 +36,18 @@ rom_main_entry_point:
 	; The trap handler itself will check EXOS action code, register values, and may modify
 	; registers C and/or A as well. Also, it can pass data through the ROm area :) from 0xF8000
 	DB	0xED, 0xBC
+	; Argument of "JP" (the word at xepsym_jump) is filled/modified by Xep128 on the ED trap above!
+	; Usually it's set to xepsym_print_xep_buffer if there is something to print at least :)
+xepsym_jump_on_rom_entry = $ + 1
+	JP	0
+
+xepsym_print_xep_buffer:
 	; Let save registers may be used by the check to print anything and/or print stuff
 	; This also includes the possibly already modified A/C by the ED trap above!
 	PUSH	AF
 	PUSH	BC
 	PUSH	DE
+.nopush:
 	LD	DE, 0xF800	; the ED trap modifies memory from here
 	LD	A, (DE)
 	LD	C, A
@@ -53,5 +63,24 @@ rom_main_entry_point:
 	POP	DE
 	POP	BC
 	POP	AF
+xepsym_ret:
 	RET
+
+
+
+xepsym_set_time:
+	PUSH	AF
+	PUSH	BC
+	PUSH	DE
+xepsym_settime_hour = $ + 1
+	LD	C, 0x88
+xepsym_settime_minsec = $ + 1
+	LD	DE, 0x8888
+	EXOS	31		; EXOS set time
+xepsym_setdate_year = $ + 1
+	LD	C, 0x88
+xepsym_setdate_monday = $ + 1
+	LD	DE, 0x8888
+	EXOS	33		; EXOS set date
+	JP	xepsym_print_xep_buffer.nopush
 

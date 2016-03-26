@@ -29,13 +29,45 @@ struct commands_st {
 static char buffer[256];
 static char *carg;
 
-static const char *SHORT_HELP = "XEP   version " VERSION "  (Xep128 EMU)\r\n";
+static const char SHORT_HELP[] = "XEP   version " VERSION "  (Xep128 EMU)\r\n";
 
 #define COBUF ((char*)(memory + xep_rom_addr + 0x3802))
+#define SET_XEPSYM_BYTE(sym, value) memory[xep_rom_addr + (sym) - 0xC000] = (value)
+#define SET_XEPSYM_WORD(sym, value) do {	\
+	SET_XEPSYM_BYTE(sym, (value) & 0xFF);	\
+	SET_XEPSYM_BYTE((sym) + 1, (value) >> 8);	\
+} while(0)
+#define BIN2BCD(bin) ((((bin) / 10) << 4) | ((bin) % 10))
+
 
 static const char *_dave_ws_descrs[4] = {
 	"all", "M1", "no", "no"
 };
+
+
+
+
+static void xep_ask_for_timeset ( int verbose )
+{
+	time_t now = emu_getunixtime();
+	struct tm *t = localtime(&now);
+	SET_XEPSYM_BYTE(xepsym_settime_hour,    BIN2BCD(t->tm_hour));
+	SET_XEPSYM_WORD(xepsym_settime_minsec,  (BIN2BCD(t->tm_min) << 8) | BIN2BCD(t->tm_sec));
+	SET_XEPSYM_BYTE(xepsym_setdate_year,    BIN2BCD(t->tm_year - 80));
+	SET_XEPSYM_WORD(xepsym_setdate_monday,  (BIN2BCD(t->tm_mon + 1) << 8) | BIN2BCD(t->tm_mday));
+	SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_set_time);
+	if (verbose)
+		sprintf(COBUF, "Setting time to %04d-%02d-%02d %02d:%02d:%02d\r\n",
+			t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+			t->tm_hour, t->tm_min, t->tm_sec
+		);
+}
+
+
+
+static void cmd_setdate ( void ) {
+	xep_ask_for_timeset(1);
+}
 
 
 
@@ -63,6 +95,7 @@ static void cmd_ram ( void ) {
 			break;
 	}
 }
+
 
 
 static void cmd_cpu ( void ) {
@@ -97,12 +130,15 @@ static void cmd_cpu ( void ) {
 }
 
 
+
 #ifdef _WIN32
 // /usr/i686-w64-mingw32/include/sysinfoapi.h:
 //#define SECURITY_WIN32
 #include "sysinfoapi.h"
 //#include "secext.h"
 #endif
+
+
 
 static void cmd_emu ( void )
 {
@@ -135,11 +171,13 @@ static void cmd_emu ( void )
 }
 
 
+
 static void cmd_exit ( void )
 {
 	INFO_WINDOW("XEP ROM command directs shutting down.");
 	exit(0);
 }
+
 
 
 static void cmd_mouse ( void )
@@ -160,11 +198,14 @@ static void cmd_mouse ( void )
 }
 
 
+
 static void cmd_audio ( void )
 {
 	audio_init(1);	// NOTE: later it shouldn't be here!
 	audio_start();
 }
+
+
 
 static void cmd_primo ( void )
 {
@@ -176,11 +217,13 @@ static void cmd_primo ( void )
 }
 
 
+
 static void cmd_showkeys ( void )
 {
 	show_keys = !show_keys;
 	sprintf(COBUF, "SDL show keys info has been turned %s.\r\n", show_keys ? "ON" : "OFF");
 }
+
 
 
 static void cmd_help ( void );
@@ -195,8 +238,10 @@ static const struct commands_st commands[] = {
 	{ "exit",	"Exit Xep128", cmd_exit },
 	{ "primo",	"Primo emulation", cmd_primo },
 	{ "showkeys",	NULL, cmd_showkeys },
+	{ "setdate",	NULL, cmd_setdate },
 	{ NULL,		NULL, NULL }
 };
+
 
 
 static void cmd_help ( void ) {
@@ -213,6 +258,7 @@ static void cmd_help ( void ) {
 }
 
 
+
 static int exos_cmd_name_match ( const char *that, Uint16 addr )
 {
 	if (strlen(that) != Z80_B) return 0;
@@ -223,12 +269,15 @@ static int exos_cmd_name_match ( const char *that, Uint16 addr )
 }
 
 
+
 static void xep_exos_command_trap ( void )
 {
 	Uint8 c = Z80_C, b = Z80_B;
 	Uint16 de = Z80_DE;
 	*COBUF = 0; // no ans by def
-	DEBUG("XEP: TRAP: C=%02Xh, B=%02Xh, DE=%04Xh" NL, c, b, de);
+	DEBUG("XEP: COMMAND TRAP: C=%02Xh, B=%02Xh, DE=%04Xh" NL, c, b, de);
+	/* restore exos command handler jump address */
+	SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_print_xep_buffer);
 	switch (c) {
 		case 2: // EXOS command
 			if (exos_cmd_name_match("XEP", de + 1)) {
@@ -279,6 +328,10 @@ static void xep_exos_command_trap ( void )
 				Z80_C = 0;
 			}
 			break;
+		case 8:	// Initialization
+			// Tell XEP ROM to set EXOS date/time with setting we will provide here
+			xep_ask_for_timeset(0);
+			break;
 	}
 	// set answer size for XEP ROM
 	de = strlen(COBUF);
@@ -291,6 +344,7 @@ static void xep_exos_command_trap ( void )
 	*(Uint8*)(COBUF - 2) = de & 0xFF;
 	*(Uint8*)(COBUF - 1) = de >> 8;
 }
+
 
 
 void xep_rom_trap ( Uint16 pc, Uint8 opcode )

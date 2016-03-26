@@ -1,2 +1,11 @@
 rom_main_entry_point: equ 0000C00Dh
-rom_main_entry_point.no_print: equ 0000C022h
+xepsym_jump_on_rom_entry: equ 0000C010h
+xepsym_print_xep_buffer: equ 0000C012h
+xepsym_print_xep_buffer.nopush: equ 0000C015h
+xepsym_print_xep_buffer.no_print: equ 0000C025h
+xepsym_ret: equ 0000C028h
+xepsym_set_time: equ 0000C029h
+xepsym_settime_hour: equ 0000C02Dh
+xepsym_settime_minsec: equ 0000C02Fh
+xepsym_setdate_year: equ 0000C034h
+xepsym_setdate_monday: equ 0000C036h
