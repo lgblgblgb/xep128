@@ -24,11 +24,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 	DB "EXOS_ROM"
 	DW 0		; device chain (0 = no)
 	JP	rom_main_entry_point
+	DB	"!XEP_ROM"
 
 MACRO	EXOS n
 	RST	0x30
 	DB	n
 ENDMACRO
+
+
+xepsym_cobuf = 0xF800
 
 
 rom_main_entry_point:
@@ -48,18 +52,18 @@ xepsym_print_xep_buffer:
 	PUSH	BC
 	PUSH	DE
 .nopush:
-	LD	DE, 0xF800	; the ED trap modifies memory from here
+	LD	DE, xepsym_cobuf	; the ED trap modifies memory from here
 	LD	A, (DE)
 	LD	C, A
 	INC	DE
 	LD	A, (DE)
 	LD	B, A
 	OR	C		; word at F800 is the print size, 0 => no print
-	JR	Z, .no_print
+	JR	Z, xepsym_pop_and_ret
 	INC	DE
 	LD	A, 0xFF		; default channel
 	EXOS	8		; write block EXOS function
-.no_print:
+xepsym_pop_and_ret:
 	POP	DE
 	POP	BC
 	POP	AF
@@ -68,10 +72,7 @@ xepsym_ret:
 
 
 
-xepsym_set_time:
-	PUSH	AF
-	PUSH	BC
-	PUSH	DE
+set_exos_time:
 xepsym_settime_hour = $ + 1
 	LD	C, 0x88
 xepsym_settime_minsec = $ + 1
@@ -82,5 +83,26 @@ xepsym_setdate_year = $ + 1
 xepsym_setdate_monday = $ + 1
 	LD	DE, 0x8888
 	EXOS	33		; EXOS set date
+	RET
+
+
+xepsym_set_time:
+	PUSH	AF
+	PUSH	BC
+	PUSH	DE
+	CALL	set_exos_time
 	JP	xepsym_print_xep_buffer.nopush
 
+
+; Called on system initialization (EXOS action code 8)
+; Currently it just sets date/time as xepsym_set_time would do as well ...
+xepsym_system_init:
+	PUSH	AF
+	PUSH	BC
+	PUSH	DE
+	CALL	set_exos_time
+	JP	xepsym_pop_and_ret
+
+; Called on EXOS action code 1
+xepsym_cold_reset:
+	RET

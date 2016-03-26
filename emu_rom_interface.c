@@ -31,7 +31,7 @@ static char *carg;
 
 static const char SHORT_HELP[] = "XEP   version " VERSION "  (Xep128 EMU)\r\n";
 
-#define COBUF ((char*)(memory + xep_rom_addr + 0x3802))
+#define COBUF ((char*)(memory + xep_rom_addr + xepsym_cobuf - 0xC000 + 2))
 #define SET_XEPSYM_BYTE(sym, value) memory[xep_rom_addr + (sym) - 0xC000] = (value)
 #define SET_XEPSYM_WORD(sym, value) do {	\
 	SET_XEPSYM_BYTE(sym, (value) & 0xFF);	\
@@ -47,7 +47,7 @@ static const char *_dave_ws_descrs[4] = {
 
 
 
-static void xep_ask_for_timeset ( int verbose )
+static void xep_set_time_consts ( int verbose )
 {
 	time_t now = emu_getunixtime();
 	struct tm *t = localtime(&now);
@@ -55,7 +55,6 @@ static void xep_ask_for_timeset ( int verbose )
 	SET_XEPSYM_WORD(xepsym_settime_minsec,  (BIN2BCD(t->tm_min) << 8) | BIN2BCD(t->tm_sec));
 	SET_XEPSYM_BYTE(xepsym_setdate_year,    BIN2BCD(t->tm_year - 80));
 	SET_XEPSYM_WORD(xepsym_setdate_monday,  (BIN2BCD(t->tm_mon + 1) << 8) | BIN2BCD(t->tm_mday));
-	SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_set_time);
 	if (verbose)
 		sprintf(COBUF, "Setting time to %04d-%02d-%02d %02d:%02d:%02d\r\n",
 			t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
@@ -66,7 +65,8 @@ static void xep_ask_for_timeset ( int verbose )
 
 
 static void cmd_setdate ( void ) {
-	xep_ask_for_timeset(1);
+	xep_set_time_consts(1);
+	SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_set_time);
 }
 
 
@@ -231,30 +231,41 @@ static void cmd_help ( void );
 static const struct commands_st commands[] = {
 	{ "audio",	"Tries to turn lame audio emulation", cmd_audio },
 	{ "cpu",	"Set/query CPU type/clock", cmd_cpu },
-	{ "ram",        "Set RAM size/report", cmd_ram },
 	{ "emu",	"Emulation info", cmd_emu },
-	{ "mouse",	"Configure or query mouse mode", cmd_mouse },
-	{ "help",	"This help screen", cmd_help },
 	{ "exit",	"Exit Xep128", cmd_exit },
+	{ "help",	"This help screen", cmd_help },
+	{ "mouse",	"Configure or query mouse mode", cmd_mouse },
 	{ "primo",	"Primo emulation", cmd_primo },
-	{ "showkeys",	NULL, cmd_showkeys },
-	{ "setdate",	NULL, cmd_setdate },
+	{ "ram",	"Set RAM size/report", cmd_ram },
+	{ "setdate",	"Set EXOS time/date by emulator" , cmd_setdate },
+	{ "showkeys",	"Show/hide PC/SDL key symbols", cmd_showkeys },
 	{ NULL,		NULL, NULL }
 };
+static const char help_for_all_desc[] = "\r\nFor help on all comamnds: XEP HELP\r\n";
 
 
 
 static void cmd_help ( void ) {
         const struct commands_st *cmds = commands;
-        char *p = sprintf(COBUF, "Helper ROM: %s%s %s %s\r\nBuilt on: %s\r\n%s\r\nGIT: %s\r\nCompiler: %s %s\r\n\r\n",
-		SHORT_HELP, WINDOW_TITLE, VERSION, COPYRIGHT,
-		BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT, CC_TYPE, BUILDINFO_CC
-	) + COBUF;
-        while (cmds->cmd) {
-		if (cmds->help)
-	                p += sprintf(p, "%s\t%s\r\n", cmds->cmd, cmds->help);
-                cmds++;
-        }
+	if (*carg) {
+		while (cmds->cmd) {
+			if (!strcmp(carg, cmds->cmd))
+				return (void)sprintf(COBUF, "%s%s", cmds->help, help_for_all_desc);
+			cmds++;
+		}
+		sprintf(COBUF, "*** No help/command found '%s'%s", carg, help_for_all_desc);
+	} else {
+	        char *p = sprintf(COBUF, "Helper ROM: %s%s %s %s\r\nBuilt on: %s\r\n%s\r\nGIT: %s\r\nCompiler: %s %s\r\n\r\nCommands:",
+			SHORT_HELP, WINDOW_TITLE, VERSION, COPYRIGHT,
+			BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT, CC_TYPE, BUILDINFO_CC
+		) + COBUF;
+		while (cmds->cmd) {
+			if (cmds->help)
+				p += sprintf(p, " %s", cmds->cmd);
+			cmds++;
+		}
+		sprintf(p, "\r\n\r\nFor help on a command: XEP HELP CMD\r\n");
+	}
 }
 
 
@@ -297,7 +308,7 @@ static void xep_exos_command_trap ( void )
 				*p = 0;
 				p[1] = 0;
 				if (p == buffer) {
-					sprintf(COBUF, "No sub-command was requested\r\n");
+					sprintf(COBUF, "*** XEP: No sub-command was requested\r\n");
 				} else {
 					const struct commands_st *cmds = commands;
 					c = 1;
@@ -312,13 +323,15 @@ static void xep_exos_command_trap ( void )
 						cmds++;
 					}
 					if (c)
-						sprintf(COBUF, "XEP: sub-command \"%s\" is unknown\r\n", buffer);
+						sprintf(COBUF, "*** XEP: sub-command \"%s\" is unknown\r\n", buffer);
 				}
 				Z80_A = 0;
 				Z80_C = 0;
 			}
 			break;
 		case 3: // EXOS help
+			carg = buffer;
+			*carg = '\0';
 			if (b == 0) {
 				sprintf(COBUF, "%s", SHORT_HELP);
 				Z80_A = 0;
@@ -330,13 +343,17 @@ static void xep_exos_command_trap ( void )
 			break;
 		case 8:	// Initialization
 			// Tell XEP ROM to set EXOS date/time with setting we will provide here
-			xep_ask_for_timeset(0);
+			xep_set_time_consts(0);
+			SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_system_init);
+			break;
+		case 1:	// Cold reset
+			SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_cold_reset);
 			break;
 	}
 	// set answer size for XEP ROM
 	de = strlen(COBUF);
 	if (de)
-		DEBUG("XEP ANSWER [%d bytes] = \"%s\"" NL, de, COBUF);
+		DEBUG("XEP: ANSWER: [%d bytes] = \"%s\"" NL, de, COBUF);
 	if (de > 2045) {
 		ERROR_WINDOW("FATAL: XEP ROM answer is too large, %d bytes.", de);
 		exit(1);
