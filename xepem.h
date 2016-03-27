@@ -368,6 +368,7 @@ void *alloc_xep_aligned_mem ( size_t size );
 void console_close_window ( void );
 void console_close_window_on_exit ( void );
 void console_open_window ( void );
+void console_monitor_ready ( void );
 extern int console_is_open;
 
 #endif

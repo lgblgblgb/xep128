@@ -206,6 +206,10 @@ void emu_one_frame(int rasters, int frameksip)
 								if (_cpu_speed_index < 3)
 									set_cpu_clock_with_osd(_cpu_speeds[++ _cpu_speed_index]);
 								break;
+							case 0xF8:	// CONSOLE, key pad minus
+								if (!console_is_open)
+									console_open_window();
+								break;
 						}
 				} else if (e.key.repeat == 0)
 					DEBUG("UI: NOT HANDLED KEY EVENT: repeat = %d windowid = %d [our win = %d]" NL, e.key.repeat, e.key.windowID, sdl_winid);
@@ -333,6 +337,7 @@ int main (int argc, char *argv[])
 		primo_emulator_execute();
 		OSD("Primo Emulator Mode");
 	}
+	console_monitor_ready();	// OK to run monitor on console now!
 	while (running) {
 		int t;
 #if 0

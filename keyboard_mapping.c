@@ -120,6 +120,7 @@ static const struct keyMappingDefault_st keyMappingDefaults[] = {
 	{ SDL_SCANCODE_PAGEDOWN,	0xFB, "EMU slower-cpu"	},
 	{ SDL_SCANCODE_PAGEUP,		0xFA, "EMU faster-cpu"	},
 	{ SDL_SCANCODE_GRAVE,		0xF9, "EMU osd-replay"	},
+	{ SDL_SCANCODE_KP_MINUS,	0xF8, "EMU console"	},
 	/* ---- end of table marker, must be the last entry ---- */
 	{ 0, -1, NULL }
 };

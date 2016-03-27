@@ -25,8 +25,80 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <fcntl.h>
 #endif
 
-int console_is_open = 0;
+#define USE_MONITOR	1
 
+int console_is_open = 0;
+static int ok_for_monitor = 0;
+static volatile int monitor_running = 0;
+static SDL_Thread *mont = NULL;
+
+
+
+
+static int monitor_thread ( void *ptr )
+{
+	printf("Welcome to " WINDOW_TITLE " monitor. Use ? for help" NL);
+	for (;;) {
+		char buffer[200];
+		char *p;
+		if (!monitor_running)
+			break;
+		printf(WINDOW_TITLE "> ");
+		p = fgets(buffer, sizeof buffer, stdin);
+		if (!monitor_running)
+			break;
+		if (p == NULL) {
+			sleep(1);
+		} else {
+			for (p = strlen(buffer) + buffer - 1; p >= buffer && (*p == '\r' || *p == '\n' || *p == ' ' || *p == '\t'); p--)
+				*p = '\0';
+			p[strlen(p) + 1] = '\0';
+			for (p = buffer; *p && (*p == ' ' || *p == '\t'); p++)
+				;
+			printf("Entered: \"%s\" [%d]" NL, p, strlen(p));
+			printf("AF =%04X BC =%04X DE =%04X HL =%04X IX=%04X IY=%04X" NL "AF'=%04X BC'=%04X DE'=%04X HL'=%04X PC=%04X SP=%04X" NL "Pages: %02X %02X %02X %02X" NL,
+				Z80_AF,  Z80_BC,  Z80_DE,  Z80_HL,  Z80_IX, Z80_IY,
+				Z80_AF_, Z80_BC_, Z80_DE_, Z80_HL_, Z80_PC, Z80_SP,
+				ports[0xB0], ports[0xB1], ports[0xB2], ports[0xB3]
+			);
+		}
+	}
+	printf("MONITOR: thread is about to exit" NL);
+	return 0;
+}
+
+
+
+static void monitor_start ( void )
+{
+	if (!ok_for_monitor || !console_is_open || monitor_running || !USE_MONITOR)
+		return;
+	DEBUGPRINT("MONITOR: start" NL);
+	monitor_running = 1;
+	mont = SDL_CreateThread(monitor_thread, WINDOW_TITLE " monitor", NULL);
+	if (mont == NULL)
+		monitor_running = 0;
+}
+
+
+
+static int monitor_stop ( void )
+{
+	int ret;
+	if (!monitor_running)
+		return 0;
+	DEBUGPRINT("MONITOR: stop" NL);
+	monitor_running = 0;
+	if (mont != NULL) {
+		printf(NL NL "*** PRESS ENTER TO EXIT ***" NL);
+		// Though Info window here is overkill, I am still interested why it causes a segfault when I've tried ...
+		//INFO_WINDOW("Monitor runs on console. You must press ENTER there to continue");
+		SDL_WaitThread(mont, &ret);
+		mont = NULL;
+		DEBUGPRINT("MONITOR: thread joined, status code is %d" NL, ret);
+	}
+	return 1;
+}
 
 
 
@@ -77,8 +149,9 @@ void console_open_window ( void )
 	SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
 	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT);
 	DEBUGPRINT("WINDOWS: console is open" NL);
-	console_is_open = 1;
 #endif
+	console_is_open = 1;
+	monitor_start();
 }
 
 
@@ -87,6 +160,7 @@ void console_close_window ( void )
 {
 	if (!console_is_open)
 		return;
+	monitor_stop();
 #ifdef _WIN32
 	if (!FreeConsole())
 		ERROR_WINDOW("Cannot release windows console!");
@@ -102,8 +176,18 @@ void console_close_window ( void )
 void console_close_window_on_exit ( void )
 {
 #ifdef _WIN32
-	if (console_is_open)
+	if (console_is_open && !monitor_stop())
 		INFO_WINDOW("Click to close console window");
+#else
+	monitor_stop();
 #endif
 	console_close_window();
+}
+
+
+
+void console_monitor_ready ( void )
+{
+	ok_for_monitor = 1;
+	monitor_start();
 }
