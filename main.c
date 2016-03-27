@@ -235,6 +235,7 @@ void emu_one_frame(int rasters, int frameksip)
 					emu_mouse_button(e.button.button, e.button.state == SDL_PRESSED);
 				break;
 		}
+	monitor_process_queued();
 	rtc_update_trigger = 1; // triggers RTC update on the next RTC register read. Woooo!
 	emu_timekeeping_delay(1000000.0 * rasters * 57.0 / (double)NICK_SLOTS_PER_SEC);
 #if 0

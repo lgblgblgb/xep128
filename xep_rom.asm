@@ -32,7 +32,6 @@ MACRO	EXOS n
 ENDMACRO
 
 
-xepsym_cobuf = 0xF800
 
 
 rom_main_entry_point:
@@ -106,3 +105,9 @@ xepsym_system_init:
 ; Called on EXOS action code 1
 xepsym_cold_reset:
 	RET
+
+
+
+; **** !! YOU MUST NOT PUT ANYTHING EXTRA AFTER THIS LINE, EMULATOR OVERWRITES THE AREA !! ****
+xepsym_cobuf:
+xepsym_cobuf_size = 0xFFF0 - xepsym_cobuf

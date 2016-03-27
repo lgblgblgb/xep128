@@ -164,7 +164,7 @@ int ep_init_ram ( void )
 				int s;
 				sprintf(dbuf, "%02X-%02X %s %s", from, a - 1, type, rom_name_tab[from] ? rom_name_tab[from] : "");
 				DEBUGPRINT("CONFIG: MEM: %s" NL, dbuf);
-				strcat(dbuf, "\r\n");
+				strcat(dbuf, "\n");
 				s = mem_desc ? strlen(mem_desc) : 0;
 				mem_desc = realloc(mem_desc, s + strlen(dbuf) + 256);
 				check_malloc(mem_desc);

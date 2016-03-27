@@ -259,6 +259,7 @@ extern Uint8 kbd_matrix[16];
 extern int kbd_selector;
 
 void xep_rom_trap ( Uint16 pc, Uint8 opcode);
+void xep_set_time_consts ( char *descbuffer );
 
 void w5300_reset ( void );
 void w5300_init ( void (*cb)(int) );
@@ -370,5 +371,10 @@ void console_close_window_on_exit ( void );
 void console_open_window ( void );
 void console_monitor_ready ( void );
 extern int console_is_open;
+
+int monitor_queue_command ( char *buffer );
+int monitor_queue_used ( void );
+void monitor_process_queued ( void );
+void monitor_execute ( char *input_buffer, int source, char *in_output_buffer, int in_output_max_size, const char *in_output_nl );
 
 #endif

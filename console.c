@@ -35,32 +35,29 @@ static SDL_Thread *mont = NULL;
 
 
 
-static int monitor_thread ( void *ptr )
+/* Monitor thread waits for console input and enqueues the request.
+   The thread is NOT executes the command itself! Even the answer
+   is printed by the main thread already!
+   Honestly, I was lazy, this may be also implemented in the main
+   main thread, with select() based scheme / async I/O on UNIX, but I have
+   no idea about Windows ... */
+static int console_monitor_thread ( void *ptr )
 {
-	printf("Welcome to " WINDOW_TITLE " monitor. Use ? for help" NL);
-	for (;;) {
-		char buffer[200];
+	printf("Welcome to " WINDOW_TITLE " monitor. Use \"help\" for help" NL);
+	while (monitor_running) {
+		char buffer[256];
 		char *p;
-		if (!monitor_running)
-			break;
 		printf(WINDOW_TITLE "> ");
 		p = fgets(buffer, sizeof buffer, stdin);
-		if (!monitor_running)
-			break;
 		if (p == NULL) {
-			sleep(1);
+			SDL_Delay(10);	// avoid flooding the CPU in case of I/O problem for fgets ...
 		} else {
-			for (p = strlen(buffer) + buffer - 1; p >= buffer && (*p == '\r' || *p == '\n' || *p == ' ' || *p == '\t'); p--)
-				*p = '\0';
-			p[strlen(p) + 1] = '\0';
-			for (p = buffer; *p && (*p == ' ' || *p == '\t'); p++)
-				;
-			printf("Entered: \"%s\" [%d]" NL, p, strlen(p));
-			printf("AF =%04X BC =%04X DE =%04X HL =%04X IX=%04X IY=%04X" NL "AF'=%04X BC'=%04X DE'=%04X HL'=%04X PC=%04X SP=%04X" NL "Pages: %02X %02X %02X %02X" NL,
-				Z80_AF,  Z80_BC,  Z80_DE,  Z80_HL,  Z80_IX, Z80_IY,
-				Z80_AF_, Z80_BC_, Z80_DE_, Z80_HL_, Z80_PC, Z80_SP,
-				ports[0xB0], ports[0xB1], ports[0xB2], ports[0xB3]
-			);
+			// Queue the command!
+			while (monitor_queue_command(buffer) && monitor_running)
+				SDL_Delay(10);	// avoid flooding the CPU in case of not processed-yet command in the "queue" buffer
+			// Wait for command completed
+			while (monitor_queue_used() && monitor_running)
+				SDL_Delay(10);	// avoid flooding the CPU while waiting for command being processed and answered on the console
 		}
 	}
 	printf("MONITOR: thread is about to exit" NL);
@@ -75,7 +72,7 @@ static void monitor_start ( void )
 		return;
 	DEBUGPRINT("MONITOR: start" NL);
 	monitor_running = 1;
-	mont = SDL_CreateThread(monitor_thread, WINDOW_TITLE " monitor", NULL);
+	mont = SDL_CreateThread(console_monitor_thread, WINDOW_TITLE " monitor", NULL);
 	if (mont == NULL)
 		monitor_running = 0;
 }

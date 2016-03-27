@@ -58,6 +58,8 @@ screen.o: app_icon.c
 
 emu_rom_interface.o: xep_rom_syms.h
 
+emu_monitor.o: xep_rom_syms.h
+
 roms.o: xep_rom.hex
 
 xep_rom.rom: xep_rom.asm

@@ -1,4 +1,3 @@
-xepsym_cobuf: equ 0000F800h
 rom_main_entry_point: equ 0000C015h
 xepsym_jump_on_rom_entry: equ 0000C018h
 xepsym_print_xep_buffer: equ 0000C01Ah
@@ -13,3 +12,5 @@ xepsym_setdate_monday: equ 0000C03Bh
 xepsym_set_time: equ 0000C040h
 xepsym_system_init: equ 0000C049h
 xepsym_cold_reset: equ 0000C052h
+xepsym_cobuf: equ 0000C053h
+xepsym_cobuf_size: equ 00003F9Dh
