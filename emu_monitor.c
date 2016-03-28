@@ -181,35 +181,36 @@ static void cmd_disasm ( void ) {
 	if (h2 >= 0)
 		disasm_addr2 = h2;
 	for (lines = 0; lines < 10; lines++) {
-		char dasm_out_buffer[100];
+		char dasm_out_buffer[128];
+		char hex_out_buffer[32];
+		char asc_out_buffer[16];
 		int t_states, t_states2, r;
 		int disasm_base = (disasm_addr2 << 14) | (disasm_addr1 & 0x3FFF);
 		char *p;
-		MPRINTF("%04X:%02X ", disasm_addr1, disasm_addr2);
-		r = z80ex_dasm(dasm_out_buffer + 12, sizeof dasm_out_buffer - 12, 0, &t_states, &t_states2, disasm_byte_read_callback, disasm_addr1, (void*)disasm_base);
-		p = strchr(dasm_out_buffer + 12, ' ');
-		h1 = p - dasm_out_buffer - 12;
-		if (p && h1 < 4) {
-			//strcat(p, "[shifted]");
-			memmove(dasm_out_buffer + 12 + 5, p + 1, strlen(p + 1) + 1);
-			memset(p + 1, ' ', 4 - h1);
+		r = z80ex_dasm(dasm_out_buffer, sizeof dasm_out_buffer, 0, &t_states, &t_states2, disasm_byte_read_callback, disasm_addr1, (void*)disasm_base);
+		if (memory[disasm_base] == 0xF7) {	// the EXOS call hack!
+			h1 = memory[(disasm_base + 1) & 0x3FFFFF];
+			r = 2;
+			sprintf(dasm_out_buffer, "EXOS $%02X", h1);
 		}
-		for (h1 = 0; h1 < 4; h1++) {
-			if (h1 < r)
-				sprintf(dasm_out_buffer + h1 * 3, "%02X", memory[(disasm_base + h1) & 0x3FFFFF]);
-			else
-				dasm_out_buffer[h1 * 3] = dasm_out_buffer[h1 * 3 + 1] = ' ';
-			dasm_out_buffer[h1 * 3 + 2] = ' ';
+		for (h1 = 0, hex_out_buffer[0] = 0, asc_out_buffer[0] = '\''; h1 < r; h1++) {
+			Uint8 byte = memory[(disasm_base + h1) & 0x3FFFFF];
+			sprintf(hex_out_buffer + h1 * 3, "%02X ", byte);
+			asc_out_buffer[h1 + 1] = (byte >= 32 && byte < 127) ? byte : '.';
+			asc_out_buffer[h1 + 2] = '\0';
 		}
-		h1 = strlen(dasm_out_buffer);
-		h2 = 30;
-		if (h1 < h2) {
-			memset(dasm_out_buffer + h1, ' ', h2 - h1);
-			p = dasm_out_buffer + h2;
-		} else
-			p = dasm_out_buffer + h1;
-		sprintf(p, " ; T=%2d/%2d L=%d", t_states, t_states2, r);
-		MPRINTF("%s\n", dasm_out_buffer);
+		strcat(asc_out_buffer, "'");
+		p = strchr(dasm_out_buffer, ' ');
+		if (p)
+			*(p++) = '\0';
+		MPRINTF("%04X:%02X %-12s%-4s %-16s ; %-6s L=%d T=%d/%d\n",
+			disasm_addr1, disasm_addr2,
+			hex_out_buffer,
+			dasm_out_buffer,
+			p ? p : "",
+			asc_out_buffer,
+			r, t_states, t_states2
+		);
 		if (disasm_addr1 >> 14 != ((disasm_addr1 + r) >> 14))
 			disasm_addr2++;
 		disasm_addr1 += r;
