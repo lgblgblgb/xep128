@@ -48,8 +48,10 @@ static const char *output_nl;
 
 static Uint16 dump_addr1 = 0;
 static Uint8  dump_addr2 = 0;
+static int    dump_pagerel = 0;
 static Uint16 disasm_addr1 = 0;
 static Uint8  disasm_addr2 = 0;
+static int    disasm_pagerel = 0;
 
 
 
@@ -139,25 +141,52 @@ static void cmd_testargs ( void ) {
 }
 
 
+#define SEGMENT_OF_Z80_ADDR(n) ports[0xB0 | (((n) & 0xFFFF) >> 14)]
 
-static void cmd_memdump ( void ) {
-	int h1, h2, row;
+
+static void set_memaddr_by_arg ( Uint16 *da1, Uint8 *da2, int *dm )
+{
+	int h1, h2;
 	get_mon_arg_hex(&h1, &h2);
 	if (h1 >= 0)
-		dump_addr1 = h1;
-	if (h2 >= 0)
-		dump_addr2 = h2;
+		*da1 = h1;
+	if (h2 >= 0) {
+		*dm = 0;
+		*da2 = h2;
+		MPRINTF("; Absolute addresses from %04X:%02X\n", *da1, *da2);
+	} else if (h1 >= 0) {
+		MPRINTF("; CPU paging relative from %04X\n", *da1);
+		*dm = 1;
+	}
+	if (*dm)
+		*da2 = SEGMENT_OF_Z80_ADDR(*da1);
+}
+
+
+
+static void cmd_memdump ( void )
+{
+	int row;
+	set_memaddr_by_arg(&dump_addr1, &dump_addr2, &dump_pagerel);
 	for (row = 0; row < 10; row++) {
 		int col;
 		char asciibuf[17];
-		MPRINTF("%04X:%02X", dump_addr1, dump_addr2);
+		MPRINTF("%04X:%c%02X",
+			dump_addr1,
+			dump_pagerel ? '*' : '=',
+			dump_addr2
+		);
 		for (col = 0; col < 16; col++) {
 			Uint8 byte = memory[(dump_addr2 << 14) | (dump_addr1 & 0x3FFF)];
 			asciibuf[col] = (byte >= 32 && byte < 127) ? byte : '.';
 			MPRINTF(" %02X", byte);
 			dump_addr1++;
-			if (!(dump_addr1 & 0x3FFF))
-				dump_addr2++;
+			if (!(dump_addr1 & 0x3FFF)) {
+				if (dump_pagerel)
+					dump_addr2 = SEGMENT_OF_Z80_ADDR(dump_addr1);
+				else
+					dump_addr2++;
+			}
 		}
 		asciibuf[col] = 0;
 		MPRINTF(" %s\n", asciibuf);
@@ -166,53 +195,58 @@ static void cmd_memdump ( void ) {
 
 
 
-static Z80EX_BYTE disasm_byte_read_callback ( Z80EX_WORD addr, void *user_data )
-{
-	return memory[((int)user_data + addr - disasm_addr1) & 0x3FFFFF];
+static Z80EX_BYTE disasm_byte_read_callback ( Z80EX_WORD addr, void *user_data ) {
+	if (disasm_pagerel)
+		return memory[(SEGMENT_OF_Z80_ADDR(addr) << 14) | (addr & 0x3FFF)];
+	else
+		return memory[((int)user_data + addr - disasm_addr1) & 0x3FFFFF];
 }
 
 
 
-static void cmd_disasm ( void ) {
-	int h1, h2, lines;
-	get_mon_arg_hex(&h1, &h2);
-	if (h1 >= 0)
-		disasm_addr1 = h1;
-	if (h2 >= 0)
-		disasm_addr2 = h2;
+static void cmd_disasm ( void )
+{
+	int lines;
+	set_memaddr_by_arg(&disasm_addr1, &disasm_addr2, &disasm_pagerel);
 	for (lines = 0; lines < 10; lines++) {
 		char dasm_out_buffer[128];
 		char hex_out_buffer[32];
 		char asc_out_buffer[16];
-		int t_states, t_states2, r;
+		int t_states, t_states2, r, h;
 		int disasm_base = (disasm_addr2 << 14) | (disasm_addr1 & 0x3FFF);
 		char *p;
 		r = z80ex_dasm(dasm_out_buffer, sizeof dasm_out_buffer, 0, &t_states, &t_states2, disasm_byte_read_callback, disasm_addr1, (void*)disasm_base);
 		if (memory[disasm_base] == 0xF7) {	// the EXOS call hack!
-			h1 = memory[(disasm_base + 1) & 0x3FFFFF];
+			h = disasm_byte_read_callback(disasm_addr1 + 1, (void*)disasm_base);
 			r = 2;
-			sprintf(dasm_out_buffer, "EXOS $%02X", h1);
+			sprintf(dasm_out_buffer, "EXOS $%02X", h);
 		}
-		for (h1 = 0, hex_out_buffer[0] = 0, asc_out_buffer[0] = '\''; h1 < r; h1++) {
-			Uint8 byte = memory[(disasm_base + h1) & 0x3FFFFF];
-			sprintf(hex_out_buffer + h1 * 3, "%02X ", byte);
-			asc_out_buffer[h1 + 1] = (byte >= 32 && byte < 127) ? byte : '.';
-			asc_out_buffer[h1 + 2] = '\0';
+		for (h = 0, hex_out_buffer[0] = 0, asc_out_buffer[0] = '\''; h < r; h++) {
+			Uint8 byte = disasm_byte_read_callback(disasm_addr1 + h, (void*)disasm_base);
+			sprintf(hex_out_buffer + h * 3, "%02X ", byte);
+			asc_out_buffer[h + 1] = (byte >= 32 && byte < 127) ? byte : '.';
+			asc_out_buffer[h + 2] = '\0';
 		}
 		strcat(asc_out_buffer, "'");
 		p = strchr(dasm_out_buffer, ' ');
 		if (p)
 			*(p++) = '\0';
-		MPRINTF("%04X:%02X %-12s%-4s %-16s ; %-6s L=%d T=%d/%d\n",
-			disasm_addr1, disasm_addr2,
+		MPRINTF("%04X:%c%02X %-12s%-4s %-16s ; %-6s L=%d T=%d/%d\n",
+			disasm_addr1,
+			disasm_pagerel ? '*' : '=',
+			disasm_addr2,
 			hex_out_buffer,
 			dasm_out_buffer,
 			p ? p : "",
 			asc_out_buffer,
 			r, t_states, t_states2
 		);
-		if (disasm_addr1 >> 14 != ((disasm_addr1 + r) >> 14))
-			disasm_addr2++;
+		if (disasm_addr1 >> 14 != ((disasm_addr1 + r) >> 14)) {
+			if (disasm_pagerel)
+				disasm_addr2 = SEGMENT_OF_Z80_ADDR(disasm_addr1 + r);
+			else
+				disasm_addr2++;
+		}
 		disasm_addr1 += r;
 	}
 }
