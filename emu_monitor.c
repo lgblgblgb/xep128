@@ -415,6 +415,14 @@ static void cmd_romname ( void )
 }
 
 
+static void cmd_exos ( void )
+{
+	char status_line[41];
+	exos_get_status_line(status_line);
+	MPRINTF("EXOS version: %d.%d\nStatus line: %s\n", exos_version >> 4, exos_version & 0xF, status_line);
+}
+
+
 
 static void cmd_help ( void );
 
@@ -425,6 +433,7 @@ static const struct commands_st commands[] = {
 	{ "DISASM",	"D", 3, "Disassembly memory", cmd_disasm },
 	{ "EMU",	"", 3, "Emulation info", cmd_emu },
 	{ "EXIT",	"", 3, "Exit Xep128", cmd_exit },
+	{ "EXOS",	"", 3, "EXOS information", cmd_exos },
 	{ "HELP",	"?", 3, "Guess, what ;-)", cmd_help },
 	{ "MEMDUMP",	"M", 3, "Memory dump", cmd_memdump },
 	{ "MOUSE",	"", 3, "Configure or query mouse mode", cmd_mouse },

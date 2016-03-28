@@ -108,4 +108,5 @@ epkey@fc = Pause	# EMU reset
 epkey@fb = PageDown	# EMU slower-cpu
 epkey@fa = PageUp	# EMU faster-cpu
 epkey@f9 = `	# EMU osd-replay
+epkey@f8 = Keypad -	# EMU console
 

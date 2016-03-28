@@ -1,4 +1,6 @@
+xepsym_ed_trap_opcode: equ 000000BCh
 rom_main_entry_point: equ 0000C015h
+xepsym_trap_exos_command: equ 0000C017h
 xepsym_jump_on_rom_entry: equ 0000C018h
 xepsym_print_xep_buffer: equ 0000C01Ah
 xepsym_print_xep_buffer.nopush: equ 0000C01Dh
@@ -11,6 +13,7 @@ xepsym_setdate_year: equ 0000C039h
 xepsym_setdate_monday: equ 0000C03Bh
 xepsym_set_time: equ 0000C040h
 xepsym_system_init: equ 0000C049h
-xepsym_cold_reset: equ 0000C052h
-xepsym_cobuf: equ 0000C053h
-xepsym_cobuf_size: equ 00003F9Dh
+xepsym_trap_version_report: equ 0000C056h
+xepsym_cold_reset: equ 0000C059h
+xepsym_cobuf: equ 0000C05Ah
+xepsym_cobuf_size: equ 00003F96h

@@ -28,7 +28,22 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define BIN2BCD(bin) ((((bin) / 10) << 4) | ((bin) % 10))
 
 static const char EXOS_NEWLINE[] = "\r\n";
+Uint8 exos_version = 0;
 
+#define EXOS_ADDR(n)		(0x3FC000 | ((n) & 0x3FFF))
+#define EXOS_BYTE(n)		memory[EXOS_ADDR(n)]
+#define EXOS_GET_WORD(n)	(EXOS_BYTE(n) | (EXOS_BYTE((n) + 1) << 8))
+
+
+
+void exos_get_status_line ( char *buffer )
+{
+	Uint8 *s = memory + EXOS_ADDR(EXOS_GET_WORD(0xBFF6));
+	int a = 40;
+	while (a--)
+		*(buffer++) = *(s++) & 0x7F;
+	*buffer = '\0';
+}
 
 
 void xep_set_time_consts ( char *descbuffer )
@@ -125,12 +140,20 @@ static void xep_exos_command_trap ( void )
 void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 {
 	DEBUG("XEP: ROM trap at PC=%04Xh OPC=%02Xh" NL, pc, opcode);
-	switch (opcode) {
-		case 0xBC:
+	if (opcode != xepsym_ed_trap_opcode) {
+		ERROR_WINDOW("FATAL: Unknown ED-trap opcode in XEP ROM: PC=%04Xh ED_OP=%02Xh", pc, opcode);
+		exit(1);
+	}
+	switch (pc) {
+		case xepsym_trap_exos_command:
 			xep_exos_command_trap();
 			break;
+		case xepsym_trap_version_report:
+			exos_version = Z80_B;	// store EXOS version number we got ...
+			//EXOS_BYTE(0xBFEF) = 1; // use this, to skip Enterprise logo when it would come :-)
+			break;
 		default:
-			ERROR_WINDOW("FATAL: Unknown ED-trap opcode in XEP ROM: PC=%04Xh ED_OP=%02Xh", pc, opcode);
+			ERROR_WINDOW("FATAL: Unknown ED-trap location in XEP ROM: PC=%04Xh (ED_OP=%02Xh)", pc, opcode);
 			exit(1);
 	}
 }

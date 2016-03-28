@@ -260,6 +260,8 @@ extern int kbd_selector;
 
 void xep_rom_trap ( Uint16 pc, Uint8 opcode);
 void xep_set_time_consts ( char *descbuffer );
+void exos_get_status_line ( char *buffer );
+extern Uint8 exos_version;
 
 void w5300_reset ( void );
 void w5300_init ( void (*cb)(int) );
