@@ -48,6 +48,8 @@ static const char *output_nl;
 
 static Uint16 dump_addr1 = 0;
 static Uint8  dump_addr2 = 0;
+static Uint16 disasm_addr1 = 0;
+static Uint8  disasm_addr2 = 0;
 
 
 
@@ -164,10 +166,74 @@ static void cmd_memdump ( void ) {
 
 
 
+static Z80EX_BYTE disasm_byte_read_callback ( Z80EX_WORD addr, void *user_data )
+{
+	return memory[((int)user_data + addr - disasm_addr1) & 0x3FFFFF];
+}
+
+
+
+static void cmd_disasm ( void ) {
+	int h1, h2, lines;
+	get_mon_arg_hex(&h1, &h2);
+	if (h1 >= 0)
+		disasm_addr1 = h1;
+	if (h2 >= 0)
+		disasm_addr2 = h2;
+	for (lines = 0; lines < 10; lines++) {
+		char dasm_out_buffer[100];
+		int t_states, t_states2, r;
+		int disasm_base = (disasm_addr2 << 14) | (disasm_addr1 & 0x3FFF);
+		char *p;
+		MPRINTF("%04X:%02X ", disasm_addr1, disasm_addr2);
+		r = z80ex_dasm(dasm_out_buffer + 12, sizeof dasm_out_buffer - 12, 0, &t_states, &t_states2, disasm_byte_read_callback, disasm_addr1, (void*)disasm_base);
+		p = strchr(dasm_out_buffer + 12, ' ');
+		h1 = p - dasm_out_buffer - 12;
+		if (p && h1 < 4) {
+			//strcat(p, "[shifted]");
+			memmove(dasm_out_buffer + 12 + 5, p + 1, strlen(p + 1) + 1);
+			memset(p + 1, ' ', 4 - h1);
+		}
+		for (h1 = 0; h1 < 4; h1++) {
+			if (h1 < r)
+				sprintf(dasm_out_buffer + h1 * 3, "%02X", memory[(disasm_base + h1) & 0x3FFFFF]);
+			else
+				dasm_out_buffer[h1 * 3] = dasm_out_buffer[h1 * 3 + 1] = ' ';
+			dasm_out_buffer[h1 * 3 + 2] = ' ';
+		}
+		h1 = strlen(dasm_out_buffer);
+		h2 = 30;
+		if (h1 < h2) {
+			memset(dasm_out_buffer + h1, ' ', h2 - h1);
+			p = dasm_out_buffer + h2;
+		} else
+			p = dasm_out_buffer + h1;
+		sprintf(p, " ; T=%2d/%2d L=%d", t_states, t_states2, r);
+		MPRINTF("%s\n", dasm_out_buffer);
+		if (disasm_addr1 >> 14 != ((disasm_addr1 + r) >> 14))
+			disasm_addr2++;
+		disasm_addr1 += r;
+	}
+}
+
+
+
 static void cmd_registers ( void ) {
-	MPRINTF("AF =%04X BC =%04X DE =%04X HL =%04X IX=%04X IY=%04X\nAF'=%04X BC'=%04X DE'=%04X HL'=%04X PC=%04X SP=%04X\nPages: %02X %02X %02X %02X\n",
+	MPRINTF(
+		"AF =%04X BC =%04X DE =%04X HL =%04X IX=%04X IY=%04X F=%c%c%c%c%c%c%c%c IM=%d IFF=%d,%d\n"
+		"AF'=%04X BC'=%04X DE'=%04X HL'=%04X PC=%04X SP=%04X Prefix=%02X P=%02X,%02X,%02X,%02X\n",
 		Z80_AF,  Z80_BC,  Z80_DE,  Z80_HL,  Z80_IX, Z80_IY,
+		(Z80_F & 0x80) ? 'S' : 's',
+		(Z80_F & 0x40) ? 'Z' : 'z',
+		(Z80_F & 0x20) ? '1' : '0',
+		(Z80_F & 0x10) ? 'H' : 'h',
+		(Z80_F & 0x08) ? '1' : '0',
+		(Z80_F & 0x04) ? 'V' : 'v',
+		(Z80_F & 0x02) ? 'N' : 'n',
+		(Z80_F & 0x01) ? 'C' : 'c',
+		Z80_IM, Z80_IFF1 ? 1 : 0, Z80_IFF2 ? 1 : 0,
 		Z80_AF_, Z80_BC_, Z80_DE_, Z80_HL_, Z80_PC, Z80_SP,
+		z80ex.prefix,
 		ports[0xB0], ports[0xB1], ports[0xB2], ports[0xB3]
 	);
 
@@ -261,7 +327,11 @@ static void cmd_emu ( void )
 	gethostname(buf, sizeof buf);
 #define OS_KIND "POSIX"
 #endif
-	MPRINTF("Run by: %s@%s %s %s\nDrivers: %s %s\nSDL c/l: %d.%d.%d %d.%d.%d\nBase path: %s\nPref path: %s\nStart dir: %s\nSD img: %s [%ldM]\n",
+	MPRINTF(
+		"Run by: %s@%s %s %s\n"
+		"Drivers: %s %s\n"
+		"SDL c/l: %d.%d.%d %d.%d.%d\n"
+		"Base path: %s\nPref path: %s\nStart dir: %s\nSD img: %s [%ldM]\n",
 #ifdef _WIN32
 		getenv("USERNAME"),
 #else
@@ -348,21 +418,22 @@ static void cmd_romname ( void )
 static void cmd_help ( void );
 
 static const struct commands_st commands[] = {
-	{ "audio",	"", 3, "Tries to turn lame audio emulation", cmd_audio },
-	{ "close",	"", 3, "Close console/monitor window", cmd_close },
-	{ "cpu",	"", 3, "Set/query CPU type/clock", cmd_cpu },
-	{ "emu",	"", 3, "Emulation info", cmd_emu },
-	{ "exit",	"", 3, "Exit Xep128", cmd_exit },
-	{ "help",	"?", 3, "Guess, what ;-)", cmd_help },
-	{ "memdump",	"m", 3, "Memory dump", cmd_memdump },
-	{ "mouse",	"", 3, "Configure or query mouse mode", cmd_mouse },
-	{ "primo",	"", 3, "Primo emulation", cmd_primo },
-	{ "ram",	"", 3, "Set RAM size/report", cmd_ram },
-	{ "regs",	"r", 3, "Show Z80 registers", cmd_registers },
-	{ "romname",	"", 3, "ROM id string", cmd_romname },
-	{ "setdate",	"", 1, "Set EXOS time/date by emulator" , cmd_setdate },
-	{ "showkeys",	"", 3, "Show/hide PC/SDL key symbols", cmd_showkeys },
-	{ "testargs",   "", 3, "Just for testing monitor statement parsing, not so useful for others", cmd_testargs },
+	{ "AUDIO",	"", 3, "Tries to turn lame audio emulation", cmd_audio },
+	{ "CLOSE",	"", 3, "Close console/monitor window", cmd_close },
+	{ "CPU",	"", 3, "Set/query CPU type/clock", cmd_cpu },
+	{ "DISASM",	"D", 3, "Disassembly memory", cmd_disasm },
+	{ "EMU",	"", 3, "Emulation info", cmd_emu },
+	{ "EXIT",	"", 3, "Exit Xep128", cmd_exit },
+	{ "HELP",	"?", 3, "Guess, what ;-)", cmd_help },
+	{ "MEMDUMP",	"M", 3, "Memory dump", cmd_memdump },
+	{ "MOUSE",	"", 3, "Configure or query mouse mode", cmd_mouse },
+	{ "PRIMO",	"", 3, "Primo emulation", cmd_primo },
+	{ "RAM",	"", 3, "Set RAM size/report", cmd_ram },
+	{ "REGS",	"R", 3, "Show Z80 registers", cmd_registers },
+	{ "ROMNAME",	"", 3, "ROM id string", cmd_romname },
+	{ "SETDATE",	"", 1, "Set EXOS time/date by emulator" , cmd_setdate },
+	{ "SHOWKEYS",	"", 3, "Show/hide PC/SDL key symbols", cmd_showkeys },
+	{ "TESTARGS",   "", 3, "Just for testing monitor statement parsing, not so useful for others", cmd_testargs },
 	{ NULL,		NULL, 0, NULL, NULL }
 };
 static const char help_for_all_desc[] = "\nFor help on all comamnds: (:XEP) HELP\n";
@@ -393,7 +464,11 @@ static void cmd_help ( void ) {
 		);
 		while (cmds->name) {
 			if (cmds->help)
-				MPRINTF(" %s", cmds->name);
+				MPRINTF(" %s%s%s%s", cmds->name,
+					cmds->alias[0] ? "[" : "",
+					cmds->alias,
+					cmds->alias[0] ? "]" : ""
+				);
 			cmds++;
 		}
 		MPRINTF("\n\nFor help on a command: (:XEP) HELP CMD\n");

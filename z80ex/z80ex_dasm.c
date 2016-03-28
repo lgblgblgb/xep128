@@ -32,8 +32,8 @@ typedef struct {
 #include "opcodes/opcodes_dasm.c"
 
 static const char *formats[] = {
-	"#%02X", /*bytes*/	
-	"#%04X", /*words*/
+	"$%02X", /*bytes, # was deleted*/
+	"$%04X", /*words, # was deleted*/
 	"%d" /*WORDS_DEC, BYTES_DEC*/
 };
 
