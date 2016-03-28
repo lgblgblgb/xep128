@@ -17,11 +17,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
-
 #include "xep_rom_syms.h"
+#ifdef _WIN32
+#include <sysinfoapi.h>
+#endif
+
 
 struct commands_st {
-	const char *cmd;
+	const char *name;
+	const char *alias;
 	const int allowed;
 	const char *help;
 	void (*handler)(void);
@@ -41,6 +45,10 @@ static char *input_p;
 static char *output_p;
 static char *output_limit;
 static const char *output_nl;
+
+static Uint16 dump_addr1 = 0;
+static Uint8  dump_addr2 = 0;
+
 
 
 
@@ -88,6 +96,7 @@ static char *get_mon_arg ( void )
 }
 
 
+
 #if 0
 static char *get_mon_arg_needed ( void )
 {
@@ -97,6 +106,62 @@ static char *get_mon_arg_needed ( void )
 	return r;
 }
 #endif
+
+
+
+static int get_mon_arg_hex ( int *hex1, int *hex2 )
+{
+	char *h = get_mon_arg();
+	*hex1 = *hex2 = -1;
+	if (h == NULL)
+		return 0;
+	return sscanf(h, "%x:%x", hex1, hex2);
+}
+
+
+
+static void cmd_testargs ( void ) {
+	int h1, h2, r;
+	r = get_mon_arg_hex(&h1, &h2);
+	MPRINTF("Tried to parse first arg as hex, result: r=%d, h1=%x, h2=%x\n",
+		r, h1, h2
+	);
+	for (;;) {
+		char *p = get_mon_arg();
+		if (!p) {
+			MPRINTF("No more args found!\n");
+			break;
+		}
+		MPRINTF("Another arg found: \"%s\"\n", p);
+	}
+}
+
+
+
+static void cmd_memdump ( void ) {
+	int h1, h2, row;
+	get_mon_arg_hex(&h1, &h2);
+	if (h1 >= 0)
+		dump_addr1 = h1;
+	if (h2 >= 0)
+		dump_addr2 = h2;
+	for (row = 0; row < 10; row++) {
+		int col;
+		char asciibuf[17];
+		MPRINTF("%04X:%02X", dump_addr1, dump_addr2);
+		for (col = 0; col < 16; col++) {
+			Uint8 byte = memory[(dump_addr2 << 14) | (dump_addr1 & 0x3FFF)];
+			asciibuf[col] = (byte >= 32 && byte < 127) ? byte : '.';
+			MPRINTF(" %02X", byte);
+			dump_addr1++;
+			if (!(dump_addr1 & 0x3FFF))
+				dump_addr2++;
+		}
+		asciibuf[col] = 0;
+		MPRINTF(" %s\n", asciibuf);
+	}
+}
+
 
 
 static void cmd_registers ( void ) {
@@ -147,7 +212,7 @@ static void cmd_ram ( void ) {
 
 
 static void cmd_cpu ( void ) {
-	char buf[512] = "";
+	//char buf[512] = "";
 	char *arg = get_mon_arg();
 	if (arg) {
 		if (!strcasecmp(arg, "z80"))
@@ -170,22 +235,12 @@ static void cmd_cpu ( void ) {
 			}
 		}
 	}
-	MPRINTF("%sCPU : %s %s @ %.2fMHz\n",
-		buf,
+	MPRINTF("CPU : %s %s @ %.2fMHz\n",
 		z80ex.z180 ? "Z180" : "Z80",
 		z80ex.nmos ? "NMOS" : "CMOS",
 		CPU_CLOCK / 1000000.0
 	);
 }
-
-
-
-#ifdef _WIN32
-// /usr/i686-w64-mingw32/include/sysinfoapi.h:
-//#define SECURITY_WIN32
-#include "sysinfoapi.h"
-//#include "secext.h"
-#endif
 
 
 
@@ -293,20 +348,22 @@ static void cmd_romname ( void )
 static void cmd_help ( void );
 
 static const struct commands_st commands[] = {
-	{ "audio",	3, "Tries to turn lame audio emulation", cmd_audio },
-	{ "close",	3, "Close console/monitor window", cmd_close },
-	{ "cpu",	3, "Set/query CPU type/clock", cmd_cpu },
-	{ "emu",	3, "Emulation info", cmd_emu },
-	{ "exit",	3, "Exit Xep128", cmd_exit },
-	{ "help",	3, "Guess, what ;-)", cmd_help },
-	{ "mouse",	3, "Configure or query mouse mode", cmd_mouse },
-	{ "primo",	3, "Primo emulation", cmd_primo },
-	{ "ram",	3, "Set RAM size/report", cmd_ram },
-	{ "regs",	3, "Show Z80 registers", cmd_registers },
-	{ "romname",	3, "ROM id string", cmd_romname },
-	{ "setdate",	1, "Set EXOS time/date by emulator" , cmd_setdate },
-	{ "showkeys",	3, "Show/hide PC/SDL key symbols", cmd_showkeys },
-	{ NULL,		0, NULL, NULL }
+	{ "audio",	"", 3, "Tries to turn lame audio emulation", cmd_audio },
+	{ "close",	"", 3, "Close console/monitor window", cmd_close },
+	{ "cpu",	"", 3, "Set/query CPU type/clock", cmd_cpu },
+	{ "emu",	"", 3, "Emulation info", cmd_emu },
+	{ "exit",	"", 3, "Exit Xep128", cmd_exit },
+	{ "help",	"?", 3, "Guess, what ;-)", cmd_help },
+	{ "memdump",	"m", 3, "Memory dump", cmd_memdump },
+	{ "mouse",	"", 3, "Configure or query mouse mode", cmd_mouse },
+	{ "primo",	"", 3, "Primo emulation", cmd_primo },
+	{ "ram",	"", 3, "Set RAM size/report", cmd_ram },
+	{ "regs",	"r", 3, "Show Z80 registers", cmd_registers },
+	{ "romname",	"", 3, "ROM id string", cmd_romname },
+	{ "setdate",	"", 1, "Set EXOS time/date by emulator" , cmd_setdate },
+	{ "showkeys",	"", 3, "Show/hide PC/SDL key symbols", cmd_showkeys },
+	{ "testargs",   "", 3, "Just for testing monitor statement parsing, not so useful for others", cmd_testargs },
+	{ NULL,		NULL, 0, NULL, NULL }
 };
 static const char help_for_all_desc[] = "\nFor help on all comamnds: (:XEP) HELP\n";
 
@@ -316,9 +373,14 @@ static void cmd_help ( void ) {
         const struct commands_st *cmds = commands;
 	char *arg = get_mon_arg();
 	if (arg) {
-		while (cmds->cmd) {
-			if (!strcasecmp(arg, cmds->cmd) && cmds->help) {
-				MPRINTF("%s%s", cmds->help, help_for_all_desc);
+		while (cmds->name) {
+			if ((!strcasecmp(arg, cmds->name) || !strcasecmp(arg, cmds->alias)) && cmds->help) {
+				MPRINTF("%s: [%s] %s%s",
+					cmds->name,
+					cmds->alias[0] ? cmds->alias : "-",
+					cmds->help,
+					help_for_all_desc
+				);
 				return;
 			}
 			cmds++;
@@ -329,9 +391,9 @@ static void cmd_help ( void ) {
 			SHORT_HELP, WINDOW_TITLE, VERSION, COPYRIGHT,
 			BUILDINFO_ON, BUILDINFO_AT, BUILDINFO_GIT, CC_TYPE, BUILDINFO_CC
 		);
-		while (cmds->cmd) {
+		while (cmds->name) {
 			if (cmds->help)
-				MPRINTF(" %s", cmds->cmd);
+				MPRINTF(" %s", cmds->name);
 			cmds++;
 		}
 		MPRINTF("\n\nFor help on a command: (:XEP) HELP CMD\n");
@@ -359,8 +421,8 @@ void monitor_execute ( char *in_input_buffer, int in_source, char *in_output_buf
 			MPRINTF("*** Use: XEP HELP\n");
 		return;	// empty command line
 	}
-	while (cmds->cmd) {
-		if (!strcasecmp(cmds->cmd, cmd_name)) {
+	while (cmds->name) {
+		if (!strcasecmp(cmds->name, cmd_name) || !strcasecmp(cmds->alias, cmd_name)) {
 			if (cmds->allowed & in_source)
 				return (void)(cmds->handler)();
 			else {
