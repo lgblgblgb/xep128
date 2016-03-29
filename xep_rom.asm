@@ -63,15 +63,12 @@ xepsym_print_xep_buffer:
 	PUSH	BC
 	PUSH	DE
 .nopush:
-	LD	DE, xepsym_cobuf	; the ED trap modifies memory from here
-	LD	A, (DE)
-	LD	C, A
-	INC	DE
-	LD	A, (DE)
-	LD	B, A
-	OR	C		; word at F800 is the print size, 0 => no print
+.store_length = $ + 1
+	LD	BC, 0		; will be modified by Xep128
+	LD	A, C
+	OR	B
 	JR	Z, xepsym_pop_and_ret
-	INC	DE
+	LD	DE, xepsym_cobuf	; the ED trap modifies memory from here xepsym_cobuf
 	LD	A, 0xFF		; default channel
 	EXOS	8		; write block EXOS function
 xepsym_pop_and_ret:
@@ -80,6 +77,7 @@ xepsym_pop_and_ret:
 	POP	AF
 xepsym_ret:
 	RET
+xepsym_print_size = xepsym_print_xep_buffer.store_length
 
 
 ; Enable write of the ROM.
@@ -89,6 +87,8 @@ enable_write:
 	RET
 
 
+; Set EXOS time/date.
+; Caller should write the register fill values first ...
 set_exos_time:
 xepsym_settime_hour = $ + 1
 	LD	C, 0x88
@@ -121,7 +121,7 @@ xepsym_system_init:
 	LD	DE, xepsym_exos_info_struct
 	CALL	enable_write
 	EXOS	20
-	TRAP	xepsym_trap_version_report	; other than version report, may be used to skip Enterprise logo at the handler!
+	TRAP	xepsym_trap_on_system_init ; also stores the version number, receives the info struct from EXOS
 	JP	xepsym_pop_and_ret
 
 ; Called on EXOS action code 1

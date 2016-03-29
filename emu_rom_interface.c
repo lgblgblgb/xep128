@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xepem.h"
 #include "xep_rom_syms.h"
 
-#define COBUF ((char*)(memory + xep_rom_addr + xepsym_cobuf - 0xC000 + 2))
+#define COBUF ((char*)(memory + xep_rom_addr + xepsym_cobuf - 0xC000))
 #define SET_XEPSYM_BYTE(sym, value) memory[xep_rom_addr + (sym) - 0xC000] = (value)
 #define SET_XEPSYM_WORD(sym, value) do {	\
 	SET_XEPSYM_BYTE(sym, (value) & 0xFF);	\
@@ -80,6 +80,7 @@ static void xep_exos_command_trap ( void )
 {
 	Uint8 c = Z80_C, b = Z80_B;
 	Uint16 de = Z80_DE;
+	int size;
 	*COBUF = 0; // no ans by def
 	DEBUG("XEP: COMMAND TRAP: C=%02Xh, B=%02Xh, DE=%04Xh" NL, c, b, de);
 	/* restore exos command handler jump address */
@@ -98,7 +99,7 @@ static void xep_exos_command_trap ( void )
 					buffer,			// input buffer
 					1,			// source system (XEP ROM)
 					COBUF,			// output buffer (directly into the co-buffer area!)
-					xepsym_cobuf_size,	// max allowed output size
+					xepsym_cobuf_size - 1,	// max allowed output size
 					EXOS_NEWLINE		// newline delimiter requested (for EXOS we use this fixed value! unlike with console/monitor where it's host-OS dependent!)
 				);
 				Z80_A = 0;
@@ -107,10 +108,11 @@ static void xep_exos_command_trap ( void )
 			break;
 		case 3: // EXOS help
 			if (!b) {
-				monitor_execute("ROMNAME", 1, COBUF, xepsym_cobuf_size, EXOS_NEWLINE);
+				// eg on :HELP (ROM list) we patch the request as ROMNAME monitor command ...
+				monitor_execute("ROMNAME", 1, COBUF, xepsym_cobuf_size - 1, EXOS_NEWLINE);
 				Z80_A = 0;
 			} else if (exos_cmd_name_match("XEP", de + 1)) {
-				monitor_execute("HELP", 1, COBUF, xepsym_cobuf_size, EXOS_NEWLINE);
+				monitor_execute("HELP", 1, COBUF, xepsym_cobuf_size - 1, EXOS_NEWLINE);
 				Z80_A = 0;
 				Z80_C = 0;
 			}
@@ -124,23 +126,22 @@ static void xep_exos_command_trap ( void )
 			SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_cold_reset);
 			break;
 	}
-	// set answer size for XEP ROM TODO as output is checked by monitor_execute() this can be left out ... just the two final byte setting will remain?
-	de = strlen(COBUF);
-	if (de)
-		DEBUG("XEP: ANSWER: [%d bytes] = \"%s\"" NL, de, COBUF);
-	if (de > 2045) {
-		ERROR_WINDOW("FATAL: XEP ROM answer is too large, %d bytes.", de);
+	size = strlen(COBUF);
+	if (size)
+		DEBUG("XEP: ANSWER: [%d bytes] = \"%s\"" NL, size, COBUF);
+	// just a sanity check, monitor_execute() would not allow - in theory ... - to store more data than specified (by MPRINTF)
+	if (size > xepsym_cobuf_size - 1) {
+		ERROR_WINDOW("FATAL: XEP ROM answer is too large, %d bytes.", size);
 		exit(1);
 	}
-	*(Uint8*)(COBUF - 2) = de & 0xFF;
-	*(Uint8*)(COBUF - 1) = de >> 8;
+	SET_XEPSYM_WORD(xepsym_print_size, size);	// set print-out size (0 = no print)
 }
 
 
 
 void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 {
-	xep_rom_write_support(0);	// to be safe, let's switch off writable XEP ROM!
+	xep_rom_write_support(0);	// to be safe, let's switch writable XEP ROM off (maybe it was enabled by previous trap?)
 	DEBUG("XEP: ROM trap at PC=%04Xh OPC=%02Xh" NL, pc, opcode);
 	if (opcode != xepsym_ed_trap_opcode) {
 		ERROR_WINDOW("FATAL: Unknown ED-trap opcode in XEP ROM: PC=%04Xh ED_OP=%02Xh", pc, opcode);
@@ -148,12 +149,12 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 	}
 	switch (pc) {
 		case xepsym_trap_enable_rom_write:
-			xep_rom_write_support(1);
+			xep_rom_write_support(1);	// special ROM request to enable ROM write ... Danger Will Robinson!!
 			break;
 		case xepsym_trap_exos_command:
 			xep_exos_command_trap();
 			break;
-		case xepsym_trap_version_report:
+		case xepsym_trap_on_system_init:
 			exos_version = Z80_B;	// store EXOS version number we got ...
 			memcpy(exos_info, memory + ((xepsym_exos_info_struct & 0x3FFF) | (xep_rom_seg << 14)), 8);
 			//EXOS_BYTE(0xBFEF) = 1; // use this, to skip Enterprise logo when it would come :-)

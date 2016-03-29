@@ -58,7 +58,7 @@ static int    disasm_pagerel = 0;
 
 #define MPRINTF(...) do {			\
 	char m__buffer__[1024];			\
-	sprintf(m__buffer__, __VA_ARGS__);	\
+	snprintf(m__buffer__, sizeof m__buffer__, __VA_ARGS__);	\
 	__mprintf_append_helper(m__buffer__);	\
 } while(0)
 
@@ -464,6 +464,15 @@ static void cmd_exos ( void )
 }
 
 
+static void cmd_lpt ( void )
+{
+	char *p = nick_dump_lpt("\n");
+	__mprintf_append_helper(p);
+	free(p);
+}
+
+
+
 
 static void cmd_help ( void );
 
@@ -476,6 +485,7 @@ static const struct commands_st commands[] = {
 	{ "EXIT",	"", 3, "Exit Xep128", cmd_exit },
 	{ "EXOS",	"", 3, "EXOS information", cmd_exos },
 	{ "HELP",	"?", 3, "Guess, what ;-)", cmd_help },
+	{ "LPT",	"", 3, "Shows LPT (can be long!)", cmd_lpt },
 	{ "MEMDUMP",	"M", 3, "Memory dump", cmd_memdump },
 	{ "MOUSE",	"", 3, "Configure or query mouse mode", cmd_mouse },
 	{ "PRIMO",	"", 3, "Primo emulation", cmd_primo },

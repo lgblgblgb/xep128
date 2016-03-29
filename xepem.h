@@ -87,7 +87,7 @@ extern FILE *debug_file;
 
 #define OSD(...) do { \
 	char _buf_for_win_msg_[4096]; \
-	sprintf(_buf_for_win_msg_, __VA_ARGS__); \
+	snprintf(_buf_for_win_msg_, sizeof _buf_for_win_msg_, __VA_ARGS__); \
 	DEBUGPRINT("OSD: %s" NL, _buf_for_win_msg_); \
 	osd_notification(_buf_for_win_msg_); \
 } while(0)
@@ -95,7 +95,7 @@ extern FILE *debug_file;
 int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
 #define _REPORT_WINDOW_(sdlflag, str, ...) do { \
 	char _buf_for_win_msg_[4096]; \
-	sprintf(_buf_for_win_msg_, __VA_ARGS__); \
+	snprintf(_buf_for_win_msg_, sizeof _buf_for_win_msg_, __VA_ARGS__); \
 	DEBUGPRINT(str ": %s" NL, _buf_for_win_msg_); \
 	_sdl_emu_secured_message_box_(sdlflag, _buf_for_win_msg_); \
 } while(0)
@@ -173,7 +173,7 @@ void nick_set_lptl ( Uint8 value );
 void nick_set_lpth ( Uint8 value );
 Uint8 nick_get_last_byte ( void );
 void nick_render_slot ( void );
-void nick_dump_lpt ( void );
+char *nick_dump_lpt ( const char *newline_seq );
 
 void set_ep_memseg(int seg, int val);
 void port_write ( Z80EX_WORD port, Z80EX_BYTE value );

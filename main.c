@@ -384,7 +384,7 @@ int main (int argc, char *argv[])
 		last_optype = z80ex_last_op_type(z80);
 #endif
 	}
-	nick_dump_lpt();
+	//nick_dump_lpt();
 	return 0;
 }
 

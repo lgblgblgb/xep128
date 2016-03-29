@@ -511,13 +511,15 @@ static const char *_vm_names[] = {"vsync", "pixel", "attrib", "ch256", "ch128", 
 static const char *_cm_names[] = {"2c", "4c", "16c", "256c"};
 
 
-void nick_dump_lpt ( void )
+/* Result should be free()'d by the caller then! */
+char *nick_dump_lpt ( const char *newline_seq )
 {
 	int a = lpt_set;
 	int scs = 0;
-	DEBUG("Dumping LPT:" NL);
-	do {	
-		DEBUG("%04X SC=%3d VINT=%d CM=%d VRES=%d VM=%d RELOAD=%d LM=%2d RM=%2d LD1=%04X LD2=%04X %s/%s" NL,
+	char *p = NULL;
+	char buffer[256];
+	do {
+		sprintf(buffer,"%04X SC=%3d VINT=%d CM=%d VRES=%d VM=%d RELOAD=%d LM=%2d RM=%2d LD1=%04X LD2=%04X %s/%s%s",
 			a,
 			256 - vram[a], // sc
 			vram[a + 1] >> 7, // vint
@@ -530,16 +532,25 @@ void nick_dump_lpt ( void )
 			vram[a + 4] | (vram[a + 5] << 8), // LD1
 			vram[a + 6] | (vram[a + 7] << 8), // LD2
 			_vm_names[(vram[a + 1] >> 1) & 7],
-			_cm_names[(vram[a + 1] >> 5) & 3]
+			_cm_names[(vram[a + 1] >> 5) & 3],
+			newline_seq
 		);
+		p = realloc(p, p ? strlen(p) + strlen(buffer) + 256 : strlen(buffer) + 256);
+		check_malloc(p);
+		if (a == lpt_set)
+			*p = '\0';
+		strcat(p, buffer);
 		scs += 256 - vram[a];
 		if (vram[a + 1] & 1) {
-			DEBUG("Total scanlines = %d" NL, scs);
-			return;
+			sprintf(buffer, "Total scanlines = %d%s", scs, newline_seq);
+			strcat(p, buffer);
+			return p;
 		}
 		a = (a + 16) & 0xFFFF;
 	} while (a != lpt_set);
-	DEBUG("ERROR: LPT is endless!" NL);
+	sprintf(buffer, "ERROR: LPT is endless!%s", newline_seq);
+	strcat(p, buffer);
+	return p;
 }
 
 
