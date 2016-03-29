@@ -426,12 +426,6 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 		case 0xB3:
 			memsegs[3] = (value << 14) - 0xC000;
 			break;
-#if 0
-		case 0xB0: case 0xB1: case 0xB2: case 0xB3:
-			memsegs[port & 3] = (value << 14) - ((port & 3) << 14);
-			//set_ep_memseg(port & 3, value);
-			break;
-#endif
 		case 0xB4:
 			dave_configure_interrupts(value);
 			break;

@@ -38,13 +38,10 @@ static Uint32 full_palette[256] VARALIGN;
 static Uint32 *palette_bias = palette + 8;
 static Uint32 border;
 static Uint8 nick_last_byte;
-//static Uint32 line_storage[736], *line;
-//static int bias_offset;
 static int reload, vres;
 static int all_rasters;
 static int lpt_clk;
 int vsync;
-//static int vint;
 static int frameskip;
 static int lm, rm;
 static int vm, cm;
@@ -70,14 +67,7 @@ static int nick_addressing_init ( Uint32 *pixels_buffer, int line_size )
 		ERROR_WINDOW("NICK: SDL: FATAL ERROR: line size bytes not 4 bytes aligned!");
 		return 1;
 	}
-	//pixels_pitch = line_size - 736 * 4;
 	DEBUG("NICK: first visible scanline = %d, last visible scanline = %d, line pitch pixels = %d" NL, RASTER_FIRST_VISIBLE, RASTER_LAST_VISIBLE, 0);
-#if 0
-	if (pixels)
-		pixels = (pixels_init - pixels) + pixels_buffer; // recalculate current position
-	else
-		pixels = pixels_buffer; // was: pixels = pixels_init
-#endif
 	pixels = pixels_init = (pixels_buffer - RASTER_FIRST_VISIBLE * line_size);
 	pixels_limit_up = pixels_buffer;
 	pixels_limit_bottom = pixels_init + RASTER_LAST_VISIBLE * line_size;
@@ -93,20 +83,6 @@ Uint32 *nick_init ( void )
 {
 	int a;
 	Uint32 *buf = alloc_xep_aligned_mem(SCREEN_WIDTH * SCREEN_HEIGHT * 4);
-#if 0
-	DEBUG("NICK: SDL: emuscreen buffer width=%d height=%d PITCH=%d bytes/pixel=%d bits/pixel=%d alpha=%d" NL,
-		surface->w,
-		surface->h,
-		surface->pitch,
-		surface->format->BytesPerPixel,
-		surface->format->BitsPerPixel,
-		surface->format->Amask
-	);
-	if (surface->format->BytesPerPixel != 4) {
-		ERROR_WINDOW("NICK: SDL: FATAL ERROR: only 4 bytes / pixel SDL surfaces are supported (you have low colour video mode?!)!");
-		return NULL;
-	}
-#endif
 	if (buf == NULL) {
 		ERROR_WINDOW("Cannot allocate memory for screen buffer.");
 		return NULL;
@@ -133,7 +109,6 @@ Uint32 *nick_init ( void )
 		col16trans[a * 2 + 1] = ((a << 3) & 8) | ((a >> 2) & 4) | ((a >> 1) & 2) | ((a >> 6) & 1);
 
 	}
-	//ports[0x80] =2;
 	nick_set_bias(ports[0x80] = rand());
 	nick_set_border(ports[0x81] = rand());
 	nick_set_lptl(ports[0x82] = rand());
@@ -141,7 +116,6 @@ Uint32 *nick_init ( void )
 	nick_last_byte = 0xFF;
 	lpt_a = lpt_set;
 	slot = 0;
-	//vint = 0;
 	frameskip = 0;
 	all_rasters = 0;
 	scanlines = 0;
@@ -151,20 +125,25 @@ Uint32 *nick_init ( void )
 	return buf;
 }
 
+
+
 Uint8 nick_get_last_byte ( void )
 {
 	return nick_last_byte;
 }
+
+
 
 void nick_set_border ( Uint8 bcol )
 {
 	border = full_palette[bcol];
 }
 
+
+
 void nick_set_bias ( Uint8 value )
 {
 	int a;
-	//bias = value;
 	value = (value & 31) << 3;
 	// update the second half of the internal palette ("bias palette") based on the given BIAS value
 	// the first half of the palette is updated by the Nick LPB read process
@@ -172,10 +151,14 @@ void nick_set_bias ( Uint8 value )
 		palette_bias[a] = full_palette[value++];
 }
 
+
+
 void nick_set_lptl ( Uint8 value )
 {
 	lpt_set = (lpt_set & 0xF000) | (value << 4);
 }
+
+
 
 void nick_set_lpth ( Uint8 value )
 {
@@ -192,10 +175,6 @@ void nick_set_lpth ( Uint8 value )
 }
 
 
-
-//#define PIXDIR(a) *(pixels++)=a
-//#define PIXFULL(a) *(pixels++)=full_palette[a]
-//#define PIXPAL(a) *(pixels++)=palette[a]
 #define NICK_READ(a) (nick_last_byte = vram[a])
 
 
@@ -209,16 +188,21 @@ static inline void FILL( Uint32 colour )
 		pixels += 16;
 }
 
+
+
 static inline void TODO(void) {
 	FILL(full_palette[1]);
 	DEBUG("NO VM = %d CM = %d" NL, vm, cm);
 }
 
 
+
 static void _render_border ( void )
 {
 	FILL(border);
 }
+
+
 
 static void _render_pixel_2 ( void )
 {
@@ -579,16 +563,6 @@ void nick_render_slot ( void )
 			max_scanlines = 256 - NICK_READ(lpt_a++);
 			a = NICK_READ(lpt_a++);
 			dave_int1(a & 128);
-#if 0
-			if ((a & 128) != vint) {
-				vint = a & 128;
-				dave_int1(!vint);
-				DEBUG("VINT: %d rasters=%d" NL, vint, all_rasters);
-			}
-			//	if ((vint = a & 128))
-			//		dave_int1(); // "rising edge" of VINT bit in LPBs triggers Dave INT1
-			//dave_int1(a & 128);
-#endif
 			reload = a & 1;
 			vres = a & 16;
 			vm = (a >> 1) & 7;
@@ -671,16 +645,10 @@ void nick_render_slot ( void )
 		case 56:
 			// Nick does VRAM refresh here, and generates HSYNC, not so much needed in an emulator, though :)
 			break;
-		//case 14:
-		//	DEBUG("TEST RENDER in slot %d, offset pixels = %d" NL, slot, pixels -pixels_limit_up);
-		//	FILL(full_palette[255]);
-		//	break;
 		case  8: case  9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23: case 24: case 25: case 26: case 27: case 28:
 		case 29: case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37: case 38: case 39: case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47: case 48: case 49:
 		case 50: case 51: case 52: case 53:
-			//if (slot >= lm && slot < rm)
-			//if (lm <= slot && slot < rm
-		
+			// TODO: real nick does not use complicated comparsion just disables border and enables again while hitting lm and rm ...
 			if (slot < lm || slot >= rm) {
 				if (vsync)
 					_render_vsync();
@@ -694,6 +662,5 @@ void nick_render_slot ( void )
 			exit(1);
 			break;
 	}
-	//DEBUG("Render slot = %d, raster = %d, frame = %d, visible = %d, vm = %d, lastbyte = %02Xh" NL, slot, all_rasters, frames, visible, vm, nick_last_byte);
 	slot++;
 }

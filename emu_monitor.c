@@ -101,18 +101,6 @@ static char *get_mon_arg ( void )
 
 
 
-#if 0
-static char *get_mon_arg_needed ( void )
-{
-	char *r = get_mon_arg();
-	if (!r)
-		MPRINTF("*** Parameter needed\n");
-	return r;
-}
-#endif
-
-
-
 static int get_mon_arg_hex ( int *hex1, int *hex2 )
 {
 	char *h = get_mon_arg();

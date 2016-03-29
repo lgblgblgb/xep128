@@ -63,17 +63,6 @@ static inline Uint16 dave_render_audio_sample ( void )
 			_state_tg2 * (ports[0xAE] & 63);
 	}
 	return (left << 8) | right;
-#if 0
-	/* store sample now! */
-	//daveAudioBufferLRec[daveAudioBufferWPos] = left  / 126 - 1;
-	//daveAudioBufferRRec[daveAudioBufferWPos] = right / 126 - 1;
-	//daveAudioBufferWPos = (daveAudioBufferWPos + 1) & SOUND_BUFFER_SIZE_MASK;
-	//while (audio_buffer_r == audio_buffer_w && audio) ; // just consume CPU, yack ...
-	*(audio_buffer_w++) = left  ;
-	*(audio_buffer_w++) = right ;
-	if (audio_buffer_w == audio_buffer + AUDIO_BUFFER_SIZE)
-		audio_buffer_w = audio_buffer;
-#endif
 }
 
 
@@ -85,9 +74,6 @@ static void audio_fill_stereo ( Uint16 stereo_sample )
 	if (audio_buffer_w == audio_buffer + AUDIO_BUFFER_SIZE)
 		audio_buffer_w = audio_buffer;
 }
-
-
-
 
 
 
@@ -107,17 +93,22 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
 }
 
 
+
 void audio_start ( void )
 {
 	if (audio)
 		SDL_PauseAudioDevice(audio, 0);
 }
 
+
+
 void audio_stop ( void )
 {
 	if (audio)
 		SDL_PauseAudioDevice(audio, 1);
 }
+
+
 
 void audio_close ( void )
 {
@@ -126,6 +117,7 @@ void audio_close ( void )
 		SDL_CloseAudioDevice(audio);
 	audio = 0;
 }
+
 
 
 void audio_init ( int enable )
@@ -152,6 +144,7 @@ void audio_init ( int enable )
 }
 
 
+
 void dave_set_clock ( void )
 {
 	// FIXME maybe: Currently, it's assumed that Dave and CPU has fixed relation about clock
@@ -168,10 +161,12 @@ void dave_set_clock ( void )
 }
 
 
+
 void kbd_matrix_reset ( void )
 {
 	memset(kbd_matrix, 0xFF, sizeof(kbd_matrix));
 }
+
 
 
 void dave_reset ( void )
@@ -192,7 +187,7 @@ void dave_reset ( void )
 	DEBUG("DAVE: reset" NL);
 }
 
-//static int dave_int1_last = 0;
+
 
 /* Called by Nick */
 void dave_int1(int level)
@@ -224,15 +219,7 @@ static inline void dave_int_tg ( void )
 
 void dave_tick ( void )
 {
-#if 0
-	/* besides the name, it's 31.25KHz - NOTE, currently it is not used
-	   and maybe double freq is needed, anyway! I will examine this later,
-	   this code fragment is just a reminder for myself. */
-	_cnt_31khz -= ticks;
-	if (_cnt_31khz < 0) {
-		_cnt_31khz += 8 - 1;
-	}
-#endif
+	// TODO 31.25KHz counter for some reason :) what I forgot :-P
 	/* 50Hz counter */
 	if ((--_cnt_50hz) < 0) {
 		_cnt_50hz = 5000 - 1;
