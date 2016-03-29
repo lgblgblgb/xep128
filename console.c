@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
+#else
+#include <readline/readline.h>
+#include <readline/history.h>
 #endif
 
 #define USE_MONITOR	1
@@ -45,16 +48,25 @@ static int console_monitor_thread ( void *ptr )
 {
 	printf("Welcome to " WINDOW_TITLE " monitor. Use \"help\" for help" NL);
 	while (monitor_running) {
-		char buffer[256];
 		char *p;
+#ifdef _WIN32
+		char buffer[256];
 		printf(WINDOW_TITLE "> ");
 		p = fgets(buffer, sizeof buffer, stdin);
+#else
+		p = readline(WINDOW_TITLE "> ");
+#endif
 		if (p == NULL) {
 			SDL_Delay(10);	// avoid flooding the CPU in case of I/O problem for fgets ...
 		} else {
 			// Queue the command!
-			while (monitor_queue_command(buffer) && monitor_running)
+			while (monitor_queue_command(p) && monitor_running)
 				SDL_Delay(10);	// avoid flooding the CPU in case of not processed-yet command in the "queue" buffer
+#ifndef _WIN32
+			if (p[0])
+				add_history(p);
+			free(p);
+#endif
 			// Wait for command completed
 			while (monitor_queue_used() && monitor_running)
 				SDL_Delay(10);	// avoid flooding the CPU while waiting for command being processed and answered on the console
