@@ -205,15 +205,19 @@ void screen_set_fullscreen ( int state )
 
 void screen_present_frame (Uint32 *ep_pixels)
 {
+	int need = (osd_on && sdl_osdtex != NULL) || !paused;
 	if (resize_counter == 10) {
 		if (win_size_changed) {
 			SDL_SetWindowSize(sdl_win, win_xsize, win_ysize);
 			DEBUG("UI: correcting window size to %d x %d" NL, win_xsize, win_ysize);
 			win_size_changed = 0;
+			need = 1;
 		}
 		resize_counter = 0;
 	} else
 		resize_counter++;
+	if (!need)
+		return; // Ugly paused hack ... do not consume CPU for SDL screen update when no OSD and emu is paused
 	SDL_UpdateTexture(sdl_tex, NULL, ep_pixels, SCREEN_WIDTH * sizeof (Uint32));
 	SDL_RenderClear(sdl_ren);
 	SDL_RenderCopy(sdl_ren, sdl_tex, NULL, NULL);

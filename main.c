@@ -25,11 +25,9 @@ static const int _cpu_speeds[4] = { 4000000, 6000000, 7120000, 10000000 };
 static int _cpu_speed_index = 0;
 static int guarded_exit = 0;
 static unsigned int ticks;
-static int running;
-//static int tstates_all = 0;
+int paused = 0;
 static int cpu_cycles_for_dave_sync = 0;
 static double td_balancer = 0;
-//time_t unix_time;
 static struct timeval tv_old;
 static int td_em_ALL = 0, td_pc_ALL = 0, td_count_ALL = 0;
 static double balancer;
@@ -99,9 +97,10 @@ static void emu_timekeeping_delay ( int td_em )
 	if (td_count_ALL == 50) {
 		char buf[256];
 		//DEBUG("STAT: count = %d, EM = %d, PC = %d, usage = %f%" NL, td_count_ALL, td_em_ALL, td_pc_ALL, 100.0 * (double)td_pc_ALL / (double)td_em_ALL);
-		snprintf(buf, sizeof buf, "%s [%.2fMHz ~ %d%%]", WINDOW_TITLE " v" VERSION " ",
+		snprintf(buf, sizeof buf, "%s [%.2fMHz ~ %d%%]%s", WINDOW_TITLE " v" VERSION " ",
 			CPU_CLOCK / 1000000.0,
-			td_pc_ALL * 100 / td_em_ALL
+			td_pc_ALL * 100 / td_em_ALL,
+			paused ? " PAUSED" : ""
 		);
 		SDL_SetWindowTitle(sdl_win, buf);
 		td_count_ALL = 0;
@@ -146,17 +145,16 @@ void emu_timekeeping_start ( void )
 {
 	gettimeofday(&tv_old, NULL);
 	td_balancer = 0.0;
-	running = 1;
 }
 
 
 
 // called by nick.c
-void emu_one_frame(int rasters, int frameksip)
+void emu_one_frame(int rasters, int frameskip)
 {
 	SDL_Event e;
-	//if (!frameskip)
-	screen_present_frame(ep_pixels);
+	if (!frameskip)
+		screen_present_frame(ep_pixels);
 	while (SDL_PollEvent(&e) != 0)
 		switch (e.type) {
 			case SDL_WINDOWEVENT:
@@ -169,9 +167,8 @@ void emu_one_frame(int rasters, int frameksip)
 				}
 				break;
 			case SDL_QUIT:
-				if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1) running = 0; 
-				//running = 0;
-				//INFO_WINDOW("You are about leaving Xep128. Good bye!");
+				if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1)
+					exit(0);
 				return;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
@@ -186,7 +183,7 @@ void emu_one_frame(int rasters, int frameksip)
 								break;
 							case 0xFE:	// EXIT, default key F9
 								if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1)
-									running = 0;
+									exit(0);
 								break;
 							case 0xFD:	// SCREENSHOT, default key F10
 								screen_shot(ep_pixels, current_directory, "screenshot-*.png");
@@ -238,29 +235,6 @@ void emu_one_frame(int rasters, int frameksip)
 	monitor_process_queued();
 	rtc_update_trigger = 1; // triggers RTC update on the next RTC register read. Woooo!
 	emu_timekeeping_delay(1000000.0 * rasters * 57.0 / (double)NICK_SLOTS_PER_SEC);
-#if 0
-	ulate the precise time spent sleeping with SDL_Delay()
-	ticks_new = SDL_GetTicks();
-	used = ticks_new - ticks;
-	usecs = usecs * 64 / 1000; // "usecs" for real are the raster counter got, however 64usec is one raster, then convert to msec
-	DEBUG("usecs = %d used = %d" NL, usecs, used);
-	//usecs = usecs * 64 / 1000;
-	ticks = ticks_new;
-	if (used)
-		DEBUG("Speed: %d%% TSTATES_ALL=%d" NL, 100*usecs/used, tstates_all);
-	else
-		DEBUG("DIVIDE BY ZERO!" NL);
-	tstates_all = 0;
-	if (used > usecs) {
-		DEBUG("Too slow! realtime=%d used=%d" NL, usecs, used);
-		SDL_Delay(10);
-	} else {
-		DEBUG("Delay: %d" NL, usecs - used);
-		int foo = SDL_GetTicks();
-		SDL_Delay(usecs - used);
-		DEBUG("Real sleep was: %d" NL, SDL_GetTicks() - foo);
-	}
-#endif
 }
 
 
@@ -275,6 +249,7 @@ int set_cpu_clock ( int hz )
 	dave_set_clock();
 	return hz;
 }
+
 
 
 int set_cpu_clock_with_osd ( int hz )
@@ -319,18 +294,12 @@ int main (int argc, char *argv[])
 	w5300_init(NULL);
 #endif
 	ticks = SDL_GetTicks();
-	running = 1;
 	balancer = 0;
-#if 0
-	int last_optype = 0;
-#endif
-	//DEBUG("CPU: clock = %d scaler = %f" NL, CPU_CLOCK, SCALER);
 	set_cpu_clock(DEFAULT_CPU_CLOCK);
 	emu_timekeeping_start();
 	audio_start();
 	if (config_getopt_str("fullscreen"))
 		screen_set_fullscreen(1);
-	//osd_disable();
 	DEBUGPRINT(NL "EMU: entering into main emulation loop" NL);
 	sram_ready = 1;
 	if (strcmp(config_getopt_str("primo"), "none")) {
@@ -339,16 +308,15 @@ int main (int argc, char *argv[])
 		OSD("Primo Emulator Mode");
 	}
 	console_monitor_ready();	// OK to run monitor on console now!
-	while (running) {
+	/* Main loop of the emulator, an infinite one :) Use exit() to exit, as atexit() is
+	used to register proper "cleaner" function, including calling SDL_Quit() as well */
+	for (;;) {
 		int t;
-#if 0
-		char buffer[256];
-		int pc = z80ex_get_reg(z80, regPC);
-		////DEBUG("PC=%04Xh" NL, z80ex_get_reg(z80, regPC));
-		//z80ex_dasm(buffer, sizeof(buffer) - 1, 0, &t_states, &t_states2, pc);
-		//DEBUG("%04X %s" NL, pc, buffer);
-		z80_dasm(buffer, pc, -1);
-#endif
+		if (paused) {
+			/* Paused is non-zero for special cases, like pausing emulator :) or single-step execution mode */
+			emu_one_frame(312, 0); // keep UI stuffs (and some timing) intact ...
+			continue; // but do not emulate EP related stuff ...
+		}
 		if (nmi_pending) {
 			t = z80ex_nmi();
 			DEBUG("NMI: %d" NL, t);
@@ -371,20 +339,13 @@ int main (int argc, char *argv[])
 			cpu_cycles_for_dave_sync -= cpu_cycles_per_dave_tick;
 		}
 		balancer += t * SCALER;
-		//tstates_all += t;
 		//DEBUG("%s [balance=%f t=%d]" NL, buffer, balancer, t);
 		while (balancer >= 0.5) {
 			nick_render_slot();
 			balancer -= 1.0;
 		}
 		//DEBUG("[balance=%f t=%d]" NL, balancer, t);
-#if 0
-		if (!last_optype)
-			DEBUG("%s [balance=%f t=%d] TYPE=%d" NL, buffer, balancer, t, z80ex_last_op_type(z80));
-		last_optype = z80ex_last_op_type(z80);
-#endif
 	}
-	//nick_dump_lpt();
 	return 0;
 }
 

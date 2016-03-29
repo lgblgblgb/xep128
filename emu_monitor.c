@@ -472,6 +472,13 @@ static void cmd_lpt ( void )
 }
 
 
+static void cmd_pause ( void )
+{
+	paused = !paused;
+	OSD("Emulation %s", paused ? "paused" : "resumed");
+}
+
+
 
 
 static void cmd_help ( void );
@@ -488,6 +495,7 @@ static const struct commands_st commands[] = {
 	{ "LPT",	"", 3, "Shows LPT (can be long!)", cmd_lpt },
 	{ "MEMDUMP",	"M", 3, "Memory dump", cmd_memdump },
 	{ "MOUSE",	"", 3, "Configure or query mouse mode", cmd_mouse },
+	{ "PAUSE",	"", 2, "Pause/resume emulation", cmd_pause },
 	{ "PRIMO",	"", 3, "Primo emulation", cmd_primo },
 	{ "RAM",	"", 3, "Set RAM size/report", cmd_ram },
 	{ "REGS",	"R", 3, "Show Z80 registers", cmd_registers },

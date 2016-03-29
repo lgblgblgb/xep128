@@ -195,6 +195,7 @@ void check_malloc ( const void *p );
 time_t emu_getunixtime(void);
 
 void emu_one_frame(int usecs, int frameksip);
+extern int paused;
 
 #ifdef CONFIG_EXDOS_SUPPORT
 extern Uint8 wd_sector;
