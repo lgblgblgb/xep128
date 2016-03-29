@@ -171,7 +171,7 @@ int ep_init_ram ( void )
 		if (a == 0x100 || type != memory_segment_map[a] || rom_name_tab[a]) {
 			if (type) {
 				int s;
-				sprintf(dbuf, "%02X-%02X %s %s", from, a - 1, type, rom_name_tab[from] ? rom_name_tab[from] : "");
+				snprintf(dbuf, sizeof dbuf, "%02X-%02X %s %s", from, a - 1, type, rom_name_tab[from] ? rom_name_tab[from] : "");
 				DEBUGPRINT("CONFIG: MEM: %s" NL, dbuf);
 				strcat(dbuf, "\n");
 				s = mem_desc ? strlen(mem_desc) : 0;
@@ -185,7 +185,7 @@ int ep_init_ram ( void )
 			from = a;
 		}
 	}
-	sprintf(dbuf, "RAM:  %d segments (%d Kbytes)", sum, sum << 4);
+	snprintf(dbuf, sizeof dbuf, "RAM:  %d segments (%d Kbytes)", sum, sum << 4);
 	strcat(mem_desc, dbuf);
 	DEBUGPRINT("CONFIG: MEM: found %s" NL, dbuf);
 #ifdef CONFIG_SDEXT_SUPPORT
@@ -508,6 +508,7 @@ Z80EX_BYTE z80ex_intread_cb( void ) {
 void z80ex_reti_cb ( void ) {
 }
 
+
 int z80ex_ed_cb(Z80EX_BYTE opcode)
 {
 	if (Z80_PC >= 0xC000 && ports[0xB3] == xep_rom_seg) {
@@ -516,34 +517,6 @@ int z80ex_ed_cb(Z80EX_BYTE opcode)
 	}
 	return 0; // unhandled ED op!
 }
-
-#if 0
-static Z80EX_BYTE _rdcb_for_disasm(Z80EX_WORD addr, void *seg) {
-	return memory[(*(int*)seg < 0) ? (memsegs[addr >> 14] + addr) : (((*(int*)seg << 14) + addr) & 0x3FFFFF)];
-}
-int z80_dasm(char *buffer, Uint16 pc, int seg)
-{
-	//char _buffer[buffer_size];
-	int bytes, t1, t2;
-	if (seg >= 0) {
-		seg = (seg + (pc >> 14)) & 0xFF;
-		pc &= 0x3FFF;
-	}
-//	sprintf(_dasm_result, seg < 0 ? "%s:%04X %s %s %s" : " %02X:%04X %s %s %s", seg < 0 ? "Z80" : seg, pc);
-	if (seg < 0)
-		sprintf(buffer, "@%02X:%04X %02X ", ports[0xB0 | (pc >> 14)], pc, _rdcb_for_disasm(pc, (void*)&seg));
-	else
-		sprintf(buffer, ">%02X:%04X %02X ", seg, pc, _rdcb_for_disasm(pc, (void*)&seg));
-	bytes = z80ex_dasm(buffer + 12, 128, 0, &t1, &t2, _rdcb_for_disasm, pc, (void*)&seg);
-/*	p = strchr(_buffer, ' ');
-	if (p) {
-	
-	for (a = 0; a < bytes; a++) {
-		sprintf(p, "%02X", _rdcb_for_disasm(pc, (void*)&seg));
-	}*/
-	return bytes;
-}
-#endif
 
 
 

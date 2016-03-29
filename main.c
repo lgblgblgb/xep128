@@ -99,7 +99,7 @@ static void emu_timekeeping_delay ( int td_em )
 	if (td_count_ALL == 50) {
 		char buf[256];
 		//DEBUG("STAT: count = %d, EM = %d, PC = %d, usage = %f%" NL, td_count_ALL, td_em_ALL, td_pc_ALL, 100.0 * (double)td_pc_ALL / (double)td_em_ALL);
-		sprintf(buf, "%s [%.2fMHz ~ %d%%]", WINDOW_TITLE " v" VERSION " ",
+		snprintf(buf, sizeof buf, "%s [%.2fMHz ~ %d%%]", WINDOW_TITLE " v" VERSION " ",
 			CPU_CLOCK / 1000000.0,
 			td_pc_ALL * 100 / td_em_ALL
 		);

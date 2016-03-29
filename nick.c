@@ -519,7 +519,7 @@ char *nick_dump_lpt ( const char *newline_seq )
 	char *p = NULL;
 	char buffer[256];
 	do {
-		sprintf(buffer,"%04X SC=%3d VINT=%d CM=%d VRES=%d VM=%d RELOAD=%d LM=%2d RM=%2d LD1=%04X LD2=%04X %s/%s%s",
+		snprintf(buffer, sizeof buffer, "%04X SC=%3d VINT=%d CM=%d VRES=%d VM=%d RELOAD=%d LM=%2d RM=%2d LD1=%04X LD2=%04X %s/%s%s",
 			a,
 			256 - vram[a], // sc
 			vram[a + 1] >> 7, // vint

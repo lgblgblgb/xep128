@@ -32,7 +32,7 @@ static const char xep_rom_description[] = "(Xep128-internal)";
 static FILE *sram_open ( int seg, const char *mode, char *path )
 {
 	char fn[64];
-	sprintf(fn, "@sram-%02X.seg", seg);
+	snprintf(fn, sizeof fn, "@sram-%02X.seg", seg);
 	return open_emu_file(fn, mode, path);
 }
 

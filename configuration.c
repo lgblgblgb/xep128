@@ -116,7 +116,7 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 	}
 	while (prefixes[a] != NULL)
 		if (strcmp(prefixes[a], "?")) {
-			sprintf(pathbuffer, "%s%s", prefixes[a], name_used);
+			snprintf(pathbuffer, PATH_MAX, "%s%s", prefixes[a], name_used);
 			DEBUGPRINT("OPEN: trying file \"%s\" [mode: %s] as path \"%s\" [%s]: ",
 				name, mode, pathbuffer, policy
 			);

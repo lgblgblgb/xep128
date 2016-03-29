@@ -220,7 +220,7 @@ static void cmd_disasm ( void )
 		if (byte_reader(disasm_addr1) == 0xF7) {	// the EXOS call hack!
 			h = byte_reader(disasm_addr1 + 1);
 			r = 2;
-			sprintf(dasm_out_buffer, "EXOS $%02X", h);
+			snprintf(dasm_out_buffer, sizeof dasm_out_buffer, "EXOS $%02X", h);
 		}
 		for (h = 0, hex_out_buffer[0] = 0, asc_out_buffer[0] = '\''; h < r; h++) {
 			Uint8 byte = byte_reader(disasm_addr1 + h);
