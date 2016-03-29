@@ -41,6 +41,15 @@ char *mem_desc = NULL;
 #define nick_clock_align()
 
 
+
+void xep_rom_write_support ( int towrite )
+{
+	if (xep_rom_seg > 0) {
+		is_ram_seg[xep_rom_seg] = towrite;
+	}
+}
+
+
 void set_ep_cpu ( int type )
 {
 	z80ex.internal_int_disable = 0;

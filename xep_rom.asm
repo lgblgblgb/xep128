@@ -21,7 +21,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 ; Choose an unused ED XX opcode for our trap, which is also not used on Z180, just in case of Z180 mode selected for Xep128 :)
 ; This symbol is also exported for the C code, so the trap handler will recognize it
-xepsym_ed_trap_opcode = 0xBC
+xepsym_ed_trap_opcode	= 0xBC
+
+xepsym_exos_info_struct	= $FFF0
+
 
 	ORG 0xC000
 	DB "EXOS_ROM"
@@ -79,6 +82,12 @@ xepsym_ret:
 	RET
 
 
+; Enable write of the ROM.
+; Note: on next TRAP R/O access will be restored!
+enable_write:
+	TRAP	xepsym_trap_enable_rom_write
+	RET
+
 
 set_exos_time:
 xepsym_settime_hour = $ + 1
@@ -109,7 +118,8 @@ xepsym_system_init:
 	PUSH	BC
 	PUSH	DE
 	CALL	set_exos_time
-	LD	DE, $C000	; EXOS would store information here, but we don't have RAM for sure, let's give ROM address it won't disturb anybody then :)
+	LD	DE, xepsym_exos_info_struct
+	CALL	enable_write
 	EXOS	20
 	TRAP	xepsym_trap_version_report	; other than version report, may be used to skip Enterprise logo at the handler!
 	JP	xepsym_pop_and_ret

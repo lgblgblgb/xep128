@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 static const char EXOS_NEWLINE[] = "\r\n";
 Uint8 exos_version = 0;
+Uint8 exos_info[8];
 
 #define EXOS_ADDR(n)		(0x3FC000 | ((n) & 0x3FFF))
 #define EXOS_BYTE(n)		memory[EXOS_ADDR(n)]
@@ -139,17 +140,22 @@ static void xep_exos_command_trap ( void )
 
 void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 {
+	xep_rom_write_support(0);	// to be safe, let's switch off writable XEP ROM!
 	DEBUG("XEP: ROM trap at PC=%04Xh OPC=%02Xh" NL, pc, opcode);
 	if (opcode != xepsym_ed_trap_opcode) {
 		ERROR_WINDOW("FATAL: Unknown ED-trap opcode in XEP ROM: PC=%04Xh ED_OP=%02Xh", pc, opcode);
 		exit(1);
 	}
 	switch (pc) {
+		case xepsym_trap_enable_rom_write:
+			xep_rom_write_support(1);
+			break;
 		case xepsym_trap_exos_command:
 			xep_exos_command_trap();
 			break;
 		case xepsym_trap_version_report:
 			exos_version = Z80_B;	// store EXOS version number we got ...
+			memcpy(exos_info, memory + ((xepsym_exos_info_struct & 0x3FFF) | (xep_rom_seg << 14)), 8);
 			//EXOS_BYTE(0xBFEF) = 1; // use this, to skip Enterprise logo when it would come :-)
 			break;
 		default:

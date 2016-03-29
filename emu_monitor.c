@@ -453,9 +453,14 @@ static void cmd_romname ( void )
 
 static void cmd_exos ( void )
 {
-	char status_line[41];
-	exos_get_status_line(status_line);
-	MPRINTF("EXOS version: %d.%d\nStatus line: %s\n", exos_version >> 4, exos_version & 0xF, status_line);
+	if (exos_version == 0)
+		MPRINTF("*** XEP ROM was not called yet\n");
+	else {
+		char status_line[41];
+		exos_get_status_line(status_line);
+		MPRINTF("EXOS version: %d.%d\nStatus line: %s\n", exos_version >> 4, exos_version & 0xF, status_line);
+		MPRINTF("Working/non-working RAM segs: %d / %d\n", exos_info[5], exos_info[6]);
+	}
 }
 
 

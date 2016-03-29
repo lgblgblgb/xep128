@@ -136,6 +136,7 @@ void set_ep_cpu ( int type );
 #define CPU_Z80C	1
 #define CPU_Z180	2
 extern int cpu_type;
+void xep_rom_write_support ( int towrite );
 
 void z180_internal_reset ( void );
 void z180_port_write ( Uint8 port, Uint8 value );
@@ -262,6 +263,7 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode);
 void xep_set_time_consts ( char *descbuffer );
 void exos_get_status_line ( char *buffer );
 extern Uint8 exos_version;
+extern Uint8 exos_info[8];
 
 void w5300_reset ( void );
 void w5300_init ( void (*cb)(int) );
