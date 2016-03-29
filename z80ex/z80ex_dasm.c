@@ -40,7 +40,7 @@ static const char *formats[] = {
 #define STMP_SIZE 100
 
 int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int *t_states2,
-	z80ex_dasm_readbyte_cb readbyte_cb, Z80EX_WORD addr, void *user_data)
+	z80ex_dasm_readbyte_cb readbyte_cb, Z80EX_WORD addr)
 {
 	Z80EX_BYTE opc=0, next=0, disp_u=0;
 	Z80EX_SIGNED_BYTE disp;
@@ -59,14 +59,14 @@ int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int
 	*t_states=0;
 	*t_states2=0;
 	
-	opc = readbyte_cb(addr++,user_data);
+	opc = readbyte_cb(addr++);
 	bytes++;
 
 	switch(opc)
 	{
 		case 0xDD:
 		case 0xFD:
-			next = readbyte_cb(addr++,user_data);
+			next = readbyte_cb(addr++);
 			if((next | 0x20) == 0xFD || next == 0xED)
 			{
 				strncpy(output,"NOP*",output_size-1);
@@ -75,8 +75,8 @@ int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int
 			}
 			else if(next == 0xCB)
 			{
-				disp_u = readbyte_cb(addr++,user_data);
-				next = readbyte_cb(addr++,user_data);
+				disp_u = readbyte_cb(addr++);
+				next = readbyte_cb(addr++);
 				bytes+=3;
 				
 				dasm = (opc==0xDD)? &dasm_ddcb[next]: &dasm_fdcb[next];
@@ -96,7 +96,7 @@ int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int
 			break;
 			
 		case 0xED:
-			next = readbyte_cb(addr++,user_data);
+			next = readbyte_cb(addr++);
 			bytes++;
 			dasm = &dasm_ed[next];
 			if(dasm->mnemonic == NULL)
@@ -108,7 +108,7 @@ int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int
 			break;
 			
 		case 0xCB:
-			next = readbyte_cb(addr++,user_data);
+			next = readbyte_cb(addr++);
 			bytes++;
 			dasm = &dasm_cb[next];
 			break;
@@ -132,8 +132,8 @@ int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int
 			switch(*mpos)
 			{
 				case '@':
-					lo=readbyte_cb(addr++,user_data);
-					hi=readbyte_cb(addr++,user_data);
+					lo=readbyte_cb(addr++);
+					hi=readbyte_cb(addr++);
 					bytes+=2;
 				
 					arglen=snprintf(stmp,STMP_SIZE,words_format,(int)(lo+hi*0x100));
@@ -142,7 +142,7 @@ int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int
 				
 				case '$':
 				case '%':
-					if(!have_disp) disp_u = readbyte_cb(addr++,user_data);
+					if(!have_disp) disp_u = readbyte_cb(addr++);
 					bytes++;
 					disp = (disp_u & 0x80)? -(((~disp_u) & 0x7f)+1): disp_u;				
 					
@@ -154,7 +154,7 @@ int z80ex_dasm(char *output, int output_size, unsigned flags, int *t_states, int
 					break;
 				
 				case '#':
-					lo = readbyte_cb(addr++,user_data);
+					lo = readbyte_cb(addr++);
 					bytes++;
 				
 					arglen=snprintf(stmp,STMP_SIZE,bytes_format,(int)lo);

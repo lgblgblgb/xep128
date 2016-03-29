@@ -508,7 +508,7 @@ int z80ex_ed_cb(Z80EX_BYTE opcode)
 	return 0; // unhandled ED op!
 }
 
-
+#if 0
 static Z80EX_BYTE _rdcb_for_disasm(Z80EX_WORD addr, void *seg) {
 	return memory[(*(int*)seg < 0) ? (memsegs[addr >> 14] + addr) : (((*(int*)seg << 14) + addr) & 0x3FFFFF)];
 }
@@ -534,7 +534,7 @@ int z80_dasm(char *buffer, Uint16 pc, int seg)
 	}*/
 	return bytes;
 }
-
+#endif
 
 
 

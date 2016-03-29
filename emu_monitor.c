@@ -171,7 +171,7 @@ static void cmd_memdump ( void )
 	for (row = 0; row < 10; row++) {
 		int col;
 		char asciibuf[17];
-		MPRINTF("%04X:%c%02X",
+		MPRINTF("%04X:%c%02X  ",
 			dump_addr1,
 			dump_pagerel ? '*' : '=',
 			dump_addr2
@@ -189,17 +189,18 @@ static void cmd_memdump ( void )
 			}
 		}
 		asciibuf[col] = 0;
-		MPRINTF(" %s\n", asciibuf);
+		MPRINTF("  %s\n", asciibuf);
 	}
 }
 
 
 
-static Z80EX_BYTE disasm_byte_read_callback ( Z80EX_WORD addr, void *user_data ) {
+static Z80EX_BYTE byte_reader ( Z80EX_WORD addr ) {
 	if (disasm_pagerel)
 		return memory[(SEGMENT_OF_Z80_ADDR(addr) << 14) | (addr & 0x3FFF)];
 	else
-		return memory[((int)user_data + addr - disasm_addr1) & 0x3FFFFF];
+		//return memory[((int)user_data + addr - disasm_addr1) & 0x3FFFFF];
+		return memory[((disasm_addr2 << 14) + (disasm_addr1 & 0x3FFF) + (addr - disasm_addr1)) & 0x3FFFFF];
 }
 
 
@@ -213,16 +214,16 @@ static void cmd_disasm ( void )
 		char hex_out_buffer[32];
 		char asc_out_buffer[16];
 		int t_states, t_states2, r, h;
-		int disasm_base = (disasm_addr2 << 14) | (disasm_addr1 & 0x3FFF);
+		//int disasm_base = (disasm_addr2 << 14) | (disasm_addr1 & 0x3FFF);
 		char *p;
-		r = z80ex_dasm(dasm_out_buffer, sizeof dasm_out_buffer, 0, &t_states, &t_states2, disasm_byte_read_callback, disasm_addr1, (void*)disasm_base);
-		if (memory[disasm_base] == 0xF7) {	// the EXOS call hack!
-			h = disasm_byte_read_callback(disasm_addr1 + 1, (void*)disasm_base);
+		r = z80ex_dasm(dasm_out_buffer, sizeof dasm_out_buffer, 0, &t_states, &t_states2, byte_reader, disasm_addr1);
+		if (byte_reader(disasm_addr1) == 0xF7) {	// the EXOS call hack!
+			h = byte_reader(disasm_addr1 + 1);
 			r = 2;
 			sprintf(dasm_out_buffer, "EXOS $%02X", h);
 		}
 		for (h = 0, hex_out_buffer[0] = 0, asc_out_buffer[0] = '\''; h < r; h++) {
-			Uint8 byte = disasm_byte_read_callback(disasm_addr1 + h, (void*)disasm_base);
+			Uint8 byte = byte_reader(disasm_addr1 + h);
 			sprintf(hex_out_buffer + h * 3, "%02X ", byte);
 			asc_out_buffer[h + 1] = (byte >= 32 && byte < 127) ? byte : '.';
 			asc_out_buffer[h + 2] = '\0';
@@ -231,7 +232,7 @@ static void cmd_disasm ( void )
 		p = strchr(dasm_out_buffer, ' ');
 		if (p)
 			*(p++) = '\0';
-		MPRINTF("%04X:%c%02X %-12s%-4s %-16s ; %-6s L=%d T=%d/%d\n",
+		MPRINTF("%04X:%c%02X   %-12s%-4s %-16s ; %-6s L=%d T=%d/%d\n",
 			disasm_addr1,
 			disasm_pagerel ? '*' : '=',
 			disasm_addr2,
@@ -273,6 +274,7 @@ static void cmd_registers ( void ) {
 	);
 
 }
+
 
 
 static void cmd_setdate ( void ) {
