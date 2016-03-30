@@ -309,14 +309,22 @@ int main (int argc, char *argv[])
 	}
 	console_monitor_ready();	// OK to run monitor on console now!
 	/* Main loop of the emulator, an infinite one :) Use exit() to exit, as atexit() is
-	used to register proper "cleaner" function, including calling SDL_Quit() as well */
+	used to register proper "cleaner" function, including calling SDL_Quit() as well
+	This is also an optimization that it's an unconditional, infinite loop and no test is needed eg for 'exit' ... */
 	for (;;) {
 		int t;
+		// This needs somewhat optimazed solution, only a single, simple "if" to test, and all more complex stuff inside!
+		// So the creative usage of goto and continue can be seen here as well :)
+		// This is because in case of not-paused mode the "price" should be minimal at every opcodes, maybe just three machine code ops on x86 ...
+		// TODO this stuff should be called "request" mode not only for pause, but single stepping, well-defined snapshot save place (no-in opcode stuff), etc ...
 		if (paused) {
+			if (z80ex.prefix)
+				goto processing;	// do not allow in-opcode pause for the emulator! I *always* wanted to use GOTO, I am so happy now :D
 			/* Paused is non-zero for special cases, like pausing emulator :) or single-step execution mode */
-			emu_one_frame(312, 0); // keep UI stuffs (and some timing) intact ...
+			emu_one_frame(312, 0); // keep UI stuffs (and some timing) intact ... with a faked about 312 scanline (normal frame) timing needed ...
 			continue; // but do not emulate EP related stuff ...
 		}
+	processing:
 		if (nmi_pending) {
 			t = z80ex_nmi();
 			DEBUG("NMI: %d" NL, t);
