@@ -471,6 +471,7 @@ static void cmd_sdl ( void )
 {
 	SDL_RendererInfo info;
 	SDL_Renderer *rendererp;
+	SDL_DisplayMode display;
 	int a;
 	MPRINTF("Available SDL renderers:\n");
 	for (a = 0; a < SDL_GetNumRenderDrivers(); a++ ) {
@@ -482,7 +483,19 @@ static void cmd_sdl ( void )
 	}
 	rendererp = SDL_GetRenderer(sdl_win);
 	if (rendererp && !SDL_GetRendererInfo(rendererp, &info))
-		MPRINTF("Used driver: \"%s\"\n", info.name);
+		MPRINTF("  used: \"%s\"\n", info.name);
+	MPRINTF("Available SDL video drivers:");
+	for (a = 0; a < SDL_GetNumVideoDrivers(); a++ )
+		MPRINTF(" (%d)%s", a, SDL_GetVideoDriver(a) ? SDL_GetVideoDriver(a) : "*** CANNOT QUERY ***");
+	MPRINTF("\n  used: \"%s\"\n", SDL_GetCurrentVideoDriver());
+	MPRINTF("Available SDL audio drivers:");
+	for (a = 0; a < SDL_GetNumAudioDrivers(); a++ )
+		MPRINTF(" (%d)%s", a, SDL_GetAudioDriver(a) ? SDL_GetAudioDriver(a) : "*** CANNOT QUERY ***");
+	MPRINTF("\n  used: \"%s\"\n", SDL_GetCurrentAudioDriver());
+	for (a = 0; a < SDL_GetNumVideoDisplays(); a++ )
+		if (!SDL_GetCurrentDisplayMode(a, &display))
+			MPRINTF("Display #%d %dx%dpx @ %dHz\n", a, display.w, display.h, display.refresh_rate);
+
 }
 
 
