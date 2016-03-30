@@ -47,9 +47,7 @@ struct configSetting_st {
 /* Default keyboard mapping can be found in keyboard_mapping.c */
 static const struct configOption_st configOptions[] = {
 	{ "audio",	CONFITEM_BOOL,	"0",		0, "Enable audio output"	},
-#ifdef _WIN32
-	{ "conwin",	CONFITEM_BOOL,	"0",		0, "Keep (1) console window open" },
-#endif
+	{ "console",	CONFITEM_BOOL,	"0",		0, "Keep (1) console window open (or give console prompt on STDIN on Linux by default)" },
 	{ DEBUGFILE_OPT,CONFITEM_STR,	"none",		0, "Enable debug messages written to a specified file" },
 	{ "fullscreen",	CONFITEM_BOOL,	"0",		0, "Start in full screen"	},
 	{ "mousemode",	CONFITEM_INT,	"1",		0, "Set mouse mode, 1-3 = J-column 2,4,8 bytes and 4-6 the same for K-column" },
@@ -611,10 +609,13 @@ int config_init ( int argc, char **argv )
 		exit(0);
 	}
 	DEBUG("CONFIG: End of configuration step." NL NL);
+	/* Close console, unless user requested it with the -console option */
 #ifdef _WIN32
-	/* Close console, unless user requested it with the -conwin option */
-	if (!config_getopt_str("conwin"))
+	if (!config_getopt_int("console"))
 		console_close_window();
+#else
+	if (config_getopt_int("console"))
+		console_open_window();	// on non-windows, it only will mark console as open for monitor to be used ..
 #endif
 	return 0;
 }
