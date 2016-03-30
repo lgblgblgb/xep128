@@ -58,6 +58,7 @@ static const struct configOption_st configOptions[] = {
 	{ "ram",	CONFITEM_STR,	"128",		0, "RAM size in Kbytes (decimal) or segment specification(s) prefixed with @ in hex (VRAM is always assumed), like: @C0-CF,E0,E3-E7" 	},
 	{ "rom",	CONFITEM_STR,	NULL,		1, "ROM image, format is \"rom@xx=filename\" (xx=start segment in hex), use rom@00 for EXOS or combined ROM set" },
 	{ "sdimg",	CONFITEM_STR,	SDCARD_IMG_FN,	0, "SD-card disk image (VHD) file name/path" },
+	{ "sdl",	CONFITEM_STR,	"auto",		0, "Sets SDL specific option(s) including rendering related stuffs" },
 	/* should be the last on the list, as this is handled specially not in the config storage for real */
 	{ "epkey",	CONFITEM_STR,	NULL,		1, "Define a given EP/emu key, format epkey@xy=SDLname, where x/y are row/col in hex or spec code (ie screenshot, etc)." },
 	{ NULL, 0, NULL, 0, NULL }

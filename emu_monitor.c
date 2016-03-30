@@ -467,6 +467,25 @@ static void cmd_pause ( void )
 }
 
 
+static void cmd_sdl ( void )
+{
+	SDL_RendererInfo info;
+	SDL_Renderer *rendererp;
+	int a;
+	MPRINTF("Available SDL renderers:\n");
+	for (a = 0; a < SDL_GetNumRenderDrivers(); a++ ) {
+		int r = SDL_GetRenderDriverInfo(a, &info);
+		if (r)
+			MPRINTF("  (%d) *** CANNOT QUERY ***\n", a);
+		else
+			MPRINTF("  (%d) \"%s\"\n", a, info.name);
+	}
+	rendererp = SDL_GetRenderer(sdl_win);
+	if (rendererp && !SDL_GetRendererInfo(rendererp, &info))
+		MPRINTF("Used driver: \"%s\"\n", info.name);
+}
+
+
 
 
 static void cmd_help ( void );
@@ -488,6 +507,7 @@ static const struct commands_st commands[] = {
 	{ "RAM",	"", 3, "Set RAM size/report", cmd_ram },
 	{ "REGS",	"R", 3, "Show Z80 registers", cmd_registers },
 	{ "ROMNAME",	"", 3, "ROM id string", cmd_romname },
+	{ "SDL",        "", 3,  "Get SDL related info", cmd_sdl },
 	{ "SETDATE",	"", 1, "Set EXOS time/date by emulator" , cmd_setdate },
 	{ "SHOWKEYS",	"", 3, "Show/hide PC/SDL key symbols", cmd_showkeys },
 	{ "TESTARGS",   "", 3, "Just for testing monitor statement parsing, not so useful for others", cmd_testargs },

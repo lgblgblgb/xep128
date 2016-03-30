@@ -27,6 +27,8 @@ OPTIONS:
 	ROM image, format is "rom@xx=filename" (xx=start segment in hex), use rom@00 for EXOS or combined ROM set [default: -]
 -sdimg
 	SD-card disk image (VHD) file name/path [default: sdcard.img]
+-sdl
+	Sets SDL specific option(s) including rendering related stuffs [default: auto]
 -epkey
 	Define a given EP/emu key, format epkey@xy=SDLname, where x/y are row/col in hex or spec code (ie screenshot, etc). [default: -]
 

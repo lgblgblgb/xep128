@@ -279,6 +279,7 @@ int screen_shot ( Uint32 *ep_pixels, const char *directory, const char *filename
 }
 
 
+
 static void set_app_icon ( SDL_Window *win, const void *app_icon )
 {
 	SDL_Surface *surf = SDL_CreateRGBSurfaceFrom((void*)app_icon,96,96,32,96*4,0x000000ff,0x0000ff00,0x00ff0000,0xff000000);
@@ -291,10 +292,47 @@ static void set_app_icon ( SDL_Window *win, const void *app_icon )
 }
 
 
+
+static SDL_bool XEP128_SDL_SetHint ( const char *sdl_hint_name, const char *cfg_sub_key, const char *defval )
+{
+	char res[256];
+	const char *p = config_getopt_str("sdl");
+	if (!strchr(p, '=')) {
+		if (defval)
+			return SDL_SetHint(sdl_hint_name, defval);
+		else
+			return SDL_TRUE;	// ignored
+	}
+	while (p && *p) {
+		char *q = strchr(p, ':');
+		if (q) q++;
+		if (!strncasecmp(p, cfg_sub_key, strlen(cfg_sub_key)) && p[strlen(cfg_sub_key)] == '=') {
+			p += strlen(cfg_sub_key) + 1;
+			if (q) {
+				memcpy(res, p, q - p - 1);
+				res[q - p - 1] = '\0';
+			} else
+				strcpy(res, p);
+			DEBUGPRINT("SDL: setting hint \"%s\" [cfg: \"%s\"] to \"%s\"" NL, sdl_hint_name, cfg_sub_key, res);
+			return SDL_SetHint(sdl_hint_name, res);
+		}
+		p = q;
+	}
+	DEBUGPRINT("SDL: cannot found hint \"%s\" [cfg: \"%s\"] in sdl opt" NL, sdl_hint_name, cfg_sub_key);
+	if (defval) {
+		DEBUGPRINT("SDL: ... so setting the Xep128 internal specified default: \"%s\"" NL, defval);
+		return SDL_SetHint(sdl_hint_name, defval);
+	}
+	return SDL_FALSE;
+}
+
+
+
 int screen_init ( void )
 {
 	win_xsize = SCREEN_WIDTH;
 	win_ysize = SCREEN_HEIGHT * 2;
+	XEP128_SDL_SetHint(SDL_HINT_RENDER_DRIVER, "driver", NULL);
 	sdl_win = SDL_CreateWindow(
                 WINDOW_TITLE " v" VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -314,8 +352,13 @@ int screen_init ( void )
 		return 1;
 	}
 	SDL_RenderSetLogicalSize(sdl_ren, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // disable vsync
+	XEP128_SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "quality", "1");		// render scale quality 0, 1, 2
+	XEP128_SDL_SetHint(SDL_HINT_RENDER_VSYNC, "vsync", "0");			// disable vsync
+#if defined(_WIN32) && SDL_VERSION_ATLEAST(2, 0, 4)
+	XEP128_SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "noaltf4", "1");	// 1 = disable ALT-F4 close on Windows
+#endif
+	XEP128_SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "focuslossmin", "1");	// 1 = do minimize the SDL_Window if it loses key focus when in fullscreen mode
+	XEP128_SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "screensaver", "1");	// 1 = enable screen saver
 	sdl_tex = SDL_CreateTexture(sdl_ren, SCREEN_FORMAT, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 	if (sdl_tex == NULL) {
 		ERROR_WINDOW("Cannot create SDL texture: %s", SDL_GetError());
