@@ -11,6 +11,8 @@ OPTIONS:
 	Use config file (or do not use the default one, if "none" is specified). This must be the first option if used! [default: @config]
 -audio
 	Enable audio output [default: 0]
+-console
+	Keep (1) console window open (or give console prompt on STDIN on Linux by default) [default: 0]
 -debug
 	Enable debug messages written to a specified file [default: none]
 -fullscreen
