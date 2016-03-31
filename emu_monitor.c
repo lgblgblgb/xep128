@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
 #include "xep_rom_syms.h"
+#include <SDL_syswm.h>
 #ifdef _WIN32
 #include <sysinfoapi.h>
 #endif
@@ -472,6 +473,7 @@ static void cmd_sdl ( void )
 	SDL_RendererInfo info;
 	SDL_Renderer *rendererp;
 	SDL_DisplayMode display;
+	SDL_SysWMinfo wminfo;
 	int a;
 	MPRINTF("Available SDL renderers:\n");
 	for (a = 0; a < SDL_GetNumRenderDrivers(); a++ ) {
@@ -492,10 +494,40 @@ static void cmd_sdl ( void )
 	for (a = 0; a < SDL_GetNumAudioDrivers(); a++ )
 		MPRINTF(" (%d)%s", a, SDL_GetAudioDriver(a) ? SDL_GetAudioDriver(a) : "*** CANNOT QUERY ***");
 	MPRINTF("\n  used: \"%s\"\n", SDL_GetCurrentAudioDriver());
-	for (a = 0; a < SDL_GetNumVideoDisplays(); a++ )
+	for (a = 0; a < SDL_GetNumDisplayModes(0); a++ )
 		if (!SDL_GetCurrentDisplayMode(a, &display))
-			MPRINTF("Display #%d %dx%dpx @ %dHz\n", a, display.w, display.h, display.refresh_rate);
-
+			MPRINTF("Display #%d %dx%dpx @ %dHz %i bpp (%s)\n", a, display.w, display.h, display.refresh_rate,
+				SDL_BITSPERPIXEL(display.format), SDL_GetPixelFormatName(display.format)
+			);
+	SDL_VERSION(&wminfo.version);
+	if (SDL_GetWindowWMInfo(sdl_win, &wminfo)) {
+		const char *subsystem = "UnknownSystem";
+		switch (wminfo.subsystem) {
+			case SDL_SYSWM_UNKNOWN:	break;
+			case SDL_SYSWM_WINDOWS:	subsystem = "Microsoft Windows(TM)";	break;
+			case SDL_SYSWM_X11:	subsystem = "X Window System";		break;
+#if SDL_VERSION_ATLEAST(2, 0, 3)
+			case SDL_SYSWM_WINRT:	subsystem = "WinRT";			break;
+#endif
+			case SDL_SYSWM_DIRECTFB:subsystem = "DirectFB";			break;
+			case SDL_SYSWM_COCOA:	subsystem = "Apple OS X";		break;
+			case SDL_SYSWM_UIKIT:	subsystem = "UIKit";			break;
+#if SDL_VERSION_ATLEAST(2, 0, 2)
+			case SDL_SYSWM_WAYLAND:	subsystem = "Wayland";			break;
+			case SDL_SYSWM_MIR:	subsystem = "Mir";			break;
+#endif
+#if SDL_VERSION_ATLEAST(2, 0, 4)
+			case SDL_SYSWM_ANDROID:	subsystem = "Android";			break;
+#endif
+		}
+		MPRINTF(WINDOW_TITLE " is running with SDL version %d.%d.%d on %s (id=%d)\n",
+			(int)wminfo.version.major,
+			(int)wminfo.version.minor,
+			(int)wminfo.version.patch,
+			subsystem,
+			wminfo.subsystem
+		);
+	}
 }
 
 
