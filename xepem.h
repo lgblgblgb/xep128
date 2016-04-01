@@ -382,4 +382,5 @@ int monitor_queue_used ( void );
 void monitor_process_queued ( void );
 void monitor_execute ( char *input_buffer, int source, char *in_output_buffer, int in_output_max_size, const char *in_output_nl );
 
+void joy_sdl_event ( SDL_Event *e );
 #endif

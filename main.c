@@ -231,6 +231,9 @@ void emu_one_frame(int rasters, int frameskip)
 				if (e.button.windowID == sdl_winid)
 					emu_mouse_button(e.button.button, e.button.state == SDL_PRESSED);
 				break;
+			default:
+				joy_sdl_event(&e);
+				break;
 		}
 	monitor_process_queued();
 	rtc_update_trigger = 1; // triggers RTC update on the next RTC register read. Woooo!
@@ -287,6 +290,7 @@ int main (int argc, char *argv[])
 	mouse_setup(config_getopt_int("mousemode"));
 	ep_reset();
 	kbd_matrix_reset();
+	joy_sdl_event(NULL); // this simply inits joy layer ...
 #ifdef CONFIG_SDEXT_SUPPORT
 	sdext_init();
 #endif
