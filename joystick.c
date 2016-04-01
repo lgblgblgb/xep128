@@ -163,3 +163,13 @@ void joy_sdl_event ( SDL_Event *e )
 			break;
 	}
 }
+
+
+
+/* The SCAN function called from input.c
+   num is the Enterprise (!) external joystick number, 0 or 1 (beware, on EP it's called 1 or 2)
+   dir is the direction / button to scan, see JOY_SCAN_* defines in the header file */
+int joystick_scan ( int num, int dir )
+{
+	return !(kbd_matrix[10] & (1 << dir));  // keyboard-matrix row #10 (not a real EP one!) is used to maintain status of numeric keypad joy emu keys ...
+}

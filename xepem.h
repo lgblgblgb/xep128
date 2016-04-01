@@ -382,5 +382,13 @@ int monitor_queue_used ( void );
 void monitor_process_queued ( void );
 void monitor_execute ( char *input_buffer, int source, char *in_output_buffer, int in_output_max_size, const char *in_output_nl );
 
+#define JOY_SCAN_FIRE1  0
+#define JOY_SCAN_UP     1
+#define JOY_SCAN_DOWN   2
+#define JOY_SCAN_LEFT   3
+#define JOY_SCAN_RIGHT  4
+#define JOY_SCAN_FIRE2  5
+#define JOY_SCAN_FIRE3  6
 void joy_sdl_event ( SDL_Event *e );
+int joystick_scan ( int num, int dir );
 #endif

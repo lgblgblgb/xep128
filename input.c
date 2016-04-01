@@ -62,14 +62,6 @@ static Uint8 mouse_buffer[] = {
 #define J_COLUMN	1
 #define K_COLUMN	2
 
-#define JOY_SCAN_FIRE1	0
-#define JOY_SCAN_UP	1
-#define JOY_SCAN_DOWN	2
-#define JOY_SCAN_LEFT	3
-#define JOY_SCAN_RIGHT	4
-#define JOY_SCAN_FIRE2	5
-#define JOY_SCAN_FIRE3	6
-
 struct mouse_modes_st {
 	const char *name;	// some name for the given mouse protocol/mode ...
 	int buttons[5];		// button map: indexed by emulator given PC left/middle/right/x1/x2 (in this order), with values of the BUTTON_* macros above to map to protcol values
@@ -132,17 +124,7 @@ static const struct mouse_modes_st mouse_modes[] = {
 static const struct mouse_modes_st *mode;	// current mode mode, pointer to the selected mouse_modes
 int mouse_mode;					// current mode, with an integer
 
-
 #define JOYSTICK_SCAN(num, dir) joystick_scan(num, dir)
-
-
-/* Note: later joystick_scan and/or macro JOYSTICK_SCAN should be modified to handle different
-real joysticks/gamepads via SDL, and/or the existing solution the numeric keypad.
-Currently for both joysticks are used to get events from numeric keypads */
-static int joystick_scan ( int num, int dir )
-{
-	return !(kbd_matrix[10] & (1 << dir));	// keyboard-matrix row #10 (not a real EP one!) is used to maintain status of numeric keypad joy emu keys ...
-}
 
 
 
