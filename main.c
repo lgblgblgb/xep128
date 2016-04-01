@@ -55,10 +55,6 @@ void *alloc_xep_aligned_mem ( size_t size )
 
 static void shutdown_sdl(void)
 {
-	if (debug_file) {
-		DEBUGPRINT("Closing debug messages log file on exit." NL);
-		fclose(debug_file);
-	}
 	if (guarded_exit) {
 		audio_close();
 		printer_close();
@@ -72,6 +68,12 @@ static void shutdown_sdl(void)
 	if (sdl_win)
 		SDL_DestroyWindow(sdl_win);
 	console_close_window_on_exit();
+	/* last stuff! */
+	if (debug_file) {
+		DEBUGPRINT("Closing debug messages log file on exit." NL);
+		fclose(debug_file);
+		debug_file = NULL;
+	}
 	SDL_Quit();
 }
 
