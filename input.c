@@ -352,17 +352,17 @@ Uint8 read_control_port_bits ( void )
 		case  0: // The Entermice wiki mentioned priority of mouse buttons are not so much implemented ... TODO
 			return
 				(mouse_ok ? ((mouse_button1 ? 0 : mode->data_mask) | (7 - mode->data_mask - 4) | (mouse_button2 ? 0 : 4)) : 7) &
-				(joy1_ok ? ((JOYSTICK_SCAN(1, JOY_SCAN_FIRE1) ? 0 : 1) | (JOYSTICK_SCAN(1, JOY_SCAN_FIRE2) ? 0 : 2) | (JOYSTICK_SCAN(1, JOY_SCAN_FIRE3) ? 0 : 4)) : 7);
+				(joy1_ok ? ((JOYSTICK_SCAN(0, JOY_SCAN_FIRE1) ? 0 : 1) | (JOYSTICK_SCAN(0, JOY_SCAN_FIRE2) ? 0 : 2) | (JOYSTICK_SCAN(0, JOY_SCAN_FIRE3) ? 0 : 4)) : 7);
 		case  1: return (mouse_ok ? (((nibble & 1) ? mode->data_mask : 0) | (7 - mode->data_mask)) : 7) & ((joy1_ok && JOYSTICK_SCAN(0, JOY_SCAN_UP   )) ? 6 : 7);
 		case  2: return (mouse_ok ? (((nibble & 2) ? mode->data_mask : 0) | (7 - mode->data_mask)) : 7) & ((joy1_ok && JOYSTICK_SCAN(0, JOY_SCAN_DOWN )) ? 6 : 7);
 		case  3: return (mouse_ok ? (((nibble & 4) ? mode->data_mask : 0) | (7 - mode->data_mask)) : 7) & ((joy1_ok && JOYSTICK_SCAN(0, JOY_SCAN_LEFT )) ? 6 : 7);
 		case  4: return (mouse_ok ? (((nibble & 8) ? mode->data_mask : 0) | (7 - mode->data_mask)) : 7) & ((joy1_ok && JOYSTICK_SCAN(0, JOY_SCAN_RIGHT)) ? 6 : 7);
 		/* always joystick#2 on J-column (bit 0), other bits are spare */
-		case  5: return (JOYSTICK_SCAN(2, JOY_SCAN_FIRE1) ? 0 : 1) | (JOYSTICK_SCAN(2, JOY_SCAN_FIRE2) ? 0 : 2) | (JOYSTICK_SCAN(2, JOY_SCAN_FIRE3) ? 0 : 4);
-		case  6: return  JOYSTICK_SCAN(2, JOY_SCAN_UP   ) ? 6 : 7;
-		case  7: return  JOYSTICK_SCAN(2, JOY_SCAN_DOWN ) ? 6 : 7;
-		case  8: return  JOYSTICK_SCAN(2, JOY_SCAN_LEFT ) ? 6 : 7;
-		case  9: return  JOYSTICK_SCAN(2, JOY_SCAN_RIGHT) ? 6 : 7;
+		case  5: return (JOYSTICK_SCAN(1, JOY_SCAN_FIRE1) ? 0 : 1) | (JOYSTICK_SCAN(1, JOY_SCAN_FIRE2) ? 0 : 2) | (JOYSTICK_SCAN(1, JOY_SCAN_FIRE3) ? 0 : 4);
+		case  6: return  JOYSTICK_SCAN(1, JOY_SCAN_UP   ) ? 6 : 7;
+		case  7: return  JOYSTICK_SCAN(1, JOY_SCAN_DOWN ) ? 6 : 7;
+		case  8: return  JOYSTICK_SCAN(1, JOY_SCAN_LEFT ) ? 6 : 7;
+		case  9: return  JOYSTICK_SCAN(1, JOY_SCAN_RIGHT) ? 6 : 7;
 		/* and if not ... */
 		default: return 7;	// it shouldn't happen too much (only if no valid scan row is selected?)
 	}
