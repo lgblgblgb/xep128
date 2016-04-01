@@ -2,6 +2,9 @@
 
 #define MAX_JOYSTICKS 10
 
+#define EPJOY_DISABLED	-2
+#define EPJOY_KP	-1
+
 static struct {
 	SDL_Joystick *joy;
 	int sdl_index;
@@ -16,50 +19,70 @@ static struct {
 	Uint32 button_mask;
 	Uint32 axis_mask;
 } joysticks[MAX_JOYSTICKS];
+static struct {
+	int	id;	// Joystick ID (in joysticks array), use -1 for numeric keypad, or -2 for disable!, for vals < 0, all other options here ARE NOT used at all!
+	Uint32	button_masks[3];
+	Uint32	v_axis_mask, h_axis_mask;
+} epexjoys[3];	// emulation details for the two external joysticks of Enterprise (note: we have 0,1 on EP they're named as 1,2!) index 2 is for internal joystick emu ...
 static int joy_to_init = 1;
 static const char unknown_joystick_name[] = "Unknown joystick";
 
 
-#define BIT_MASK(n) (1U << ((Uint32)(n)))
-#define IS_BIT_SET(storage,index) ((storage) & MASK(index))
-#define BIT_TO_SET(storage,index) (storage) |= BIT_MASK(index)
-#define BIT_TO_RESET(storage,index) (storage) &= ~BIT_MASK(index)
+
+#define BIT_TO_SET(storage,mask) (storage) |= mask
+#define BIT_TO_RESET(storage,mask) (storage) &= (4294967295U - mask)
 
 
 #define AXIS_LIMIT_HIGH	20000
-#define AXIS_LIMIT_LOW	13000
+#define AXIS_LIMIT_LOW	10000
 
 
 
 
-static void set_axis_state ( int joy_id, Uint32 axis, Sint16 value )
+static void set_axis_state ( int joy_id, Uint32 axis, int value )
 {
+	Uint32 axis_mask, oldp, oldn;
 	if (joy_id >= MAX_JOYSTICKS || !joysticks[joy_id].joy || axis >= joysticks[joy_id].num_of_axes)
 		return;
-	axis = 1 << axis;
+	axis_mask = 1U << axis;
+	oldp = joysticks[joy_id].axisp; 
+	oldn = joysticks[joy_id].axisn;
 	if (value > AXIS_LIMIT_HIGH) {
-		BIT_TO_SET(joysticks[joy_id].axisp, axis);
-		BIT_TO_RESET(joysticks[joy_id].axisn, axis);
+		BIT_TO_SET  (joysticks[joy_id].axisp, axis_mask);
+		BIT_TO_RESET(joysticks[joy_id].axisn, axis_mask);
 	} else if (value < AXIS_LIMIT_LOW && value > -AXIS_LIMIT_LOW) {
-		BIT_TO_RESET(joysticks[joy_id].axisp, axis);
-		BIT_TO_RESET(joysticks[joy_id].axisn, axis);
+		BIT_TO_RESET(joysticks[joy_id].axisp, axis_mask);
+		BIT_TO_RESET(joysticks[joy_id].axisn, axis_mask);
 	} else if (value < -AXIS_LIMIT_HIGH) {
-		BIT_TO_RESET(joysticks[joy_id].axisp, axis);
-		BIT_TO_SET(joysticks[joy_id].axisn, axis);
+		BIT_TO_RESET(joysticks[joy_id].axisp, axis_mask);
+		BIT_TO_SET  (joysticks[joy_id].axisn, axis_mask);
 	}
+	if (show_keys && (oldp != joysticks[joy_id].axisp || oldn != joysticks[joy_id].axisn))
+		OSD("PC joystick #%d axis %d [%c %c]\nmask=%X value=%d",
+			joy_id,
+			axis,
+			(joysticks[joy_id].axisn & axis_mask) ? '-' : ' ',
+			(joysticks[joy_id].axisp & axis_mask) ? '+' : ' ',
+			axis_mask,
+			value
+	);
 }
 
 
 
 static void set_button_state ( int joy_id, Uint32 button, int value )
 {
+	Uint32 button_mask, old;
 	if (joy_id >= MAX_JOYSTICKS || !joysticks[joy_id].joy || button >= joysticks[joy_id].num_of_buttons)
 		return;
-	button = 1 << button;
+	button_mask = 1U << button;
+	old = joysticks[joy_id].button;
 	if (value)
-		BIT_TO_SET(joysticks[joy_id].button, button);
+		BIT_TO_SET(joysticks[joy_id].button, button_mask);
 	else
-		BIT_TO_RESET(joysticks[joy_id].button, button);
+		BIT_TO_RESET(joysticks[joy_id].button, button_mask);
+	if (show_keys && old != joysticks[joy_id].button)
+		OSD("PC joystick #%d button %d %s", joy_id, button, value ? "pressed" : "released");
 }
 
 
@@ -90,6 +113,7 @@ static void joy_detach ( int joy_id )
 	SDL_JoystickClose(joysticks[joy_id].joy);
 	joysticks[joy_id].joy = NULL;
 	OSD("Joy detached #%d", joy_id);
+	joysticks[joy_id].button = joysticks[joy_id].axisp = joysticks[joy_id].axisn = 0;	// don't leave state in a "stucked" situation!
 }
 
 
@@ -143,6 +167,14 @@ void joy_sdl_event ( SDL_Event *e )
 			joysticks[a].joy = NULL;
 			joysticks[a].button = joysticks[a].axisp = joysticks[a].axisn = 0;
 		}
+		for (a = 0; a < 2; a++) {
+			epexjoys[a].id = 0;	// assigned to SDL joystick #0
+			epexjoys[a].button_masks[0] = 1;
+			epexjoys[a].button_masks[1] = 0;
+			epexjoys[a].button_masks[2] = 0;
+			epexjoys[a].v_axis_mask = 2;
+			epexjoys[a].h_axis_mask = 1;
+		}
 		SDL_GameControllerEventState(SDL_DISABLE);
 		SDL_JoystickEventState(SDL_ENABLE);
 		joy_to_init = 0;
@@ -168,8 +200,40 @@ void joy_sdl_event ( SDL_Event *e )
 
 /* The SCAN function called from input.c
    num is the Enterprise (!) external joystick number, 0 or 1 (beware, on EP it's called 1 or 2)
-   dir is the direction / button to scan, see JOY_SCAN_* defines in the header file */
+   dir is the direction / button to scan, see JOY_SCAN_* defines in the header file.
+   The return value is '0' for inactive and '1' for active (well, or any non-zero value) for a given scan, warning, it's the
+   opposite behaviour as you can see on EP HW level!
+   DO NOT call this function with other num than 0, 1! (2 is reserved for internal joy emu, but it's not handled by this func!)
+*/
 int joystick_scan ( int num, int dir )
 {
-	return !(kbd_matrix[10] & (1 << dir));  // keyboard-matrix row #10 (not a real EP one!) is used to maintain status of numeric keypad joy emu keys ...
+	if (num != 0 && num != 1)
+		return 0;
+	switch (epexjoys[num].id) {
+		case EPJOY_KP:
+			return !(kbd_matrix[10] & (1 << dir));  // keyboard-matrix row #10 (not a real EP one!) is used to maintain status of numeric keypad joy emu keys ...
+		case EPJOY_DISABLED:
+			return 0;		// disabled, always zero answer
+		default:
+			// hack: give priority to the numeric keypad ;-)
+			if (!(kbd_matrix[10] & (1 << dir)))
+				return 1;
+			switch (dir) {
+				case JOY_SCAN_FIRE1:
+					return joysticks[epexjoys[num].id].button & epexjoys[num].button_masks[0];
+				case JOY_SCAN_UP:
+					return joysticks[epexjoys[num].id].axisn  & epexjoys[num].v_axis_mask;
+				case JOY_SCAN_DOWN:
+					return joysticks[epexjoys[num].id].axisp  & epexjoys[num].v_axis_mask;
+				case JOY_SCAN_LEFT:
+					return joysticks[epexjoys[num].id].axisn  & epexjoys[num].h_axis_mask;
+				case JOY_SCAN_RIGHT:
+					return joysticks[epexjoys[num].id].axisp  & epexjoys[num].h_axis_mask;
+				case JOY_SCAN_FIRE2:
+					return joysticks[epexjoys[num].id].button & epexjoys[num].button_masks[1];
+				case JOY_SCAN_FIRE3:
+					return joysticks[epexjoys[num].id].button & epexjoys[num].button_masks[2];
+			}
+	}
+	return 0;	// unknown?!
 }
