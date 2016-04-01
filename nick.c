@@ -325,6 +325,28 @@ static void _render_char_2 ( void )
 }
 
 
+static void _render_char_4 ( void )
+{
+	if (!visible) {
+		ld1++;
+	} else {
+		Uint8 data = NICK_READ(ld1++);
+		Uint32 col[2];
+		col[0] = _altind_modes[(altind & data) >> 6];
+		col[1] = palette[col[0] + 1];
+		col[0] = palette[col[0]];
+		data = NICK_READ(ld2 | (data & chm));
+		Uint8 *trans = col4trans + (data << 2);
+		pixels[ 0] = pixels[ 1] = pixels[ 2] = pixels[ 3] = trans[0] < 2 ? col[trans[0]] : palette[trans[0]];
+		pixels[ 4] = pixels[ 5] = pixels[ 6] = pixels[ 7] = trans[1] < 2 ? col[trans[1]] : palette[trans[1]];
+		pixels[ 8] = pixels[ 9] = pixels[10] = pixels[11] = trans[2] < 2 ? col[trans[2]] : palette[trans[2]];
+		pixels[12] = pixels[13] = pixels[14] = pixels[15] = trans[3] < 2 ? col[trans[3]] : palette[trans[3]];
+	}
+	pixels += 16;
+}
+
+
+
 static void _render_invalid ( void )
 {
 	FILL(full_palette[3]);
@@ -419,7 +441,6 @@ static void _render_lpixel_16 ( void ) // TODO
 	pixels += 16;
 }
 
-static void _render_char_4 ( void ) { TODO(); }
 static void _render_char_16 ( void ) { TODO(); }
 static void _render_char_256 ( void ) { TODO(); }
 
