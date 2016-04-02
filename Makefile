@@ -160,7 +160,12 @@ depend:
 	$(MAKE) xep_rom_syms.h
 	$(CC) -MM $(CFLAGS) $(CPPFLAGS) $(SRCS) > .depend
 
-.PHONY: all clean distclean strip commit win32 publish data install ztest zclean dep depend
+valgrind:
+	@echo "*** valgrind is useful mainly if you built Xep128 with the -g flag ***"
+	valgrind --read-var-info=yes --leak-check=full --track-origins=yes ./$(PRG) -debug /tmp/xep128.debug > /tmp/xep128-valgrind.stdout 2> /tmp/xep128-valgrind.stderr
+	ls -l /tmp/xep128.debug /tmp/xep128-valgrind.stdout /tmp/xep128-valgrind.stderr
+
+.PHONY: all clean distclean strip commit win32 publish data install ztest zclean dep depend valgrind
 
 ifneq ($(wildcard .depend),)
 include .depend
