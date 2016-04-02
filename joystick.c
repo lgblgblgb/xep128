@@ -6,8 +6,10 @@
 #define EPJOY_KP	-1
 
 static struct {
-	SDL_Joystick *joy;
+	SDL_Joystick 	*joy;
+	SDL_Haptic	*haptic;
 	int	sdl_index;
+	int	rumble;
 	int	num_of_buttons;
 	int	num_of_axes;
 	int	num_of_axes_orig;	// before abstraction of hats as axes ...
@@ -136,10 +138,25 @@ static void joy_detach ( int joy_id )
 	DEBUG("JOY: device removed #%d" NL,
 		joy_id
 	);
+	if (joysticks[joy_id].haptic)
+		SDL_HapticClose(joysticks[joy_id].haptic);
 	SDL_JoystickClose(joysticks[joy_id].joy);
 	joysticks[joy_id].joy = NULL;
+	joysticks[joy_id].haptic = NULL;
 	OSD("Joy detached #%d", joy_id);
 	joysticks[joy_id].button = joysticks[joy_id].axisp = joysticks[joy_id].axisn = 0;	// don't leave state in a "stucked" situation!
+}
+
+
+
+static void joy_rumble ( int joy_id, Uint32 len, int always )
+{
+	if (joy_id >= MAX_JOYSTICKS || !joysticks[joy_id].haptic || !joysticks[joy_id].rumble)
+		return;
+	if (always || joysticks[joy_id].rumble == 1) {
+		SDL_HapticRumblePlay(joysticks[joy_id].haptic, 1.0, len);
+		joysticks[joy_id].rumble = 2;
+	}
 }
 
 
@@ -154,6 +171,11 @@ static void joy_attach ( int joy_id )
 	joysticks[joy_id].joy = joy = SDL_JoystickOpen(joy_id);
 	if (!joy)
 		return;
+	joysticks[joy_id].haptic = SDL_HapticOpenFromJoystick(joy);
+	if (joysticks[joy_id].haptic)
+		joysticks[joy_id].rumble = SDL_HapticRumbleInit(joysticks[joy_id].haptic) ? 0 : 1;
+	else
+		joysticks[joy_id].rumble = 0;	// rumble is not supported
 	joysticks[joy_id].sdl_index = joy_id;
 	joysticks[joy_id].num_of_buttons = SDL_JoystickNumButtons(joy);
 	joysticks[joy_id].num_of_axes = SDL_JoystickNumAxes(joy);
@@ -202,7 +224,8 @@ void joy_sdl_event ( SDL_Event *e )
 	if (joy_to_init) {
 		int a;
 		for (a = 0; a < MAX_JOYSTICKS; a++) {
-			joysticks[a].joy = NULL;
+			joysticks[a].joy    = NULL;
+			joysticks[a].haptic = NULL;
 			joysticks[a].button = joysticks[a].axisp = joysticks[a].axisn = 0;
 		}
 		for (a = 0; a < 2; a++) {
@@ -259,6 +282,7 @@ int joystick_scan ( int num, int dir )
 			// hack: give priority to the numeric keypad ;-)
 			if (!(kbd_matrix[10] & (1 << dir)))
 				return 1;
+			joy_rumble(epjoys[num].id, 1000, 0);
 			switch (dir) {
 				case JOY_SCAN_FIRE1:
 					return joysticks[epjoys[num].id].button & epjoys[num].button_masks[0];
