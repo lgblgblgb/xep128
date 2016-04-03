@@ -51,6 +51,7 @@ static inline Uint16 dave_render_audio_sample ( void )
 	if (ports[0xA7] &  8)
 		left  = (ports[0xA8] & 63) << 2;	// left ch is in D/A mode
 	else {						// left ch is in "normal" mode
+		//_state_tg0 = _state_tg1 = _state_tg2 = 1;
 		left  = _state_tg0 * (ports[0xA8] & 63) +
 			_state_tg1 * (ports[0xA9] & 63) +
 			_state_tg2 * (ports[0xAA] & 63);
@@ -58,10 +59,22 @@ static inline Uint16 dave_render_audio_sample ( void )
 	if (ports[0xA7] & 16)
 		right = (ports[0xAC] & 63) << 2;	// right ch is in D/A mode
 	else {						// right ch is in "normal" mode
+		//_state_tg0 = _state_tg1 = _state_tg2 = 1;
 		right = _state_tg0 * (ports[0xAC] & 63) +
 			_state_tg1 * (ports[0xAD] & 63) +
 			_state_tg2 * (ports[0xAE] & 63);
 	}
+#if 0
+	DEBUGPRINT("DAVE: TG: %d %d %d Vol-l=%02X,%02X,%02X,%02X Vol-r=%02X,%02X,%02X,%02X FREQ=%d,%d,%d CNT=%d,%d,%d SYNC=%d" NL, _state_tg0, _state_tg1, _state_tg2,
+		ports[0xA8], ports[0xA9], ports[0xAA], ports[0xAB],
+		ports[0xAC], ports[0xAD], ports[0xAE], ports[0xAF],
+		ports[0xA0] | ((ports[0xA1] & 15) << 8),
+		ports[0xA2] | ((ports[0xA3] & 15) << 8),
+		ports[0xA4] | ((ports[0xA5] & 15) << 8),
+		_cnt_tg0, _cnt_tg1, _cnt_tg2,
+		ports[0xA7] & 7
+	);
+#endif
 	return (left << 8) | right;
 }
 
