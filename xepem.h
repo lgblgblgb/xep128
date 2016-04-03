@@ -159,6 +159,7 @@ void dave_set_clock ( void );
 void dave_int1(int level);
 void dave_configure_interrupts ( Uint8 n );
 void dave_tick ( void );
+void dave_write_audio_register ( Uint8 port, Uint8 value );
 extern int cpu_cycles_per_dave_tick;
 void kbd_matrix_reset ( void );
 void mouse_reset_button ( void );
