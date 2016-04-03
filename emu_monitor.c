@@ -532,6 +532,19 @@ static void cmd_sdl ( void )
 
 
 
+static void cmd_ports ( void )
+{
+	int a;
+	MPRINTF("      0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F");
+	for (a = 0; a < 0x100; a++) {
+		if (!(a & 15))
+			MPRINTF("\n%02X -", a);
+		MPRINTF(" %02X", ports[a]);
+	}
+	MPRINTF("\n");
+}
+
+
 
 static void cmd_help ( void );
 
@@ -548,6 +561,7 @@ static const struct commands_st commands[] = {
 	{ "MEMDUMP",	"M", 3, "Memory dump", cmd_memdump },
 	{ "MOUSE",	"", 3, "Configure or query mouse mode", cmd_mouse },
 	{ "PAUSE",	"", 2, "Pause/resume emulation", cmd_pause },
+	{ "PORTS",	"", 3, "I/O port values (written)", cmd_ports },
 	{ "PRIMO",	"", 3, "Primo emulation", cmd_primo },
 	{ "RAM",	"", 3, "Set RAM size/report", cmd_ram },
 	{ "REGS",	"R", 3, "Show Z80 registers", cmd_registers },
