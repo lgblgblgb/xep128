@@ -327,7 +327,7 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 
 
 void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
-	Z80EX_BYTE old_value;
+	//Z80EX_BYTE old_value;
 	Uint8 port;
 	if (z80ex.z180 && (port16 & 0xFFC0) == z180_port_start) {
 		if (z180_port_start == 0x80) {
@@ -340,7 +340,7 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 	port = port16 & 0xFF;
 	if (port < primo_on)
 		return primo_write_io(port, value);
-	old_value = ports[port];
+	//old_value = ports[port];
 	ports[port] = value;
 	//DEBUG("IO: WRITE: OUT (%02Xh),%02Xh" NL, port, value);
 	switch (port) {
@@ -432,8 +432,8 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 			kbd_selector = ((value & 15) < 10) ? (value & 15) : -1;
 			/*if ((old_value & 16) != (value & 16))
 				DEBUG("PRINTER STROBE: %d -> %d" NL, old_value & 16, value & 16);*/
-			if ((old_value & 16) && (!(value & 16)))
-				printer_port_strobe();
+			//if ((old_value & 16) && (!(value & 16)))
+			printer_port_check_strobe(value & 16);
 			//	printer_send_data(ports[0xB6]);
 			//printer_port_strobe((old_value & 16) != (value & 16));	// storbe event
 			break;
@@ -458,7 +458,7 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 				mem_ws_m1  = 0;
 			}
 			dave_set_clock();
-			DEBUG("BF register is written -> W_ALL=%d W_M1=%d CLOCK=%dMhz" NL, mem_ws_all, mem_ws_m1, (value & 2) ? 12 : 8);
+			DEBUG("DAVE: BF register is written -> W_ALL=%d W_M1=%d CLOCK=%dMhz" NL, mem_ws_all, mem_ws_m1, (value & 2) ? 12 : 8);
 			break;
 		/* NICK registers */
 		case 0x80: case 0x84: case 0x88: case 0x8C:

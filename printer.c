@@ -31,6 +31,7 @@ static int strobes_missed = 0;
 Uint8 printer_data_byte = 0xFF;
 static int printer_is_covox = 0;
 static int covox_to_warn = 1;
+static int old_strobe_level = 0;
 
 
 
@@ -105,15 +106,21 @@ static void send_data_to_printer ( Uint8 data )
 
 
 
-void printer_port_strobe ( void )
+void printer_port_check_strobe ( int level )
 {
-	strobes_missed = 0;
-	if (printer_is_covox) {
-		DEBUG("PRINTER: COVOX: covox mode has been disabled on STROBE, data byte %02Xh is sent for printing" NL, printer_data_byte);
-		printer_is_covox = 0;
-		audio_source = AUDIO_SOURCE_DAVE;
-	}
-	send_data_to_printer(printer_data_byte);
+	if (old_strobe_level && !level) {
+		DEBUG("PRINTER: strobe!" NL);
+		//old_strobe_level = level;
+		strobes_missed = 0;
+		if (printer_is_covox) {
+			DEBUG("PRINTER: COVOX: covox mode has been disabled on STROBE, data byte %02Xh is sent for printing" NL, printer_data_byte);
+			printer_is_covox = 0;
+			audio_source = AUDIO_SOURCE_DAVE;
+		}
+		send_data_to_printer(printer_data_byte);
+	}/* else
+		DEBUG("PRINTER: NOT strobe: %d -> %d" NL, old_strobe_level, level);*/
+	old_strobe_level = level;
 }
 
 

@@ -228,7 +228,7 @@ Uint8 rtc_read_reg(void);
 extern int rtc_update_trigger;
 
 void printer_port_set_data(Uint8 data);
-void printer_port_strobe(void);
+void printer_port_check_strobe( int level );
 void printer_close(void);
 void printer_disable_covox ( void );
 extern Uint8 printer_data_byte;
