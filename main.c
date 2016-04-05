@@ -277,6 +277,7 @@ int main (int argc, char *argv[])
 	if (config_init(argc, argv))
 		return 1;
 	guarded_exit = 1;	// turn on guarded exit, with custom de-init stuffs
+	fileio_init(app_pref_path, "files");
 	if (screen_init())
 		return 1;
 	audio_init(config_getopt_int("audio"));

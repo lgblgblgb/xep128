@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xepem.h"
 #include "xep_rom_syms.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define COBUF ((char*)(memory + xep_rom_addr + xepsym_cobuf - 0xC000))
 #define SET_XEPSYM_BYTE(sym, value) memory[xep_rom_addr + (sym) - 0xC000] = (value)
@@ -30,11 +32,32 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 static const char EXOS_NEWLINE[] = "\r\n";
 Uint8 exos_version = 0;
 Uint8 exos_info[8];
+char fileio_cwd[PATH_MAX + 1];
 
 #define EXOS_ADDR(n)		(0x3FC000 | ((n) & 0x3FFF))
 #define EXOS_BYTE(n)		memory[EXOS_ADDR(n)]
 #define EXOS_GET_WORD(n)	(EXOS_BYTE(n) | (EXOS_BYTE((n) + 1) << 8))
 
+
+
+void fileio_init ( const char *dir, const char *subdir )
+{
+	if (dir && *dir && *dir != '?') {
+		strcpy(fileio_cwd, dir);
+		if (subdir) {
+			strcat(fileio_cwd, subdir);
+			if (subdir[strlen(subdir) - 1] != DIRSEP[0])
+				strcat(fileio_cwd, DIRSEP);
+		}
+		DEBUGPRINT("FILEIO: base directory is: %s" NL, fileio_cwd);
+		mkdir(fileio_cwd
+#ifndef _WIN32
+			, 0777
+#endif
+		);
+	} else
+		fileio_cwd[0] = '\0';
+}
 
 
 void exos_get_status_line ( char *buffer )

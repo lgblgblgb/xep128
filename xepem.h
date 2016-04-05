@@ -266,6 +266,8 @@ void xep_set_time_consts ( char *descbuffer );
 void exos_get_status_line ( char *buffer );
 extern Uint8 exos_version;
 extern Uint8 exos_info[8];
+extern char fileio_cwd[PATH_MAX + 1];
+void fileio_init ( const char *dir, const char *subdir );
 
 void w5300_reset ( void );
 void w5300_init ( void (*cb)(int) );

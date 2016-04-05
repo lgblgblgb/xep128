@@ -22,6 +22,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #ifdef _WIN32
 #include <sysinfoapi.h>
 #endif
+#include <dirent.h>
+#include <sys/stat.h>
+
+
 
 
 struct commands_st {
@@ -56,12 +60,15 @@ static int    disasm_pagerel = 0;
 
 
 
-
 #define MPRINTF(...) do {			\
-	char m__buffer__[1024];			\
-	snprintf(m__buffer__, sizeof m__buffer__, __VA_ARGS__);	\
-	__mprintf_append_helper(m__buffer__);	\
+	char   __mprintf__buffer__[0x4000];	\
+	snprintf(__mprintf__buffer__, sizeof __mprintf__buffer__, __VA_ARGS__);	\
+	__mprintf_append_helper(__mprintf__buffer__);	\
 } while(0)
+
+#define ARG_ONE 33
+#define ARG_SPACE 32
+
 
 
 static void __mprintf_append_helper ( char *s )
@@ -85,7 +92,8 @@ static void __mprintf_append_helper ( char *s )
 }
 
 
-static char *get_mon_arg ( void )
+// Use ARG_ONE to return one parameter, or ARG_SPACE (can contain space(s) but not eg TAB)
+static char *get_mon_arg ( int limitrangecode )
 {
 	char *r;
 	while (*input_p && *input_p <= 32)
@@ -93,7 +101,7 @@ static char *get_mon_arg ( void )
 	if (!*input_p) 
 		return NULL;		// no argument left
 	r = input_p;			// remember position of first printable character ...
-	while (*input_p > 32)
+	while (*input_p >= limitrangecode)
 		input_p++;
 	if (*input_p)
 		*(input_p++) = '\0';	// terminate argument
@@ -104,7 +112,7 @@ static char *get_mon_arg ( void )
 
 static int get_mon_arg_hex ( int *hex1, int *hex2 )
 {
-	char *h = get_mon_arg();
+	char *h = get_mon_arg(ARG_ONE);
 	*hex1 = *hex2 = -1;
 	if (h == NULL)
 		return 0;
@@ -120,7 +128,7 @@ static void cmd_testargs ( void ) {
 		r, h1, h2
 	);
 	for (;;) {
-		char *p = get_mon_arg();
+		char *p = get_mon_arg(ARG_ONE);
 		if (!p) {
 			MPRINTF("No more args found!\n");
 			break;
@@ -275,7 +283,7 @@ static void cmd_setdate ( void ) {
 
 
 static void cmd_ram ( void ) {
-	char *arg = get_mon_arg();
+	char *arg = get_mon_arg(ARG_ONE);
 	int r = arg ? *arg : 0;
 	switch (r) {
 		case 0:
@@ -305,7 +313,7 @@ static void cmd_ram ( void ) {
 
 static void cmd_cpu ( void ) {
 	//char buf[512] = "";
-	char *arg = get_mon_arg();
+	char *arg = get_mon_arg(ARG_ONE);
 	if (arg) {
 		if (!strcasecmp(arg, "z80"))
 			set_ep_cpu(CPU_Z80);
@@ -383,7 +391,7 @@ static void cmd_exit ( void )
 
 static void cmd_mouse ( void )
 {
-	char *arg = get_mon_arg();
+	char *arg = get_mon_arg(ARG_ONE);
 	int c = arg ? *arg : 0;
 	char buffer[256];
 	switch (c) {
@@ -546,12 +554,80 @@ static void cmd_ports ( void )
 
 
 
+static void cmd_cd ( void )
+{
+	int r_cd = 0;
+	char *arg = get_mon_arg(ARG_SPACE);
+	if (arg) {
+		char cwd_old[PATH_MAX + 1];
+		char *r_scwd = getcwd(cwd_old, PATH_MAX);	// Save working directory
+		int r;
+		if (chdir(fileio_cwd))	// set old FILE: dir
+			r = chdir(DIRSEP);
+		r_cd = chdir(arg);	// do the CD - maybe relative - to the old one
+		if (!r_cd) {
+			if (getcwd(fileio_cwd, PATH_MAX)) { // store result directory as new FILE: dir
+				if (fileio_cwd[strlen(fileio_cwd) - 1] != DIRSEP[0])
+					strcat(fileio_cwd, DIRSEP);
+			}
+		}
+		if (!r_scwd)
+			r = chdir(cwd_old);	// restore current working directory
+		(void)r;			// make GCC happy, we DO NOT need value of r, and some retvals, sorry!!
+	}
+	if (r_cd)
+		MPRINTF("*** Cannot change directory to %s\n", arg);
+	else if (!arg)
+		MPRINTF("%s\n", fileio_cwd);
+}
+
+
+
+static void cmd_dir ( void )
+{
+	struct dirent *entry;
+	DIR *dir;
+	if (get_mon_arg(ARG_ONE)) {
+		MPRINTF("*** DIR command does not have parameter\n");
+		return;
+	}
+	dir = opendir(fileio_cwd);
+	if (!dir) {
+		MPRINTF("*** Cannot open host OS directory: %s\n", fileio_cwd);
+		return;
+	}
+	MPRINTF("Directory of %s\n", fileio_cwd);
+	while ((entry = readdir(dir))) {
+		char fn[PATH_MAX + 1];
+		struct stat st;
+		if (entry->d_name[0] == '.')
+			continue;
+		sprintf(fn, "%s%s%s", fileio_cwd, DIRSEP, entry->d_name);
+		if (!stat(fn, &st)) {
+			char size_info[10];
+			if (S_ISDIR(st.st_mode))
+				strcpy(size_info, "<dir>");
+			else if (st.st_size < 65536)
+				snprintf(size_info, sizeof size_info, "%d", (int)st.st_size);
+			else
+				size_info[0] = 0;
+			if (size_info[0])
+				MPRINTF("%-12s %6s\n", entry->d_name, size_info);
+		}
+	}
+	closedir(dir);
+}
+
+
+
 static void cmd_help ( void );
 
 static const struct commands_st commands[] = {
 	{ "AUDIO",	"", 3, "Tries to turn lame audio emulation", cmd_audio },
+	{ "CD",		"", 3, "Host OS directory change/query for FILE:", cmd_cd },
 	{ "CLOSE",	"", 3, "Close console/monitor window", cmd_close },
 	{ "CPU",	"", 3, "Set/query CPU type/clock", cmd_cpu },
+	{ "DIR",	"", 3, "Directory listing from host OS for FILE:", cmd_dir },
 	{ "DISASM",	"D", 3, "Disassembly memory", cmd_disasm },
 	{ "EMU",	"", 3, "Emulation info", cmd_emu },
 	{ "EXIT",	"", 3, "Exit Xep128", cmd_exit },
@@ -578,7 +654,7 @@ static const char help_for_all_desc[] = "\nFor help on all comamnds: (:XEP) HELP
 
 static void cmd_help ( void ) {
         const struct commands_st *cmds = commands;
-	char *arg = get_mon_arg();
+	char *arg = get_mon_arg(ARG_ONE);
 	if (arg) {
 		while (cmds->name) {
 			if ((!strcasecmp(arg, cmds->name) || !strcasecmp(arg, cmds->alias)) && cmds->help) {
@@ -626,7 +702,7 @@ void monitor_execute ( char *in_input_buffer, int in_source, char *in_output_buf
 	strcpy(input_buffer, in_input_buffer);
 	input_p = input_buffer;
 	/* OK, now it's time to do something ... */
-	cmd_name = get_mon_arg();
+	cmd_name = get_mon_arg(ARG_ONE);
 	if (!cmd_name) {
 		if (in_source == 1)
 			MPRINTF("*** Use: XEP HELP\n");
