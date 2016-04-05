@@ -16,6 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+
+; This ROM is *INCLUDED* in Xep128 by default and have strong relation
+; with the _current_ version of the emulator. it would crash on a real EP,
+; also with any other version of Xep128 what is part of. That's the reason
+; it's included inside the Xep128 executable itself.
+;
+; Following functionalities is done by this ROM:
+;
+; * provides processing of :XEP commands
+; * sets EXOS clock on restart
+; * handles the FILE: functionality to load programs from host OS FS
+; * provides information (ie: EXOS version) for the emulator
+
+
 ; Note, symbols having name starting with "xepsym_" are extracted
 ; into a .h file can can be used by Xep128 itself!
 
@@ -25,25 +39,109 @@ xepsym_ed_trap_opcode	= 0xBC
 
 xepsym_exos_info_struct	= $FFF0
 
+; Great help: http://ep.homeserver.hu/Dokumentacio/Konyvek/EXOS_2.1_technikal_information/exos/kernel/Ch6.html
+;             http://ep.homeserver.hu/Dokumentacio/Konyvek/EXOS_2.1_technikal_information/exos/kernel/Ch7.html
 
-	ORG 0xC000
-	DB "EXOS_ROM"
-	DW 0		; device chain (0 = no)
+DEFINE PAGE1_ADDR(a) (a & 0x3FFF) | 0x4000
+
+	ORG	0xC000
+	DB	"EXOS_ROM"
+	DW	PAGE1_ADDR(fileio_device_pseudo_descriptor.rom_ref)	; device chain (0 = no), otherwise address, "seen as" in the 0x4000 - 0x7FFF Z80 page (page 1)
 	JP	rom_main_entry_point
-	DB	"!XEP_ROM"	; Please leave this here, in this form! It may be used to detect XEP ROM in the future!
+	DB	"[XEProm]"	; Please leave this here, in this form! It may be used to detect XEP ROM in the future!
 
 ; Standard EXOS call macro
 MACRO	EXOS n
 	RST	0x30
 	DB	n
 ENDMACRO
-
 ; This macro is used to place a trap, also creating a symbol (after the trap yes, since that PC will be seen by the trap handler)
 ; Value of "sym" should be start with xepsym_ so it's exported as a symbol for the C code! And it must be handled there too ...
 MACRO	TRAP sym
 	DB 0xED, xepsym_ed_trap_opcode
 sym = $
 ENDMACRO
+
+
+
+fileio_device_pseudo_descriptor:
+	DW	0	; link to the next descriptor (0 = none)
+	DW	$FFFE	; needed RAM amount (-2 = no RAM needed)
+.type
+	DB	0	; type
+	DB	0	; IRQ flag
+	DB	0	; flags
+	DW	PAGE1_ADDR(.jump_table)
+	DB	0	; segment of jump table, will be filled by EXOS when descriptor is copied to RAM!
+	DB	0	; unit count for this device
+.device_fn:
+	DB	4, "FILE"	; name, with its size
+.rom_ref:
+	DB	.rom_ref - .type	; size!
+.jump_table:
+	DW	fileio_not_used_call	; interrupt, not valid, since IRQ flag is 0 in the descriptor
+	DW	fileio_open_channel
+	DW	fileio_create_channel
+	DW	fileio_close_channel
+	DW	fileio_destroy_channel
+	DW	fileio_read_character
+	DW	fileio_read_block
+	DW	fileio_write_character
+	DW	fileio_write_block
+	DW	fileio_channel_read_status
+	DW	fileio_set_channel_status
+	DW	fileio_special_function
+	DW	fileio_init
+	DW	fileio_buffer_moved
+	DW	fileio_not_used_call
+	DW	fileio_not_used_call
+
+xepsym_device_fn = fileio_device_pseudo_descriptor.device_fn
+
+fileio_not_used_call:
+	TRAP	xepsym_fileio_test_trap
+	RET
+
+fileio_open_channel:
+	JP	fileio_not_used_call
+
+fileio_create_channel:
+	JP	fileio_not_used_call
+
+fileio_close_channel:
+	JP	fileio_not_used_call
+
+fileio_destroy_channel:
+	JP	fileio_not_used_call
+
+fileio_read_character:
+	JP	fileio_not_used_call
+
+fileio_read_block:
+	JP	fileio_not_used_call
+
+fileio_write_character:
+	JP	fileio_not_used_call
+
+fileio_write_block:
+	JP	fileio_not_used_call
+
+fileio_channel_read_status:
+	JP	fileio_not_used_call
+
+fileio_set_channel_status:
+	JP	fileio_not_used_call
+
+fileio_special_function:
+	JP	fileio_not_used_call
+
+fileio_init:
+	JP	fileio_not_used_call
+
+fileio_buffer_moved:
+	JP	fileio_not_used_call
+
+
 
 
 rom_main_entry_point:

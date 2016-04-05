@@ -159,6 +159,10 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 			memcpy(exos_info, memory + ((xepsym_exos_info_struct & 0x3FFF) | (xep_rom_seg << 14)), 8);
 			//EXOS_BYTE(0xBFEF) = 1; // use this, to skip Enterprise logo when it would come :-)
 			break;
+		case xepsym_fileio_test_trap:
+			DEBUGPRINT("File I/O trap is not implemented yet" NL);
+			Z80_A = 0xE7;
+			break;
 		default:
 			ERROR_WINDOW("FATAL: Unknown ED-trap location in XEP ROM: PC=%04Xh (ED_OP=%02Xh)", pc, opcode);
 			exit(1);
