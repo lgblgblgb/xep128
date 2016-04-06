@@ -131,6 +131,8 @@ int ep_init_ram ( void );
 extern int xep_rom_seg, xep_rom_addr;
 FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer );
 Uint8 read_cpu_byte ( Uint16 addr );
+Uint8 read_cpu_byte_by_segmap ( Uint16 addr, Uint8 *segmap );
+void write_cpu_byte_by_segmap ( Uint16 addr, Uint8 *segmap, Uint8 data );
 void set_ep_cpu ( int type );
 #define CPU_Z80		0
 #define CPU_Z80C	1

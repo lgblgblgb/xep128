@@ -221,6 +221,20 @@ Uint8 read_cpu_byte ( Uint16 addr )
 }
 
 
+Uint8 read_cpu_byte_by_segmap ( Uint16 addr, Uint8 *segmap )
+{
+	return memory[(segmap[addr >> 14] << 14) | (addr & 0x3FFF)];
+}
+
+
+void write_cpu_byte_by_segmap ( Uint16 addr, Uint8 *segmap, Uint8 data )
+{
+	int seg = segmap[addr >> 14];
+	if (is_ram_seg[seg])
+		memory[(seg << 14) | (addr & 0x3FFF)] = data;
+}
+
+
 void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 	register int phys = memsegs[addr >> 14] + addr;
 	if (phys >= 0x3F0000) { // VRAM access, no "$BF port" wait states ever, BUT TODO: Nick CPU clock strechting ...
