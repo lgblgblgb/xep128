@@ -32,14 +32,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define EXOS_USER_SEGMAP_P (0X3FFFFC + memory)
 
 char fileio_cwd[PATH_MAX + 1];
-static int fileio_fd = -1;
-static int fileio_channel = -1;
-
+static int exos_channels[0x100];
 
 
 
 void fileio_init ( const char *dir, const char *subdir )
 {
+	int a;
+	for (a = 0; a < 0x100; a++)
+		exos_channels[a] = -1;
 	if (dir && *dir && *dir != '?') {
 		strcpy(fileio_cwd, dir);
 		if (subdir) {
@@ -83,13 +84,12 @@ static int fileio_open_existing_hostfile ( const char *dirname, const char *file
 
 Uint8 fileio_func_open_channel ( void )
 {
+	int channel = Z80_A;
 	int de = Z80_DE;
 	int fnlen = read_cpu_byte(de);
 	char fnbuf[128], *p = fnbuf;
-	if (fileio_channel == Z80_A)
-		return 0xF9;	// channel number is already used! (not so much useful here though to check, maybe?)
-	if (fileio_channel != -1)
-		return 0xE9;	// we support only single channel mode, ie, device already in use error ...
+	if (exos_channels[channel] != -1)
+		return 0xF9;	// channel number is already used! (maybe it's useless to be tested, as EXOS wouldn't allow that anyway?)
 	while (fnlen--)
 		*(p++) = read_cpu_byte(++de);
 	*p = '\0';
@@ -98,19 +98,19 @@ Uint8 fileio_func_open_channel ( void )
 	DEBUGPRINT("Result of open: %d (cwd=%s)" NL, de, fileio_cwd);
 	if (de < 0)
 		return 0xCF;	// file not found, but this is an EXDOS error code for real!
-	fileio_channel = Z80_A;
-	fileio_fd = de;
+	exos_channels[channel] = de;
 	return 0;
 }
 
 
 Uint8 fileio_func_close_channel ( void )
 {
-	if (fileio_channel != Z80_A)
+	int channel = Z80_A;
+	int channel_fd = exos_channels[channel];
+	if (channel_fd == -1)
 		return 0xFB;	// invalid channel
-	close(fileio_fd);
-	fileio_fd = -1;
-	fileio_channel = -1;
+	close(channel_fd);
+	exos_channels[channel] = -1;
 	return 0;		// OK, closed.
 }
 
@@ -135,14 +135,14 @@ static ssize_t safe_read ( int fd, void *buffer, size_t requested )
 
 Uint8 fileio_func_read_block ( void )
 {
-	int r;
+	int r, channel_fd = exos_channels[Z80_A];
 	Uint8 fileio_buffer[0xFFFF], *p = fileio_buffer;
-	if (Z80_A != fileio_channel)
+	if (channel_fd == -1)
 		return 0xFB;	// invalid channel
 	if (!Z80_BC)
 		return 0;	// read to zero amount of data should be handled normally!
-	r = safe_read(fileio_fd, fileio_buffer, Z80_BC);
-	DEBUGPRINT("FILEIO: HOST-read(block): fd=%d, requested_bytes=%d result=%d" NL, fileio_fd, Z80_BC, r);
+	r = safe_read(channel_fd, fileio_buffer, Z80_BC);
+	DEBUGPRINT("FILEIO: HOST-read(block): fd=%d, requested_bytes=%d result=%d" NL, channel_fd, Z80_BC, r);
 	if (!r) 		// attempt to read after end of file?
 		return 0xE4;
 	else if (r < 0)		// host file read error!
@@ -161,10 +161,11 @@ Uint8 fileio_func_read_character ( void )
 {
 	int r;
 	Uint8 fileio_buffer;
-	if (Z80_A != fileio_channel)
+	int channel_fd = exos_channels[Z80_A];
+	if (channel_fd == -1)
 		return 0xFB;	// invalid channel
-	r = safe_read(fileio_fd, &fileio_buffer, 1);
-	DEBUGPRINT("FILEIO: HOST-read(character): fd=%d, result=%d" NL, fileio_fd, r);
+	r = safe_read(channel_fd, &fileio_buffer, 1);
+	DEBUGPRINT("FILEIO: HOST-read(character): fd=%d, result=%d" NL, channel_fd, r);
 	if (!r) 		// attempt to read after end of file?
 		return 0xE4;
 	else if (r < 0)		// host file read error!
@@ -210,10 +211,12 @@ Uint8 fileio_func_special_function ( void )
 
 Uint8 fileio_func_init ( void )
 {
-	if (fileio_fd != -1)
-		close(fileio_fd);
-	fileio_fd = -1;
-	fileio_channel = -1;
+	int a;
+	for (a = 0; a < 0x100; a++)
+		if (exos_channels[a] != -1) {
+			close(exos_channels[a]);
+			exos_channels[a] = -1;
+		}
         return 0;
 }
 
