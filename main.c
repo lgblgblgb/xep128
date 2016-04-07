@@ -36,7 +36,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "console.h"
 #include "emu_monitor.h"
 #include "rtc.h"
+#include "fileio.h"
 #include "z80.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <SDL.h>

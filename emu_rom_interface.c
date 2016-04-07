@@ -24,11 +24,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "roms.h"
 #include "emu_monitor.h"
 #include "configuration.h"
+#include "fileio.h"
 
 #include "main.h"
 
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -44,32 +43,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 static const char EXOS_NEWLINE[] = "\r\n";
 Uint8 exos_version = 0;
 Uint8 exos_info[8];
-char fileio_cwd[PATH_MAX + 1];
 
 #define EXOS_ADDR(n)		(0x3FC000 | ((n) & 0x3FFF))
 #define EXOS_BYTE(n)		memory[EXOS_ADDR(n)]
 #define EXOS_GET_WORD(n)	(EXOS_BYTE(n) | (EXOS_BYTE((n) + 1) << 8))
 
-
-
-void fileio_init ( const char *dir, const char *subdir )
-{
-	if (dir && *dir && *dir != '?') {
-		strcpy(fileio_cwd, dir);
-		if (subdir) {
-			strcat(fileio_cwd, subdir);
-			if (subdir[strlen(subdir) - 1] != DIRSEP[0])
-				strcat(fileio_cwd, DIRSEP);
-		}
-		DEBUGPRINT("FILEIO: base directory is: %s" NL, fileio_cwd);
-		mkdir(fileio_cwd
-#ifndef _WIN32
-			, 0777
-#endif
-		);
-	} else
-		fileio_cwd[0] = '\0';
-}
 
 
 void exos_get_status_line ( char *buffer )
@@ -173,137 +151,6 @@ static void xep_exos_command_trap ( void )
 }
 
 
-#include <dirent.h>
-#include <fcntl.h>
-
-
-static int fileio_fd = -1;
-static int fileio_channel = -1;
-
-
-
-
-
-
-static int fileio_open_existing_hostfile ( const char *dirname, const char *filename, int mode )
-{
-	DIR *dir;
-	struct dirent *entry;
-	dir = opendir(dirname);
-	if (!dir)
-		return -1;
-	while ((entry = readdir(dir))) {
-		if (!strcasecmp(entry->d_name, filename)) {
-			char buffer[PATH_MAX + 1];
-			closedir(dir);
-			snprintf(buffer, sizeof buffer, "%s%s%s", dirname, DIRSEP, entry->d_name);
-			DEBUGPRINT("FILEIO: opening file \"%s\"" NL, buffer);
-			mode |= O_BINARY; // make sure, we won't forget this one!!!
-			return open(buffer, mode);
-		}
-	}
-	closedir(dir);
-	return -1;
-}
-
-
-
-static Uint8 fileio_open_channel ( void )
-{
-	int de = Z80_DE;
-	int fnlen = read_cpu_byte(de);
-	char fnbuf[128], *p = fnbuf;
-	if (fileio_channel == Z80_A)
-		return 0xF9;	// channel number is already used! (not so much useful here though to check, maybe?)
-	if (fileio_channel != -1)
-		return 0xE9;	// we support only single channel mode, ie, device already in use error ...
-	while (fnlen--)
-		*(p++) = read_cpu_byte(++de);
-	*p = '\0';
-	DEBUGPRINT("Filename = \"%s\" Channel = %d O_BINARY=%d" NL, fnbuf, Z80_A, O_BINARY);
-	de = fileio_open_existing_hostfile(fileio_cwd, fnbuf, O_RDONLY|O_BINARY);
-	DEBUGPRINT("Result of open: %d (cwd=%s)" NL, de, fileio_cwd);
-	if (de < 0)
-		return 0xCF;	// file not found, but this is an EXDOS error code for real!
-	fileio_channel = Z80_A;
-	fileio_fd = de;
-	return 0;
-}
-
-
-static Uint8 fileio_close_channel ( void )
-{
-	if (fileio_channel != Z80_A)
-		return 0xFB;	// invalid channel
-	close(fileio_fd);
-	fileio_fd = -1;
-	fileio_channel = -1;
-	return 0;		// OK, closed.
-}
-
-
-
-static ssize_t safe_read ( int fd, void *buffer, size_t requested )
-{
-	ssize_t done = 0, r;
-	do {
-		r = read(fd, buffer, requested);
-		DEBUGPRINT("FILEIO: safe_read: fd=%d, requested=%d, result=%d" NL, fd, requested, r);
-		if (r > 0) {
-			requested -= r;
-			buffer += r;
-			done += r;
-		}
-	} while (requested && r > 0);
-	return r < 0 ? r : done;
-}
-
-
-
-static Uint8 fileio_read_block ( void )
-{
-	int r;
-	Uint8 fileio_buffer[0xFFFF], *p = fileio_buffer;
-	if (Z80_A != fileio_channel)
-		return 0xFB;	// invalid channel
-	if (!Z80_BC)
-		return 0;	// read to zero amount of data should be handled normally!
-	r = safe_read(fileio_fd, fileio_buffer, Z80_BC);
-	DEBUGPRINT("FILEIO: HOST-read(block): fd=%d, requested_bytes=%d result=%d" NL, fileio_fd, Z80_BC, r);
-	if (!r) 		// attempt to read after end of file?
-		return 0xE4;
-	else if (r < 0)		// host file read error!
-		return 0xD0;	// somewhat funny error code for here: casette CRC error :)
-	while (r--) {
-		write_cpu_byte_by_segmap(Z80_DE++, memory + EXOS_ADDR(0xBFFC), *(p++));
-		Z80_BC--;
-		if (!Z80_DE && r)
-			return 0x9B;	// OV64K, this is an EXDOS error for real ...
-	}
-	return 0;
-}
-
-
-static Uint8 fileio_read_character ( void )
-{
-	int r;
-	Uint8 fileio_buffer;
-	if (Z80_A != fileio_channel)
-		return 0xFB;	// invalid channel
-	r = safe_read(fileio_fd, &fileio_buffer, 1);
-	DEBUGPRINT("FILEIO: HOST-read(character): fd=%d, result=%d" NL, fileio_fd, r);
-	if (!r) 		// attempt to read after end of file?
-		return 0xE4;
-	else if (r < 0)		// host file read error!
-		return 0xD0;	// somewhat funny error code for here: casette CRC error :)
-	Z80_B = fileio_buffer;
-	return 0;
-}
-
-
-
-
-
 
 void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 {
@@ -329,70 +176,55 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 				EXOS_BYTE(0xBFEF) = 1; // use this, to skip Enterprise logo when it would come :-)
 			}
 			break;
-		/* ---- FILEIO RELATED TRAPS ---- */
-		case xepsym_fileio_no_used_call:
-			DEBUGPRINT("File I/O trap xepsym_fileio_no_used_call is not implemented yet." NL);
-			Z80_A = 0xE7;
-			break;
-		case xepsym_fileio_open_channel:
-			//DEBUGPRINT("File I/O trap xepsym_fileio_open_channel is not implemented yet." NL);
-			Z80_A = fileio_open_channel();
-			break;
-		case xepsym_fileio_create_channel:
-			DEBUGPRINT("File I/O trap xepsym_fileio_create_channel is not implemented yet." NL);
-			Z80_A = 0xE7;
-			break;
-		case xepsym_fileio_close_channel:
-			//DEBUGPRINT("File I/O trap xepsym_fileio_close_channel is not implemented yet." NL);
-			Z80_A = fileio_close_channel();
-			break;
-		case xepsym_fileio_destroy_channel:
-			DEBUGPRINT("File I/O trap xepsym_fileio_destroy_channel is not implemented yet." NL);
-			Z80_A = 0xE7;
-			break;
-		case xepsym_fileio_read_character:
-			//DEBUGPRINT("File I/O trap xepsym_fileio_read_character is not implemented yet." NL);
-			Z80_A = fileio_read_character();
-			break;
-		case xepsym_fileio_read_block:
-			//DEBUGPRINT("File I/O trap xepsym_fileio_read_block is not implemented yet." NL);
-			Z80_A = fileio_read_block();
-			break;
-		case xepsym_fileio_write_character:
-			DEBUGPRINT("File I/O trap xepsym_fileio_write_character is not implemented yet." NL);
-			Z80_A = 0xE7;
-			break;
-		case xepsym_fileio_write_block:
-			DEBUGPRINT("File I/O trap xepsym_fileio_write_block is not implemented yet." NL);
-			Z80_A = 0xE7;
-			break;
-		case xepsym_fileio_channel_read_status:
-			DEBUGPRINT("File I/O trap xepsym_fileio_channel_read_status is not implemented yet." NL);
-			Z80_A = 0xE7;
-			break;
-		case xepsym_fileio_set_channel_status:
-			DEBUGPRINT("File I/O trap xepsym_fileio_set_channel_status is not implemented yet." NL);
-			Z80_A = 0xE7;
-			break;
-		case xepsym_fileio_special_function:
-			DEBUGPRINT("File I/O trap xepsym_fileio_special_function is not implemented yet." NL);
-			Z80_A = 0xE7;
-			break;
-		case xepsym_fileio_init:
-			//DEBUGPRINT("File I/O trap xepsym_fileio_init is not implemented yet." NL);
-			//Z80_A = 0xE7;
-			if (fileio_fd != -1)
-				close(fileio_fd);
-			fileio_fd = -1;
-			fileio_channel = -1;
-			break;
-		case xepsym_fileio_buffer_moved:
-			DEBUGPRINT("File I/O trap xepsym_fileio_buffer_moved is not implemented yet." NL);
-			Z80_A = 0xE7;
-			break;
 		default:
 			ERROR_WINDOW("FATAL: Unknown ED-trap location in XEP ROM: PC=%04Xh (ED_OP=%02Xh)", pc, opcode);
 			exit(1);
+			break;
+		//
+		/* ---- FILEIO RELATED TRAPS ---- */
+		//
+		case xepsym_fileio_no_used_call:
+			Z80_A = fileio_func_not_used_call();
+			break;
+		case xepsym_fileio_open_channel:
+			Z80_A = fileio_func_open_channel();
+			break;
+		case xepsym_fileio_create_channel:
+			Z80_A = fileio_func_create_channel();
+			break;
+		case xepsym_fileio_close_channel:
+			Z80_A = fileio_func_close_channel();
+			break;
+		case xepsym_fileio_destroy_channel:
+			Z80_A = fileio_func_destroy_channel();
+			break;
+		case xepsym_fileio_read_character:
+			Z80_A = fileio_func_read_character();
+			break;
+		case xepsym_fileio_read_block:
+			Z80_A = fileio_func_read_block();
+			break;
+		case xepsym_fileio_write_character:
+			Z80_A = fileio_func_write_character();
+			break;
+		case xepsym_fileio_write_block:
+			Z80_A = fileio_func_write_block();
+			break;
+		case xepsym_fileio_channel_read_status:
+			Z80_A = fileio_func_channel_read_status();
+			break;
+		case xepsym_fileio_set_channel_status:
+			Z80_A = fileio_func_set_channel_status();
+			break;
+		case xepsym_fileio_special_function:
+			Z80_A = fileio_func_special_function();
+			break;
+		case xepsym_fileio_init:
+			Z80_A = fileio_func_init();
+			break;
+		case xepsym_fileio_buffer_moved:
+			Z80_A = fileio_func_buffer_moved();
+			break;
 	}
 }
 

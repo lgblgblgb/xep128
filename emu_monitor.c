@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "cpu_z180.h"
 #include "configuration.h"
 #include "emu_rom_interface.h"
+#include "fileio.h"
 #include "screen.h"
 #include "console.h"
 #include "nick.h"

@@ -21,9 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 extern Uint8 exos_version;
 extern Uint8 exos_info[8];
-extern char  fileio_cwd[PATH_MAX + 1];
 
-extern void fileio_init ( const char *dir, const char *subdir );
 extern void exos_get_status_line ( char *buffer );
 extern void xep_set_time_consts ( char *descbuffer );
 extern void xep_rom_trap ( Uint16 pc, Uint8 opcode );
