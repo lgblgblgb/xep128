@@ -99,47 +99,71 @@ fileio_device_pseudo_descriptor:
 xepsym_device_fn = fileio_device_pseudo_descriptor.device_fn
 
 fileio_not_used_call:
-	TRAP	xepsym_fileio_test_trap
+	TRAP	xepsym_fileio_no_used_call
 	RET
 
 fileio_open_channel:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_open_channel
+	OR	A
+	RET	NZ
+allocate_channel_buffer:
+	PUSH	DE
+	PUSH	IX
+	LD	DE, 1	; really, I have no idea why I need to allocate 1 byte, when I don't need it
+	EXOS	27	; ... but it seems EXOS would expect this call on open/create or strange error occures!
+	POP	IX
+	POP	DE
+	RET		; A was not saved/restored, however EXOS 27 result code should be zero on OK anyway
 
 fileio_create_channel:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_create_channel
+	OR	A
+	RET	NZ
+	JR	allocate_channel_buffer
 
 fileio_close_channel:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_close_channel
+	RET
 
 fileio_destroy_channel:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_destroy_channel
+	RET
 
 fileio_read_character:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_read_character
+	RET
 
 fileio_read_block:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_read_block
+	RET
 
 fileio_write_character:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_write_character
+	RET
 
 fileio_write_block:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_write_block
+	RET
 
 fileio_channel_read_status:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_channel_read_status
+	RET
 
 fileio_set_channel_status:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_set_channel_status
+	RET
 
 fileio_special_function:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_special_function
+	RET
 
 fileio_init:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_init
+	RET
 
 fileio_buffer_moved:
-	JP	fileio_not_used_call
+	TRAP	xepsym_fileio_buffer_moved
+	RET
 
 
 
