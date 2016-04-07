@@ -16,10 +16,22 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "xepem.h"
+#include "xep128.h"
+#include "emu_rom_interface.h"
 #include "xep_rom_syms.h"
+#include "z80.h"
+#include "cpu.h"
+#include "roms.h"
+#include "emu_monitor.h"
+#include "configuration.h"
+
+#include "main.h"
+
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <time.h>
+
 
 #define COBUF ((char*)(memory + xep_rom_addr + xepsym_cobuf - 0xC000))
 #define SET_XEPSYM_BYTE(sym, value) memory[xep_rom_addr + (sym) - 0xC000] = (value)

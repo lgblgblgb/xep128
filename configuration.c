@@ -17,7 +17,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include "xepem.h"
+#include "xep128.h"
+#include "configuration.h"
+#include "console.h"
+#include "keyboard_mapping.h"
+
+#include <SDL.h>
+#include <unistd.h>
 
 
 enum configItemEnum_t {
@@ -175,13 +181,13 @@ int config_set ( const char *name, int subopt, const char *value )
 		free(st->value);
 	} else {
 		config = realloc(config, (config_size + 1) * sizeof(struct configOption_st));
-		check_malloc(config);
+		CHECK_MALLOC(config);
 		st = config + (config_size++);
 		st->opt = opt;
 		st->subopt = subopt;
 	}
 	st->value = strdup(value);
-	check_malloc(st->value);
+	CHECK_MALLOC(st->value);
 	return 0;
 }
 

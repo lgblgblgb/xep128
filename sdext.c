@@ -24,7 +24,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 	http://www.mouser.com/ds/2/380/spansion%20inc_am29f400b_eol_21505e8-329620.pdf
 */
 
-#include "xepem.h"
+#include "xep128.h"
+#include "sdext.h"
+#include "cpu.h"
+#include "configuration.h"
+
+#include <unistd.h>
+
 
 #ifdef CONFIG_SDEXT_SUPPORT
 //#define DEBUG_SDEXT

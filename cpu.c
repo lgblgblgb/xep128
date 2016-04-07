@@ -17,7 +17,22 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include "xepem.h"
+#include "xep128.h"
+#include "cpu.h"
+#include "apu.h"
+#include "cpu_z180.h"
+#include "dave.h"
+#include "nick.h"
+#include "rtc.h"
+#include "printer.h"
+#include "zxemu.h"
+#include "primoemu.h"
+#include "w5300.h"
+#include "roms.h"
+#include "input.h"
+#include "emu_rom_interface.h"
+#include "sdext.h"
+#include <time.h>
 
 Z80EX_CONTEXT z80ex VARALIGN;
 static int memsegs[4] VARALIGN;
@@ -27,6 +42,8 @@ const char *memory_segment_map[0x100];
 static int is_ram_seg[0x100] VARALIGN;
 static int mem_ws_all, mem_ws_m1;
 int nmi_pending = 0;
+int CPU_CLOCK = DEFAULT_CPU_CLOCK;
+
 
 const char ROM_SEGMENT[] = "ROM";
 const char RAM_SEGMENT[] = "RAM";
@@ -153,12 +170,13 @@ int ep_set_ram_config ( const char *spec )
 
 int ep_init_ram ( void )
 {
-	int a, sum = 0, from;
+	int a, sum = 0, from = 0;
 	const char *type = NULL;
 	char dbuf[PATH_MAX + 80];
 	if (mem_desc)
 		*mem_desc = '\0';
 	for (a = 0; a < 0x101; a++) {	// yeah, 0x101 is by intent!!
+		//printf("LGB: WTF a = %d" NL, a);
 		if (a < 0x100) {
 			int is_sram = (memory_segment_map[a] == SRAM_SEGMENT);
 			is_ram_seg[a] = (memory_segment_map[a] == RAM_SEGMENT || memory_segment_map[a] == VRAM_SEGMENT || is_sram);
@@ -171,18 +189,23 @@ int ep_init_ram ( void )
 		if (a == 0x100 || type != memory_segment_map[a] || rom_name_tab[a]) {
 			if (type) {
 				int s;
+				/*DEBUGPRINT("LGB: dbuf=%p, sizeof dbuf=%d, from=%d, a=%d, type=%p" NL,
+					dbuf, sizeof dbuf,from, a, type
+				);*/
 				snprintf(dbuf, sizeof dbuf, "%02X-%02X %s %s", from, a - 1, type, rom_name_tab[from] ? rom_name_tab[from] : "");
 				DEBUGPRINT("CONFIG: MEM: %s" NL, dbuf);
 				strcat(dbuf, "\n");
 				s = mem_desc ? strlen(mem_desc) : 0;
 				mem_desc = realloc(mem_desc, s + strlen(dbuf) + 256);
-				check_malloc(mem_desc);
+				CHECK_MALLOC(mem_desc);
 				if (!s)
 					*mem_desc = '\0';
 				strcat(mem_desc, dbuf);
 			}
-			type = memory_segment_map[a];
-			from = a;
+			if (a < 0x100) {
+				type = memory_segment_map[a];
+				from = a;
+			}
 		}
 	}
 	snprintf(dbuf, sizeof dbuf, "RAM:  %d segments (%d Kbytes)", sum, sum << 4);

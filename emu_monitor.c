@@ -16,14 +16,33 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "xepem.h"
+#include "xep128.h"
+#include "emu_monitor.h"
 #include "xep_rom_syms.h"
+#include "cpu.h"
+#include "cpu_z180.h"
+#include "configuration.h"
+#include "emu_rom_interface.h"
+#include "screen.h"
+#include "console.h"
+#include "nick.h"
+#include "input.h"
+#include "primoemu.h"
+#include "dave.h"
+#include "sdext.h"
+
+#include "main.h"
+
+#include <SDL.h>
 #include <SDL_syswm.h>
+
 #ifdef _WIN32
 #include <sysinfoapi.h>
 #endif
+
 #include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 
 

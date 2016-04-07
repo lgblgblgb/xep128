@@ -8,13 +8,12 @@ PREFIX	= /usr/local
 BINDIR	= $(PREFIX)/bin
 DATADIR	= $(PREFIX)/lib/xep128
 CC	= $(CC_NATIVE)
-DEBUG	=
-CFLAGS	= -falign-functions=16 -falign-loops=16 -Wall -Ofast -ffast-math -pipe $(shell $(SDLCFG_NATIVE) --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\" -DZ80EX_USER_HEADER=\"z80ex_config.h\"
+DEBUG	= -g
+CFLAGS	= -falign-functions=16 -falign-loops=16 -Wall -Ofast -ffast-math -pipe $(shell $(SDLCFG_NATIVE) --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\"
 ZCFLAGS	= -ansi -falign-functions=16 -falign-loops=16 -fno-common -Wall -pipe -Ofast -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG_NATIVE) --cflags | cut -f1 -d' ') $(DEBUG) 
-CPPFLAGS= -Iz80ex -I.
+CPPFLAGS= -I.
 LDFLAGS	= $(shell $(SDLCFG_NATIVE) --libs) -lm -lreadline $(DEBUG)
 LIBS	=
-INCS	= xepem.h z80ex_config.h
 SRCS	= $(LINSRCS) $(SRCS_COMMON)
 OBJS	= $(SRCS:.c=.o)
 PRG	= xep128
@@ -32,10 +31,10 @@ all:
 	@echo "Linker:   $(CC) $(LDFLAGS) $(LIBS)"
 	$(MAKE) $(PRG)
 
-%.o: %.c $(INCS) Makefile Makefile.common
+%.o: %.c Makefile Makefile.common
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-%.s: %.c $(INCS) Makefile Makefile.common
+%.s: %.c Makefile Makefile.common
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 z80ex/z180ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
@@ -100,7 +99,7 @@ $(ROM):
 data:	$(SDIMG) $(ROM)
 	rm -f buildinfo.c
 
-$(PRG): .depend $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(INCS) Makefile Makefile.common
+$(PRG): .depend $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o Makefile Makefile.common
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.o
 	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(LDFLAGS) $(LIBS)

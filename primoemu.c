@@ -16,7 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "xepem.h"
+#include "xep128.h"
+#include "primoemu.h"
+#include "z80.h"
+#include "cpu.h"
+#include "dave.h"
+#include "nick.h"
+#include "zxemu.h"
+
+#include "main.h"
 
 
 
@@ -24,7 +32,6 @@ int primo_on = 0;
 int primo_nmi_enabled = 0;
 int primo_rom_seg = -1;
 
-extern int vsync;
 
 // translates EP keyboard matrix  positions into Primo scan keys, indexed by primo scan keys
 const Uint8 primo_key_trans[] = {

@@ -3,6 +3,9 @@ LodePNG version 20150418
 
 Copyright (c) 2005-2015 Lode Vandevenne
 
+!! Xep128 WARNING: this is not the original distribution of LodePNG,
+!! some lighter modifications have been done!
+
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
 arising from the use of this software.
@@ -28,8 +31,8 @@ The manual and changelog are in the header file "lodepng.h"
 */
 
 
-#include "xepem.h"
-#ifdef USE_LODEPNG
+#include "xep128.h"
+#ifdef CONFIG_USE_LODEPNG
 
 #include "lodepng.h"
 

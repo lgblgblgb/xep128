@@ -17,10 +17,34 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include "xepem.h"
+#include "xep128.h"
+#include "main.h"
+#include "dave.h"
+#include "nick.h"
+#include "configuration.h"
+#include "sdext.h"
+#include "roms.h"
+#include "screen.h"
+#include "input.h"
+#include "cpu.h"
+#include "primoemu.h"
+#include "emu_rom_interface.h"
+#include "w5300.h"
+#include "zxemu.h"
+#include "printer.h"
+#include "joystick.h"
+#include "console.h"
+#include "emu_monitor.h"
+#include "rtc.h"
+#include "z80.h"
+#include <string.h>
+#include <stdlib.h>
+#include <SDL.h>
+#include <sys/time.h>
+#include <unistd.h>
+
 
 static Uint32 *ep_pixels;
-int CPU_CLOCK = DEFAULT_CPU_CLOCK;
 static const int _cpu_speeds[4] = { 4000000, 6000000, 7120000, 10000000 };
 static int _cpu_speed_index = 0;
 static int guarded_exit = 0;
@@ -151,6 +175,28 @@ void emu_timekeeping_start ( void )
 
 
 
+int set_cpu_clock ( int hz )
+{
+	if (hz <  1000000) hz =  1000000;
+	if (hz > 12000000) hz = 12000000;
+	CPU_CLOCK = hz;
+	SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK;
+	DEBUG("CPU: clock = %d scaler = %f" NL, CPU_CLOCK, SCALER);
+	dave_set_clock();
+	return hz;
+}
+
+
+
+int set_cpu_clock_with_osd ( int hz )
+{
+	hz = set_cpu_clock(hz);
+	OSD("CPU speed: %.2f MHz", hz / 1000000.0);
+	return hz;
+}
+
+
+
 // called by nick.c
 void emu_one_frame(int rasters, int frameskip)
 {
@@ -240,28 +286,6 @@ void emu_one_frame(int rasters, int frameskip)
 	monitor_process_queued();
 	rtc_update_trigger = 1; // triggers RTC update on the next RTC register read. Woooo!
 	emu_timekeeping_delay(1000000.0 * rasters * 57.0 / (double)NICK_SLOTS_PER_SEC);
-}
-
-
-
-int set_cpu_clock ( int hz )
-{
-	if (hz <  1000000) hz =  1000000;
-	if (hz > 12000000) hz = 12000000;
-	CPU_CLOCK = hz;
-	SCALER = (double)NICK_SLOTS_PER_SEC / (double)CPU_CLOCK;
-	DEBUG("CPU: clock = %d scaler = %f" NL, CPU_CLOCK, SCALER);
-	dave_set_clock();
-	return hz;
-}
-
-
-
-int set_cpu_clock_with_osd ( int hz )
-{
-	hz = set_cpu_clock(hz);
-	OSD("CPU speed: %.2f MHz", hz / 1000000.0);
-	return hz;
 }
 
 

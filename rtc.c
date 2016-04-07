@@ -17,18 +17,20 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include "xepem.h"
+#include "xep128.h"
+#include "rtc.h"
+
+#include "main.h"
+
+#include <time.h>
+
 
 //#define RESET_RTC_INDEX
-
 
 
 static int _rtc_register;
 static Uint8 cmos_ram[0x100];
 int rtc_update_trigger;
-
-
-
 
 
 void rtc_set_reg(Uint8 val)

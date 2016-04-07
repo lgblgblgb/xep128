@@ -17,7 +17,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include "xepem.h"
+#include "xep128.h"
+#include "nick.h"
+#include "screen.h"
+#include "cpu.h"
+#include "dave.h"
+
+#include "main.h"
+
 
 /*
  * The basic idea to speed emulation up: use the actual RGB
@@ -541,7 +548,7 @@ char *nick_dump_lpt ( const char *newline_seq )
 			newline_seq
 		);
 		p = realloc(p, p ? strlen(p) + strlen(buffer) + 256 : strlen(buffer) + 256);
-		check_malloc(p);
+		CHECK_MALLOC(p);
 		if (a == lpt_set)
 			*p = '\0';
 		strcat(p, buffer);

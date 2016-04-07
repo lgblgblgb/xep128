@@ -17,7 +17,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include "xepem.h"
+#include "xep128.h"
+#include "console.h"
+#include "emu_monitor.h"
+
+#include <SDL.h>
+
 #ifdef _WIN32
 #include <windows.h>
 #include <stdio.h>

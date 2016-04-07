@@ -16,12 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "xepem.h"
-#ifdef USE_LODEPNG
-#include "lodepng.h"
+#include "xep128.h"
+#include "screen.h"
+#include "dave.h"
+#include "configuration.h"
+#include "main.h"
+#include "input.h"
+#ifdef CONFIG_USE_LODEPNG
+#	include "lodepng.h"
 #else
-#include "png.h"
+#	include "png.h"
 #endif
+#include "app_icon.c"
+#include "font_16x16.h"
+#include <SDL.h>
+
 
 int is_fullscreen = 0;
 SDL_Window   *sdl_win = NULL;
@@ -33,11 +42,6 @@ static int win_xsize, win_ysize, resize_counter = 0, win_size_changed = 0;
 static int screenshot_index = 0;
 static Uint32 *osd_pixels = NULL;
 static int osd_on = 0, osd_fade = 0;
-
-#include "app_icon.c"
-
-extern const Uint16 font_16x16[];
-
 
 
 
@@ -385,15 +389,6 @@ int screen_init ( void )
 	return 0;
 }
 
-
-
-void check_malloc ( const void *p )
-{
-	if (p == NULL) {
-		ERROR_WINDOW("Memory allocation error. Not enough memory?");
-		exit(1);
-	}
-}
 
 
 
