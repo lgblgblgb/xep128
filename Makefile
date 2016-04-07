@@ -115,7 +115,7 @@ win32:	$(DLL) xep_rom.hex xep_rom_syms.h
 
 $(ZIP32): $(PRG_EXE) $(ROM) $(DLL)
 	$(STRIP_WIN32) $(PRG_EXE)
-	zip $(ZIP32) $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE
+	zip $(ZIP32) $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE CHANGES
 	@ls -l $(ZIP32)
 
 publish: $(ZIP32)

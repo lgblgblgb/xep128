@@ -1,0 +1,44 @@
+This file contains somewhat "official" releases, and important steps. For
+proper ChangeLog, you should have a look on the GIT (github) commit log!
+Newer releases at the top ...
+
+2016/Apr/07 --------------------------------------------------------------
+
+	* FILE: functionality, currently buggy and ugly code, only reading!
+	  It's about accessing files directly from host OS FS, much like
+	  FILE: in ep128emu.
+	  Default directory: files inside the preferences directory.
+	  No support for UI based file selection, file name and/or path
+	  must be provided. Example:
+
+	  LOAD"FILE:mandel.bas"
+
+	  No support for setting FILE: as the default, so you must use
+	  FILE: all the time.
+
+	* XEP/MONITOR commands DIR and CD to show/navigate on the host OS
+	  directory tree (what FILE: would use). Output is really ugly,
+	  and unsorted. Only files are shown with size under 64K.
+	  To show what is the current directory FILE: would use, issue
+	  a CD command with :XEP or monitor/console.
+
+	* skiplogo command line switch or configure file option to skip
+	  the Enterprise logo (uses XEP ROM which modifies the CRDISP
+	  EXOS flag).
+
+	* Ugly 4 colour text mode support (still Nick rewrite is needed!)
+	  Bricky Prise seems to work.
+
+	* Joystick support via game controllers and/or joysticks, what
+	  SDL can support (the numeric keypad can be still used though).
+	  Currently, the first controller found is assigned for axis 0/1
+	  and button 0 whatever they are :-/
+	  Bricky Prise seems to be playable with X-Box 360 game controller
+	  now. Even EPDOS can be :-) However, if your controller/joystick
+	  has axis 0/1 at an insane position or not assigned to the same
+	  handle, it can be odd. TODO: configuration of used axes/buttons
+	  for functions.
+
+	* Monitor/Console/XEP disasm/memory dump, I/O port dump commands.
+	  See help command (:XEP help from EP)
+
