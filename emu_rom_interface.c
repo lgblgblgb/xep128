@@ -291,7 +291,10 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 		case xepsym_trap_on_system_init:
 			exos_version = Z80_B;	// store EXOS version number we got ...
 			memcpy(exos_info, memory + ((xepsym_exos_info_struct & 0x3FFF) | (xep_rom_seg << 14)), 8);
-			//EXOS_BYTE(0xBFEF) = 1; // use this, to skip Enterprise logo when it would come :-)
+			if (config_getopt_int("skiplogo")) {
+				DEBUG("XEP: skiplogo option requested logo skip, etting EXOS variable 0xBFEF to 1 on system init ROM call" NL);
+				EXOS_BYTE(0xBFEF) = 1; // use this, to skip Enterprise logo when it would come :-)
+			}
 			break;
 		/* ---- FILEIO RELATED TRAPS ---- */
 		case xepsym_fileio_no_used_call:
