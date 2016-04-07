@@ -186,6 +186,7 @@ static int fileio_open_existing_hostfile ( const char *dirname, const char *file
 			closedir(dir);
 			snprintf(buffer, sizeof buffer, "%s%s%s", dirname, DIRSEP, entry->d_name);
 			DEBUGPRINT("FILEIO: opening file \"%s\"" NL, buffer);
+			mode |= O_BINARY; // make sure, we won't forget this one!!!
 			return open(buffer, mode);
 		}
 	}
@@ -207,8 +208,8 @@ static Uint8 fileio_open_channel ( void )
 	while (fnlen--)
 		*(p++) = read_cpu_byte(++de);
 	*p = '\0';
-	DEBUGPRINT("Filename = \"%s\" Channel = %d" NL, fnbuf, Z80_A);
-	de = fileio_open_existing_hostfile(fileio_cwd, fnbuf, O_RDONLY);
+	DEBUGPRINT("Filename = \"%s\" Channel = %d O_BINARY=%d" NL, fnbuf, Z80_A, O_BINARY);
+	de = fileio_open_existing_hostfile(fileio_cwd, fnbuf, O_RDONLY|O_BINARY);
 	DEBUGPRINT("Result of open: %d (cwd=%s)" NL, de, fileio_cwd);
 	if (de < 0)
 		return 0xCF;	// file not found, but this is an EXDOS error code for real!
@@ -230,6 +231,23 @@ static Uint8 fileio_close_channel ( void )
 
 
 
+static ssize_t safe_read ( int fd, void *buffer, size_t requested )
+{
+	ssize_t done = 0, r;
+	do {
+		r = read(fd, buffer, requested);
+		DEBUGPRINT("FILEIO: safe_read: fd=%d, requested=%d, result=%d" NL, fd, requested, r);
+		if (r > 0) {
+			requested -= r;
+			buffer += r;
+			done += r;
+		}
+	} while (requested && r > 0);
+	return r < 0 ? r : done;
+}
+
+
+
 static Uint8 fileio_read_block ( void )
 {
 	int r;
@@ -238,7 +256,8 @@ static Uint8 fileio_read_block ( void )
 		return 0xFB;	// invalid channel
 	if (!Z80_BC)
 		return 0;	// read to zero amount of data should be handled normally!
-	r = read(fileio_fd, fileio_buffer, Z80_BC);
+	r = safe_read(fileio_fd, fileio_buffer, Z80_BC);
+	DEBUGPRINT("FILEIO: HOST-read(block): fd=%d, requested_bytes=%d result=%d" NL, fileio_fd, Z80_BC, r);
 	if (!r) 		// attempt to read after end of file?
 		return 0xE4;
 	else if (r < 0)		// host file read error!
@@ -259,7 +278,8 @@ static Uint8 fileio_read_character ( void )
 	Uint8 fileio_buffer;
 	if (Z80_A != fileio_channel)
 		return 0xFB;	// invalid channel
-	r = read(fileio_fd, &fileio_buffer, 1);
+	r = safe_read(fileio_fd, &fileio_buffer, 1);
+	DEBUGPRINT("FILEIO: HOST-read(character): fd=%d, result=%d" NL, fileio_fd, r);
 	if (!r) 		// attempt to read after end of file?
 		return 0xE4;
 	else if (r < 0)		// host file read error!
@@ -283,6 +303,7 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 	}
 	switch (pc) {
 		case xepsym_trap_enable_rom_write:
+			DEBUG("XEP: write access to XEP ROM was requested" NL);
 			xep_rom_write_support(1);	// special ROM request to enable ROM write ... Danger Will Robinson!!
 			break;
 		case xepsym_trap_exos_command:

@@ -72,6 +72,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #else
 #define DIRSEP "/"
 #define NL "\n"
+#define O_BINARY 0
 #endif
 
 extern FILE *debug_file;
