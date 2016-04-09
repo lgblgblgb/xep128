@@ -175,24 +175,18 @@ int ep_init_ram ( void )
 	char dbuf[PATH_MAX + 80];
 	if (mem_desc)
 		*mem_desc = '\0';
-	for (a = 0; a < 0x101; a++) {	// yeah, 0x101 is by intent!!
-		//printf("LGB: WTF a = %d" NL, a);
-		if (a < 0x100) {
-			int is_sram = (memory_segment_map[a] == SRAM_SEGMENT);
-			is_ram_seg[a] = (memory_segment_map[a] == RAM_SEGMENT || memory_segment_map[a] == VRAM_SEGMENT || is_sram);
-			if (is_ram_seg[a]) {
-				if (!is_sram)
-					memset(memory + (a << 14), 0xFF, 0x4000);
-				sum++;
-			}
+	for (a = 0; a < 0x100; a++) {
+		int is_sram = (memory_segment_map[a] == SRAM_SEGMENT);
+		is_ram_seg[a] = (memory_segment_map[a] == RAM_SEGMENT || memory_segment_map[a] == VRAM_SEGMENT || is_sram);
+		if (is_ram_seg[a]) {
+			if (!is_sram)
+				memset(memory + (a << 14), 0xFF, 0x4000);
+			sum++;
 		}
-		if (a == 0x100 || type != memory_segment_map[a] || rom_name_tab[a]) {
+		if (a == 0xFF || type != memory_segment_map[a] || rom_name_tab[a]) {
 			if (type) {
-				int s;
-				/*DEBUGPRINT("LGB: dbuf=%p, sizeof dbuf=%d, from=%d, a=%d, type=%p" NL,
-					dbuf, sizeof dbuf,from, a, type
-				);*/
-				snprintf(dbuf, sizeof dbuf, "%02X-%02X %s %s", from, a - 1, type, rom_name_tab[from] ? rom_name_tab[from] : "");
+				int s = (a == 0xFF) ? a : a - 1;
+				snprintf(dbuf, sizeof dbuf, "%02X-%02X %s %s", from, s, type, rom_name_tab[from] ? rom_name_tab[from] : "");
 				DEBUGPRINT("CONFIG: MEM: %s" NL, dbuf);
 				strcat(dbuf, "\n");
 				s = mem_desc ? strlen(mem_desc) : 0;
@@ -202,10 +196,8 @@ int ep_init_ram ( void )
 					*mem_desc = '\0';
 				strcat(mem_desc, dbuf);
 			}
-			if (a < 0x100) {
-				type = memory_segment_map[a];
-				from = a;
-			}
+			type = memory_segment_map[a];
+			from = a;
 		}
 	}
 	snprintf(dbuf, sizeof dbuf, "RAM:  %d segments (%d Kbytes)", sum, sum << 4);
