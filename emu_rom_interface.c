@@ -184,46 +184,46 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 		/* ---- FILEIO RELATED TRAPS ---- */
 		//
 		case xepsym_fileio_no_used_call:
-			Z80_A = fileio_func_not_used_call();
+			fileio_func_not_used_call();
 			break;
 		case xepsym_fileio_open_channel:
-			Z80_A = fileio_func_open_channel();
+			fileio_func_open_or_create_channel(0);
 			break;
 		case xepsym_fileio_create_channel:
-			Z80_A = fileio_func_create_channel();
+			fileio_func_open_or_create_channel(1);
 			break;
 		case xepsym_fileio_close_channel:
-			Z80_A = fileio_func_close_channel();
+			fileio_func_close_channel();
 			break;
 		case xepsym_fileio_destroy_channel:
-			Z80_A = fileio_func_destroy_channel();
+			fileio_func_destroy_channel();
 			break;
 		case xepsym_fileio_read_character:
-			Z80_A = fileio_func_read_character();
+			fileio_func_read_character();
 			break;
 		case xepsym_fileio_read_block:
-			Z80_A = fileio_func_read_block();
+			fileio_func_read_block();
 			break;
 		case xepsym_fileio_write_character:
-			Z80_A = fileio_func_write_character();
+			fileio_func_write_character();
 			break;
 		case xepsym_fileio_write_block:
-			Z80_A = fileio_func_write_block();
+			fileio_func_write_block();
 			break;
 		case xepsym_fileio_channel_read_status:
-			Z80_A = fileio_func_channel_read_status();
+			fileio_func_channel_read_status();
 			break;
 		case xepsym_fileio_set_channel_status:
-			Z80_A = fileio_func_set_channel_status();
+			fileio_func_set_channel_status();
 			break;
 		case xepsym_fileio_special_function:
-			Z80_A = fileio_func_special_function();
+			fileio_func_special_function();
 			break;
 		case xepsym_fileio_init:
-			Z80_A = fileio_func_init();
+			fileio_func_init();
 			break;
 		case xepsym_fileio_buffer_moved:
-			Z80_A = fileio_func_buffer_moved();
+			fileio_func_buffer_moved();
 			break;
 	}
 }

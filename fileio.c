@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <time.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 
 #define EXOS_USER_SEGMAP_P (0X3FFFFC + memory)
@@ -59,11 +60,15 @@ void fileio_init ( const char *dir, const char *subdir )
 }
 
 
-
-static int fileio_open_existing_hostfile ( const char *dirname, const char *filename, int mode )
+/* Opens a file on host-OS/FS side.
+   Note: EXOS is case-insensitve on file names.
+   Host OS FS "under" Xep128 may (Win32) or may not (UNIX) be case sensitve, thus we walk over the directory and tries to find matching file name.
+*/
+static int open_host_file ( const char *dirname, const char *filename, int create )
 {
 	DIR *dir;
 	struct dirent *entry;
+	int mode = (create ? O_TRUNC | O_CREAT | O_RDWR : O_RDONLY) | O_BINARY;
 	dir = opendir(dirname);
 	if (!dir)
 		return -1;
@@ -73,143 +78,173 @@ static int fileio_open_existing_hostfile ( const char *dirname, const char *file
 			closedir(dir);
 			snprintf(buffer, sizeof buffer, "%s%s%s", dirname, DIRSEP, entry->d_name);
 			DEBUGPRINT("FILEIO: opening file \"%s\"" NL, buffer);
-			return open(buffer, mode | O_BINARY);
+			return open(buffer, mode, 0666);
 		}
 	}
 	closedir(dir);
+	if (create) {
+		char buffer[PATH_MAX + 1];
+		snprintf(buffer, sizeof buffer, "%s%s%s", dirname, DIRSEP, filename);
+		return open(buffer, mode, 0666);
+	}
 	return -1;
 }
 
 
-
-Uint8 fileio_func_open_channel ( void )
+static void get_file_name ( char *p )
 {
-	int channel = Z80_A;
 	int de = Z80_DE;
-	int fnlen = read_cpu_byte(de);
-	char fnbuf[128], *p = fnbuf;
-	if (exos_channels[channel] != -1)
-		return 0xF9;	// channel number is already used! (maybe it's useless to be tested, as EXOS wouldn't allow that anyway?)
-	while (fnlen--)
-		*(p++) = read_cpu_byte(++de);
+	int len = read_cpu_byte(de);
+	while (len--)
+		*(p++) = tolower(read_cpu_byte(++de));
 	*p = '\0';
-	DEBUGPRINT("Filename = \"%s\" Channel = %d O_BINARY=%d" NL, fnbuf, Z80_A, O_BINARY);
-	de = fileio_open_existing_hostfile(fileio_cwd, fnbuf, O_RDONLY);
-	DEBUGPRINT("Result of open: %d (cwd=%s)" NL, de, fileio_cwd);
-	if (de < 0)
-		return 0xCF;	// file not found, but this is an EXDOS error code for real!
-	exos_channels[channel] = de;
-	return 0;
 }
 
 
-Uint8 fileio_func_close_channel ( void )
-{
-	int channel = Z80_A;
-	int channel_fd = exos_channels[channel];
-	if (channel_fd == -1)
-		return 0xFB;	// invalid channel
-	close(channel_fd);
-	exos_channels[channel] = -1;
-	return 0;		// OK, closed.
-}
-
-
-
-static ssize_t safe_read ( int fd, void *buffer, size_t requested )
-{
-	ssize_t done = 0, r;
-	do {
-		r = read(fd, buffer, requested);
-		DEBUGPRINT("FILEIO: safe_read: fd=%d, requested=%d, result=%d" NL, fd, requested, r);
-		if (r > 0) {
-			requested -= r;
-			buffer += r;
-			done += r;
-		}
-	} while (requested && r > 0);
-	return r < 0 ? r : done;
-}
-
-
-
-Uint8 fileio_func_read_block ( void )
-{
-	int r, channel_fd = exos_channels[Z80_A];
-	Uint8 fileio_buffer[0xFFFF], *p = fileio_buffer;
-	if (channel_fd == -1)
-		return 0xFB;	// invalid channel
-	if (!Z80_BC)
-		return 0;	// read to zero amount of data should be handled normally!
-	r = safe_read(channel_fd, fileio_buffer, Z80_BC);
-	DEBUGPRINT("FILEIO: HOST-read(block): fd=%d, requested_bytes=%d result=%d" NL, channel_fd, Z80_BC, r);
-	if (!r) 		// attempt to read after end of file?
-		return 0xE4;
-	else if (r < 0)		// host file read error!
-		return 0xD0;	// somewhat funny error code for here: casette CRC error :)
-	while (r--) {
-		write_cpu_byte_by_segmap(Z80_DE++, EXOS_USER_SEGMAP_P, *(p++));
-		Z80_BC--;
-		if (!Z80_DE && r)
-			return 0x9B;	// OV64K, this is an EXDOS error for real ...
-	}
-	return 0;
-}
-
-
-Uint8 fileio_func_read_character ( void )
+void fileio_func_open_or_create_channel ( int create )
 {
 	int r;
-	Uint8 fileio_buffer;
-	int channel_fd = exos_channels[Z80_A];
-	if (channel_fd == -1)
-		return 0xFB;	// invalid channel
-	r = safe_read(channel_fd, &fileio_buffer, 1);
-	DEBUGPRINT("FILEIO: HOST-read(character): fd=%d, result=%d" NL, channel_fd, r);
-	if (!r) 		// attempt to read after end of file?
-		return 0xE4;
-	else if (r < 0)		// host file read error!
-		return 0xD0;	// somewhat funny error code for here: casette CRC error :)
-	Z80_B = fileio_buffer;
-	return 0;
+	char fnbuf[256];
+	if (exos_channels[Z80_A] >= 0) {
+		Z80_A = 0xF9;	// channel number is already used! (maybe it's useless to be tested, as EXOS wouldn't allow that anyway?)
+		return;
+	}
+	get_file_name(fnbuf);
+	r = open_host_file(fileio_cwd, fnbuf, create);
+	DEBUGPRINT("FILEIO: %s channel #%d result = %d filename = \"%s\" (in \"%s\")" NL, create ? "create" : "open", Z80_A, r, fnbuf, fileio_cwd);
+	if (r < 0)
+		Z80_A = 0xCF;	// file not found, but this is an EXDOS error code for real! also TODO for creation it's odd error ...
+	else {
+		exos_channels[Z80_A] = r;
+		Z80_A = 0;
+	}
 }
 
 
-Uint8 fileio_func_not_used_call ( void )
+void fileio_func_close_channel ( void )
 {
-	return 0xE7;
+	if (exos_channels[Z80_A] < 0)
+		Z80_A = 0xFB;	// invalid channel
+	else {
+		close(exos_channels[Z80_A]);
+		exos_channels[Z80_A] = -1;
+		Z80_A = 0;
+	}
 }
 
 
-Uint8 fileio_func_write_block ( void )
+void fileio_func_read_block ( void )
 {
-        return 0xE7;
+	int channel_fd = exos_channels[Z80_A], rb;
+	Uint8 buffer[0xFFFF], *p;
+	if (channel_fd < 0) {
+		Z80_A = 0xFB;	// invalid channel
+		return;
+	}
+	Z80_A = 0;
+	rb = 0;
+	while (Z80_BC) {
+		int r = read(channel_fd, buffer + rb, Z80_BC);
+		if (r > 0) {
+			rb += r;
+			Z80_BC -= r;
+		} else if (!r) {
+			Z80_A = 0xE4;	// attempt to read after end of file
+			break;
+		} else {
+			Z80_A = 0xD0;	// somewhat funny error code for here: casette CRC error :)
+			break;
+		}
+	}
+	p = buffer;
+	while (rb--)
+		write_cpu_byte_by_segmap(Z80_DE++, EXOS_USER_SEGMAP_P, *(p++));
 }
 
 
-
-Uint8 fileio_func_channel_read_status ( void )
+void fileio_func_read_character ( void )
 {
-        return 0xE7;
+	if (exos_channels[Z80_A] < 0)
+		Z80_A = 0xFB;	// invalid channel
+	else {
+		int r = read(exos_channels[Z80_A], &Z80_B, 1);
+		if (r == 1)
+			Z80_A = 0;
+		else if (!r)
+			Z80_A = 0xE4;	// attempt to read after end of file
+		else
+			Z80_A = 0xD0;	// somewhat funny error code for here: casette CRC error :)
+	}
 }
 
 
 
-Uint8 fileio_func_set_channel_status ( void )
+void fileio_func_write_block ( void )
 {
-        return 0xE7;
+	int channel_fd = exos_channels[Z80_A], wb, de;
+	Uint8 buffer[0xFFFF], *p;
+	if (channel_fd < 0) {
+		Z80_A = 0xFB;	// invalid channel
+		return;
+	}
+	wb = Z80_BC;
+	p = buffer;
+	de = Z80_DE;
+	Z80_A = 0;
+	while (wb--)
+		*(p++) = read_cpu_byte_by_segmap(de++, EXOS_USER_SEGMAP_P);
+	p = buffer;
+	while (Z80_BC) {
+		int r = write(channel_fd, p, Z80_BC);
+		if (r > 0) {
+			Z80_BC -= r;
+			Z80_DE += r;
+		} else if (!r) {
+			Z80_A = 0xE4;	// TODO: no write, "read after end of file" answer is odd ... what should be?!
+			break;
+		} else {
+			Z80_A = 0xD0;	// somewhat funny error code for here: casette CRC error :)
+		}
+	}
 }
 
 
-
-Uint8 fileio_func_special_function ( void )
+void fileio_func_write_character ( void )
 {
-        return 0xE7;
+	if (exos_channels[Z80_A] < 0)
+		Z80_A = 0xFB;	// invalid channel
+	else {
+		int r = write(exos_channels[Z80_A], &Z80_B, 1);
+		if (r == 1)
+			Z80_A = 0;
+		else
+			Z80_A = 0xD0;	// somewhat funny error code for here: casette CRC error :)
+	}
+}
+
+
+void fileio_func_channel_read_status ( void )
+{
+	Z80_A = 0xE7;
 }
 
 
 
-Uint8 fileio_func_init ( void )
+void fileio_func_set_channel_status ( void )
+{
+	Z80_A = 0xE7;
+}
+
+
+
+void fileio_func_special_function ( void )
+{
+	Z80_A = 0xE7;
+}
+
+
+
+void fileio_func_init ( void )
 {
 	int a;
 	for (a = 0; a < 0x100; a++)
@@ -217,33 +252,24 @@ Uint8 fileio_func_init ( void )
 			close(exos_channels[a]);
 			exos_channels[a] = -1;
 		}
-        return 0;
+}
+
+
+void fileio_func_buffer_moved ( void )
+{
+	Z80_A = 0xE7;
 }
 
 
 
-Uint8 fileio_func_buffer_moved ( void )
+void fileio_func_destroy_channel ( void )
 {
-        return 0xE7;
+	Z80_A = 0xE7;
 }
 
 
 
-Uint8 fileio_func_destroy_channel ( void )
+void fileio_func_not_used_call ( void )
 {
-        return 0xE7;
-}
-
-
-
-Uint8 fileio_func_create_channel ( void )
-{
-        return 0xE7;
-}
-
-
-
-Uint8 fileio_func_write_character ( void )
-{
-        return 0xE7;
+	Z80_A = 0xE7;
 }
