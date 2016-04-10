@@ -17,8 +17,8 @@ EXDOS/WD:
 
 Dave:
 
-	* Dave audio generation
-	* Dave audio D/A
+	* [PENDING] Dave audio generation
+	* [DONE] Dave audio D/A
 
 APU:
 
@@ -50,25 +50,25 @@ Memory:
 Emulator:
 
 	* at least load Ep128emu's snapshot format
-	* Command/log window maybe? With another SDL window, thus platform independent
+	* [DONE] Command/log window maybe? [note: console window on Win32, stdin/out otherwise]
 	* ... OR native dialogs on specific host OS, at least file browser when needed (?)
 	* network installer for ROM images, maybe SD card image as well?
 	* [DONE] system directory on host OS, to read ROMs, config, whatever
 	* [DONE] ability to configure emulator, save/load configuration?
-	* ep128emu "fileio" like stuff to load/save single files
-	* Xep ROM clean-up, almost useless currently (maybe it should implement the fileio stuff)
+	* [DONE] ep128emu "fileio" like stuff to load/save single files
+	* [DONE] Xep ROM clean-up, almost useless currently (maybe it should implement the fileio stuff)
 	* [DONE, but only the positional based] configurable keyboard? positional/symbolic mapping, switchable?
 	* [DONE] maybe: OSD, if something import happens (mouse grab starts, full screen entered, whatever)
 	* video and/or audio recording mode maybe?
 	* scripting in command window?
-	* disassembler etc? (in command window?)
+	* [DONE] disassembler etc? (in command window?)
 	* more precise timing: on Windows/MinGW there are issues (time resolution) with the "emulated" gettimeofday() call
 
 Host OS / target:
 
 	* Android build?
 	* debian package building easily?
-	* port to Raspberry Pi: ARM/Linux and maybe to bare iron (without OS!) as well (true EP feeling?)
+	* [DONE, no bare-iron] port to Raspberry Pi: ARM/Linux and maybe to bare iron (without OS!) as well (true EP feeling?)
 	* I have no idea about MacOSX. And cross compiling ...
 
 Network emulation:
@@ -83,9 +83,9 @@ ZX Spectrum emulator card:
 Other hardware emulation:
 
 	* TAPE: [WONTFIX] I don't want to use tape ever :)
-	* External DAC emulation
-	* SIO emulation for "Super EP" [?]
-	* Joystick emulation
+	* [DONE] External DAC emulation
+	* SIO emulation for "Super EP" [?] OK, but what would be connected to the emulated SIO? :)
+	* [DONE] Joystick emulation
 	* Wild idea: network joy/kbd emulation? :)
 	* Wild idea: MSX/MSX2 video chip emulation as an add-on
 	* ask others? :)
@@ -98,5 +98,5 @@ SDL:
 	* [DONE] window resizing ability for custom "zoom" factor
 	* check possible hardware acceleration, better performance, etc (?)
 	* [PENDING] like the previous: check if Render/texture is better than surface?
-	* joystick input with SDL functions?
+	* [DONE] joystick input with SDL functions?
 
