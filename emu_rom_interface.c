@@ -31,9 +31,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <unistd.h>
 #include <time.h>
 
-
-#define COBUF ((char*)(memory + xep_rom_addr + xepsym_cobuf - 0xC000))
-#define SET_XEPSYM_BYTE(sym, value) memory[xep_rom_addr + (sym) - 0xC000] = (value)
+#define XEPSYM_ADDR(sym) (xep_rom_addr + (sym) - 0xC000)
+#define XEPSYM_P(sym) (memory + XEPSYM_ADDR(sym))
+#define COBUF ((char*)XEPSYM_P(xepsym_cobuf))
+#define SET_XEPSYM_BYTE(sym, value) *XEPSYM_P(sym) = (value)
 #define SET_XEPSYM_WORD(sym, value) do {	\
 	SET_XEPSYM_BYTE(sym, (value) & 0xFF);	\
 	SET_XEPSYM_BYTE((sym) + 1, (value) >> 8);	\
@@ -57,6 +58,17 @@ void exos_get_status_line ( char *buffer )
 	while (a--)
 		*(buffer++) = *(s++) & 0x7F;
 	*buffer = '\0';
+}
+
+
+void xep_set_error ( const char *msg )
+{
+	int l = strlen(msg);
+	if (l > 63)
+		l = 63;
+	SET_XEPSYM_BYTE(xepsym_error_message_buffer, l);
+	memcpy(XEPSYM_P(xepsym_error_message_buffer + 1), msg, l);
+	DEBUGPRINT("XEP: error msg set len=%d len_stored=%d \"%s\"" NL, l, *XEPSYM_P(xepsym_error_message_buffer), msg);
 }
 
 
@@ -135,8 +147,16 @@ static void xep_exos_command_trap ( void )
 			xep_set_time_consts(NULL);
 			SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_system_init);
 			break;
-		case 1:	// Cold reset
+		case 1:	// Cold reset (app program can take control here) after the copyright msg ...
 			SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_cold_reset);
+			break;
+		case 5:	// explain error code ...
+			DEBUGPRINT("XEP: explain error code of %02Xh our=%d" NL, Z80_B, Z80_B == XEP_ERROR_CODE);
+			if (Z80_B == XEP_ERROR_CODE) {
+				Z80_B = xep_rom_seg;
+				Z80_DE = xepsym_error_message_buffer;
+				Z80_C = 0; // signal that we recognized the error code
+			}
 			break;
 	}
 	size = strlen(COBUF);
@@ -183,6 +203,9 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 		//
 		/* ---- FILEIO RELATED TRAPS ---- */
 		//
+		case xepsym_fileio_open_channel_remember:
+			fileio_func_open_channel_remember();
+			break;
 		case xepsym_fileio_no_used_call:
 			fileio_func_not_used_call();
 			break;

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "fileio.h"
 #include "z80.h"
 #include "cpu.h"
+#include "emu_rom_interface.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -31,9 +32,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
 #define EXOS_USER_SEGMAP_P (0X3FFFFC + memory)
+#define HOST_OS_STR "Host OS "
 
 char fileio_cwd[PATH_MAX + 1];
 static int exos_channels[0x100];
+static int channel = 0;
 
 
 
@@ -60,9 +63,18 @@ void fileio_init ( const char *dir, const char *subdir )
 }
 
 
+static void fileio_host_errstr ( void )
+{
+	char buffer[65];
+	snprintf(buffer, sizeof buffer, HOST_OS_STR "%s", ERRSTR());
+	xep_set_error(buffer);
+}
+
+
 /* Opens a file on host-OS/FS side.
    Note: EXOS is case-insensitve on file names.
-   Host OS FS "under" Xep128 may (Win32) or may not (UNIX) be case sensitve, thus we walk over the directory and tries to find matching file name.
+   Host OS FS "under" Xep128 may (Win32) or may not (UNIX) be case sensitve, thus we walk through the directory with tring to find matching file name.
+   Argument "create" must be non-zero for create channel call, otherwise it should be zero.
 */
 static int open_host_file ( const char *dirname, const char *filename, int create )
 {
@@ -70,23 +82,39 @@ static int open_host_file ( const char *dirname, const char *filename, int creat
 	struct dirent *entry;
 	int mode = (create ? O_TRUNC | O_CREAT | O_RDWR : O_RDONLY) | O_BINARY;
 	dir = opendir(dirname);
-	if (!dir)
+	if (!dir) {
+		//xep_set_error("Cannot open host dir");
 		return -1;
+	}
 	while ((entry = readdir(dir))) {
 		if (!strcasecmp(entry->d_name, filename)) {
+			int ret;
 			char buffer[PATH_MAX + 1];
 			closedir(dir);
 			snprintf(buffer, sizeof buffer, "%s%s%s", dirname, DIRSEP, entry->d_name);
 			DEBUGPRINT("FILEIO: opening file \"%s\"" NL, buffer);
-			return open(buffer, mode, 0666);
+			ret = open(buffer, mode, 0666);
+			if (ret < 0) {
+				fileio_host_errstr();
+				DEBUGPRINT("FILEIO: open in directory walk failed: %s" NL, ERRSTR());
+			}
+			return ret;
 		}
 	}
 	closedir(dir);
 	if (create) {
+		int ret;
 		char buffer[PATH_MAX + 1];
 		snprintf(buffer, sizeof buffer, "%s%s%s", dirname, DIRSEP, filename);
-		return open(buffer, mode, 0666);
+		ret = open(buffer, mode, 0666);
+		if (ret < 0) {
+			fileio_host_errstr();
+			DEBUGPRINT("FILEIO: open in create case for new file failed: %s" NL, ERRSTR());
+		}
+		return ret;
 	}
+	xep_set_error(HOST_OS_STR "File not found");
+	DEBUGPRINT("FILE: open at last restort failed" NL);
 	return -1;
 }
 
@@ -101,21 +129,36 @@ static void get_file_name ( char *p )
 }
 
 
+void fileio_func_open_channel_remember ( void )
+{
+	channel = Z80_A;
+}
+
+
+// channel number is set up with fileio_func_open_channel_remember() *before* this call! from XEP ROM separated trap!
 void fileio_func_open_or_create_channel ( int create )
 {
 	int r;
 	char fnbuf[256];
-	if (exos_channels[Z80_A] >= 0) {
+	if (exos_channels[channel] >= 0) {
+		DEBUGPRINT("FILEIO: open/create channel, already used channel for %d, fd is %d" NL, channel, exos_channels[channel]);
 		Z80_A = 0xF9;	// channel number is already used! (maybe it's useless to be tested, as EXOS wouldn't allow that anyway?)
 		return;
 	}
 	get_file_name(fnbuf);
+	if (!*fnbuf) {
+		xep_set_error(HOST_OS_STR "Empty file name");
+		Z80_A = XEP_ERROR_CODE;
+		return;
+	}
 	r = open_host_file(fileio_cwd, fnbuf, create);
-	DEBUGPRINT("FILEIO: %s channel #%d result = %d filename = \"%s\" (in \"%s\")" NL, create ? "create" : "open", Z80_A, r, fnbuf, fileio_cwd);
-	if (r < 0)
-		Z80_A = 0xCF;	// file not found, but this is an EXDOS error code for real! also TODO for creation it's odd error ...
-	else {
-		exos_channels[Z80_A] = r;
+	//xep_set_error(ERRSTR());
+	DEBUGPRINT("FILEIO: %s channel #%d result = %d filename = \"%s\" (in \"%s\")" NL, create ? "create" : "open", channel, r, fnbuf, fileio_cwd);
+	if (r < 0) {
+		// open_host_file() already issued the xep_set_error() call to set a message up ...
+		Z80_A = XEP_ERROR_CODE;
+	} else {
+		exos_channels[channel] = r;
 		Z80_A = 0;
 	}
 }
@@ -123,9 +166,10 @@ void fileio_func_open_or_create_channel ( int create )
 
 void fileio_func_close_channel ( void )
 {
-	if (exos_channels[Z80_A] < 0)
+	if (exos_channels[Z80_A] < 0) {
+		DEBUGPRINT("FILEIO: close, invalid channel for %d, fd is %d" NL, Z80_A, exos_channels[Z80_A]);
 		Z80_A = 0xFB;	// invalid channel
-	else {
+	} else {
 		close(exos_channels[Z80_A]);
 		exos_channels[Z80_A] = -1;
 		Z80_A = 0;
@@ -138,6 +182,7 @@ void fileio_func_read_block ( void )
 	int channel_fd = exos_channels[Z80_A], rb;
 	Uint8 buffer[0xFFFF], *p;
 	if (channel_fd < 0) {
+		DEBUGPRINT("FILEIO: read block, invalid channel for %d, fd is %d" NL, Z80_A, exos_channels[Z80_A]);
 		Z80_A = 0xFB;	// invalid channel
 		return;
 	}
@@ -152,7 +197,8 @@ void fileio_func_read_block ( void )
 			Z80_A = 0xE4;	// attempt to read after end of file
 			break;
 		} else {
-			Z80_A = 0xD0;	// somewhat funny error code for here: casette CRC error :)
+			fileio_host_errstr();
+			Z80_A = XEP_ERROR_CODE;
 			break;
 		}
 	}
@@ -164,16 +210,19 @@ void fileio_func_read_block ( void )
 
 void fileio_func_read_character ( void )
 {
-	if (exos_channels[Z80_A] < 0)
+	if (exos_channels[Z80_A] < 0) {
+		DEBUGPRINT("FILEIO: read character, invalid channel for %d, fd is %d" NL, Z80_A, exos_channels[Z80_A]);
 		Z80_A = 0xFB;	// invalid channel
-	else {
+	} else {
 		int r = read(exos_channels[Z80_A], &Z80_B, 1);
 		if (r == 1)
 			Z80_A = 0;
 		else if (!r)
 			Z80_A = 0xE4;	// attempt to read after end of file
-		else
-			Z80_A = 0xD0;	// somewhat funny error code for here: casette CRC error :)
+		else {
+			fileio_host_errstr();
+			Z80_A = XEP_ERROR_CODE;
+		}
 	}
 }
 
@@ -200,10 +249,13 @@ void fileio_func_write_block ( void )
 			Z80_BC -= r;
 			Z80_DE += r;
 		} else if (!r) {
-			Z80_A = 0xE4;	// TODO: no write, "read after end of file" answer is odd ... what should be?!
+			xep_set_error(HOST_OS_STR "Cannot write block");
+			Z80_A = XEP_ERROR_CODE;
 			break;
 		} else {
-			Z80_A = 0xD0;	// somewhat funny error code for here: casette CRC error :)
+			fileio_host_errstr();
+			Z80_A = XEP_ERROR_CODE;
+			break;
 		}
 	}
 }
@@ -217,8 +269,13 @@ void fileio_func_write_character ( void )
 		int r = write(exos_channels[Z80_A], &Z80_B, 1);
 		if (r == 1)
 			Z80_A = 0;
-		else
-			Z80_A = 0xD0;	// somewhat funny error code for here: casette CRC error :)
+		else if (!r) {
+			xep_set_error(HOST_OS_STR "Cannot write character");
+			Z80_A = XEP_ERROR_CODE;
+		} else {
+			fileio_host_errstr();
+			Z80_A = XEP_ERROR_CODE;
+		}
 	}
 }
 

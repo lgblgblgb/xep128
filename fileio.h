@@ -24,18 +24,19 @@ extern char  fileio_cwd[PATH_MAX + 1];
 extern void fileio_init ( const char *dir, const char *subdir );
 
 /* Internal functions between emu ROM interface and fileio: */
-extern void fileio_func_not_used_call();
+extern void fileio_func_not_used_call( void );
 extern void fileio_func_open_or_create_channel ( int create );
-extern void fileio_func_close_channel();
-extern void fileio_func_destroy_channel();
-extern void fileio_func_read_character();
-extern void fileio_func_read_block();
-extern void fileio_func_write_character();
-extern void fileio_func_write_block();
-extern void fileio_func_channel_read_status();
-extern void fileio_func_set_channel_status();
-extern void fileio_func_special_function();
-extern void fileio_func_init();
-extern void fileio_func_buffer_moved();
+extern void fileio_func_open_channel_remember( void );
+extern void fileio_func_close_channel( void );
+extern void fileio_func_destroy_channel(void );
+extern void fileio_func_read_character(void );
+extern void fileio_func_read_block(void );
+extern void fileio_func_write_character( void );
+extern void fileio_func_write_block( void );
+extern void fileio_func_channel_read_status( void );
+extern void fileio_func_set_channel_status( void );
+extern void fileio_func_special_function( void );
+extern void fileio_func_init( void );
+extern void fileio_func_buffer_moved( void );
 
 #endif

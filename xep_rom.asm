@@ -102,24 +102,27 @@ fileio_not_used_call:
 	TRAP	xepsym_fileio_no_used_call
 	RET
 
-fileio_open_channel:
-	TRAP	xepsym_fileio_open_channel
-	OR	A
-	RET	NZ
 allocate_channel_buffer:
+	TRAP	xepsym_fileio_open_channel_remember
 	PUSH	DE
 	PUSH	IX
-	LD	DE, 1	; really, I have no idea why I need to allocate 1 byte, when I don't need it
-	EXOS	27	; ... but it seems EXOS would expect this call on open/create or strange error occures!
+	LD	DE, 1
+	EXOS	27
 	POP	IX
 	POP	DE
-	RET		; A was not saved/restored, however EXOS 27 result code should be zero on OK anyway
+	RET
+
+fileio_open_channel:
+	CALL	allocate_channel_buffer
+	RET	NZ
+	TRAP	xepsym_fileio_open_channel
+	RET
 
 fileio_create_channel:
-	TRAP	xepsym_fileio_create_channel
-	OR	A
+	CALL	allocate_channel_buffer
 	RET	NZ
-	JR	allocate_channel_buffer
+	TRAP	xepsym_fileio_create_channel
+	RET
 
 fileio_close_channel:
 	TRAP	xepsym_fileio_close_channel
@@ -253,5 +256,12 @@ xepsym_cold_reset:
 
 
 ; **** !! YOU MUST NOT PUT ANYTHING EXTRA AFTER THIS LINE, EMULATOR OVERWRITES THE AREA !! ****
+xepsym_error_message_buffer:
+	DB	.def_msg_size
+.def_msg:
+	DB	"Unknown XEP ROM error"
+.def_msg_size = $ - .def_msg
+	ORG	xepsym_error_message_buffer + 64
+xepsym_error_message_buffer_size = $ - xepsym_error_message_buffer
 xepsym_cobuf:
 xepsym_cobuf_size = 0xFFF0 - xepsym_cobuf
