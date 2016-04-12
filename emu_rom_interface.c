@@ -68,7 +68,7 @@ void xep_set_error ( const char *msg )
 		l = 63;
 	SET_XEPSYM_BYTE(xepsym_error_message_buffer, l);
 	memcpy(XEPSYM_P(xepsym_error_message_buffer + 1), msg, l);
-	DEBUGPRINT("XEP: error msg set len=%d len_stored=%d \"%s\"" NL, l, *XEPSYM_P(xepsym_error_message_buffer), msg);
+	DEBUG("XEP: error msg set len=%d len_stored=%d \"%s\"" NL, l, *XEPSYM_P(xepsym_error_message_buffer), msg);
 }
 
 
@@ -151,7 +151,7 @@ static void xep_exos_command_trap ( void )
 			SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_cold_reset);
 			break;
 		case 5:	// explain error code ...
-			DEBUGPRINT("XEP: explain error code of %02Xh our=%d" NL, Z80_B, Z80_B == XEP_ERROR_CODE);
+			DEBUG("XEP: explain error code of %02Xh our=%d" NL, Z80_B, Z80_B == XEP_ERROR_CODE);
 			if (Z80_B == XEP_ERROR_CODE) {
 				Z80_B = xep_rom_seg;
 				Z80_DE = xepsym_error_message_buffer;
