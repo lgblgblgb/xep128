@@ -104,7 +104,7 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 	};
 	int a = 0;
 	FILE *f;
-	// try to detect absolue path, Win32 related part tries to detect the possibility of X:\... syntax
+	// try to detect absolute path, Win32 related part tries to detect the possibility of X:\... syntax
 	if (
 		name[0] == DIRSEP[0]
 #ifdef _WIN32
@@ -113,7 +113,7 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 	) {
 		prefixes[0] = "";
 		prefixes[1] = NULL;
-		policy = "absolue";
+		policy = "absolute";
 	} else if (name[0] == '@') {		// @ means user preference directory related path names
 		prefixes[0] = app_pref_path;
 		prefixes[1] = NULL;
