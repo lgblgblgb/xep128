@@ -95,11 +95,11 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 	const char *policy = "guessing";
 	const char *prefixes[] = {
 		current_directory,	// try in the current directory first
+		app_pref_path,		// try at pref path (user writable area)
+		app_base_path,		// try at base path (where executable is)
 #ifndef _WIN32
 		DATADIR "/",		// try in the DATADIR, it makes sense on UNIX like sys
 #endif
-		app_base_path,		// try at base path (where executable is)
-		app_pref_path,		// try at pref path (user writable area)
 		NULL
 	};
 	int a = 0;
