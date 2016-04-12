@@ -156,16 +156,13 @@ void sdext_init ( void )
 	SD_DEBUG("SDEXT: init: cool, SD-card cartridge ROM code seems to be found in loaded ROM set, enabling SD card hardware emulation ..." NL);
 	sdf = open_emu_file(config_getopt_str("sdimg"), "rb", sdimg_path); // open in read-only mode, to get the path
 	if (sdf) {
-		char unused[PATH_MAX + 1];
-		FILE *sdf_rw = open_emu_file(sdimg_path, "r+b", unused); // try to open in read-write mode with the given path
-		if (sdf_rw && !strcmp(sdimg_path, unused)) {
-			fclose(sdf);
-			sdf = sdf_rw;
-			DEBUGPRINT("SDEXT: SD image file is open in read/write mode, good." NL);
+		fclose(sdf);
+		sdf = fopen(sdimg_path, "r+b");
+		if (sdf) {
+			DEBUGPRINT("SDEXT: SD image file is re-open in read/write mode, good (fd=%d)." NL, fileno(sdf));
 		} else {
-			DEBUGPRINT("SDEXT: SD image cannot be open in read-write mode, using read-only access" NL);
-			if (sdf_rw)
-				fclose(sdf_rw);
+			sdf = fopen(sdimg_path, "rb");
+			DEBUGPRINT("SDEXT: SD image cannot be re-open in read-write mode, using read-only access (fd=%d)." NL, fileno(sdf));
 		}
 	}
 	if (!sdf) {
