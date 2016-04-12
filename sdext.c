@@ -36,6 +36,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 //#define DEBUG_SDEXT
 #define CONFIG_SDEXT_FLASH
 
+#ifdef DEBUG_SDEXT
+#	define SD_DEBUG	DEBUG
+#else
+#	define SD_DEBUG(...)
+#endif
+
+
 static const char *sdext_rom_signature = "SDEXT";
 
 int sdext_cart_enabler = SDEXT_CART_ENABLER_OFF;
@@ -62,6 +69,8 @@ static int flash_command = 0;
 static Uint8 cmd[6], cmd_index, _read_b, _write_b, _write_specified;
 static const Uint8 *ans_p;
 static int ans_index, ans_size;
+static int writing;
+static int delay_answer;
 static void (*ans_callback)(void);
 
 static FILE *sdf;
@@ -141,18 +150,31 @@ void sdext_init ( void )
 		WARNING_WINDOW("No SD-card cartridge ROM code found in loaded ROM set. SD card hardware emulation has been disabled!");
 		*sdimg_path = 0;
 		sdf = NULL;
-		DEBUG("SDEXT: init: REFUSE: no SD-card cartridge ROM code found in loaded ROM set." NL);
+		SD_DEBUG("SDEXT: init: REFUSE: no SD-card cartridge ROM code found in loaded ROM set." NL);
 		return;
 	}
-	DEBUG("SDEXT: init: cool, SD-card cartridge ROM code seems to be found in loaded ROM set, enabling SD card hardware emulation ..." NL);
-	sdf = open_emu_file(config_getopt_str("sdimg"), "rb", sdimg_path);
-	if (sdf == NULL) {
+	SD_DEBUG("SDEXT: init: cool, SD-card cartridge ROM code seems to be found in loaded ROM set, enabling SD card hardware emulation ..." NL);
+	sdf = open_emu_file(config_getopt_str("sdimg"), "rb", sdimg_path); // open in read-only mode, to get the path
+	if (sdf) {
+		char unused[PATH_MAX + 1];
+		FILE *sdf_rw = open_emu_file(sdimg_path, "r+b", unused); // try to open in read-write mode with the given path
+		if (sdf_rw && !strcmp(sdimg_path, unused)) {
+			fclose(sdf);
+			sdf = sdf_rw;
+			DEBUGPRINT("SDEXT: SD image file is open in read/write mode, good." NL);
+		} else {
+			DEBUGPRINT("SDEXT: SD image cannot be open in read-write mode, using read-only access" NL);
+			if (sdf_rw)
+				fclose(sdf_rw);
+		}
+	}
+	if (!sdf) {
 		WARNING_WINDOW("SD card image file \"%s\" cannot be open: %s. You can use Xep128 but SD card access won't work!", sdimg_path, ERRSTR());
 		*sdimg_path = 0;
 	} else {
 		sdfd = fileno(sdf);
 		sd_card_size = lseek(sdfd, 0, SEEK_END);
-		DEBUG("SDEXT: SD card size is: %ld bytes" NL, sd_card_size);
+		SD_DEBUG("SDEXT: SD card size is: %ld bytes" NL, sd_card_size);
 		if (sd_card_size > MAX_CARD_SIZE || sd_card_size < MIN_CARD_SIZE) {
 			fclose(sdf);
 			sdf = NULL;
@@ -174,13 +196,15 @@ void sdext_init ( void )
 	is_hs_read = 0;
 	cmd_index = 0;
 	ans_size = 0;
+	delay_answer = 0;
 	ans_index = 0;
 	ans_callback = NULL;
 	status = 0;
 	_read_b = 0;
 	_write_b = 0xFF;
 	_spi_last_w = 0xFF;
-	DEBUG("SDEXT: init end" NL);
+	writing = -2;
+	SD_DEBUG("SDEXT: init end" NL);
 }
 
 
@@ -198,9 +222,7 @@ static void _block_read ( void )
 	_buffer[1] = 0xFE; // data token
 	//ret = fread(_buffer + 2, 1, 512, sdf);
 	ret = read(sdfd, _buffer + 2, 512);
-#ifdef DEBUG_SDEXT
-	DEBUG("SDEXT: REGIO: fread retval = %d" NL, ret);
-#endif
+	SD_DEBUG("SDEXT: REGIO: fread retval = %d" NL, ret);
 	_buffer[512 + 2] = 0; // CRC
 	_buffer[512 + 3] = 0; // CRC
 	ans_p = _buffer;
@@ -222,11 +244,66 @@ static void _spi_shifting_with_sd_card ()
 		_read_b = 0xFF;
 		return;
 	}
+	/* begin of write support */
+	if (delay_answer) {
+		delay_answer = 0;
+		return;
+	}
+	if (writing > -2) {
+		_read_b = 0xFF;
+		SD_DEBUG("SDEXT: write byte #%d as %02Xh for CMD %d" NL, writing, _write_b, cmd[0]);
+		if (writing == -1) {
+			if (_write_b == 0xFD) {	// stop token
+				SD_DEBUG("SDEXT: Stop token got" NL);
+				_read_b = 0;	// wait a tiny time ...
+				writing = -2;	// ... but otherwise, end of write session
+				return;
+			}
+			if (_write_b != 0xFE && _write_b != 0xFC) {
+				SD_DEBUG("SDEXT: Waiting for token ..." NL);
+				return;
+			}
+			SD_DEBUG("SDEXT: token found %02Xh" NL, _write_b);
+			writing = 0;
+			return;
+		}
+		_buffer[writing++] = _write_b;	// store written byte
+		if (writing == 512 + 2) {	// if one block (+ 2byte CRC) is written by host ...
+			off_t ret, _offset = (cmd[1] << 24) | (cmd[2] << 16) | (cmd[3] << 8) | cmd[4];
+			_offset += 512UL * blocks;
+			blocks++;
+			if (_offset > sd_card_size - 512UL) {
+				ret = 13;
+				SD_DEBUG("SDEXT: access beyond the card size!" NL);
+			} else {
+				ret = (lseek(sdfd, _offset, SEEK_SET) == _offset) ? 5 : 13;
+				if (ret != 5)
+					SD_DEBUG("SDEXT: seek error: %s" NL, ERRSTR());
+				else {
+					ret = (write(sdfd, _buffer, 512) == 512) ? 5 : 13;
+					if (ret != 5)
+						SD_DEBUG("SDEXT: write error: %s" NL, ERRSTR());
+				}
+			}
+			// space for the actual block write ...
+			if (cmd[0] == 24 || ret != 5) {
+				SD_DEBUG("SDEXT: cmd-%d end blocks=%d" NL, cmd[0], blocks);
+				_read_b = ret;	// data accepted?
+				writing = -2;	// turn off write mode
+				delay_answer = 1;
+			} else {
+				SD_DEBUG("SDEXT: cmd-25 end blocks=%d" NL, blocks);
+				_read_b = ret;	// data accepted?
+				writing = -1;	// write mode back to the token waiting phase
+				delay_answer = 1;
+			}
+		}
+		return;
+	}
+	/* end of write support */
 	if (cmd_index == 0 && (_write_b & 0xC0) != 0x40) {
 		if (ans_index < ans_size) {
-#ifdef DEBUG_SDEXT
-			DEBUG("SDEXT: REGIO: streaming answer byte %d of %d-1 value %02X" NL, ans_index, ans_size, ans_p[ans_index]);
-#endif
+			SD_DEBUG("SDEXT: REGIO: streaming answer byte %d of %d-1 value %02X" NL, ans_index, ans_size, ans_p[ans_index]);
 			_read_b = ans_p[ans_index++];
 		} else {
 			if (ans_callback)
@@ -235,9 +312,7 @@ static void _spi_shifting_with_sd_card ()
 				//_read_b = 0xFF;
 				ans_index = 0;
 				ans_size = 0;
-#ifdef DEBUG_SDEXT
-				DEBUG("SDEXT: REGIO: dummy answer 0xFF" NL);
-#endif
+				SD_DEBUG("SDEXT: REGIO: dummy answer 0xFF" NL);
 			}
 			_read_b = 0xFF;
 		}
@@ -248,9 +323,7 @@ static void _spi_shifting_with_sd_card ()
 		_read_b = 0xFF;
 		return;
 	}
-#ifdef DEBUG_SDEXT
-	DEBUG("SDEXT: REGIO: command (CMD%d) received: %02X %02X %02X %02X %02X %02X" NL, cmd[0] & 63, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]);
-#endif
+	SD_DEBUG("SDEXT: REGIO: command (CMD%d) received: %02X %02X %02X %02X %02X %02X" NL, cmd[0] & 63, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]);
 	cmd[0] &= 63;
 	cmd_index = 0;
 	ans_callback = NULL;
@@ -265,9 +338,7 @@ static void _spi_shifting_with_sd_card ()
 			_read_b = 0; // R1 answer
 			break;
 		case 9:  // CMD9: read CSD register
-#ifdef DEBUG_SDEXT
-			DEBUG("SDEXT: REGIO: command is read CSD register" NL);
-#endif
+			SD_DEBUG("SDEXT: REGIO: command is read CSD register" NL);
 			ADD_ANS(_read_csd_answer);
 			_read_b = 0; // R1
 			break;
@@ -283,9 +354,7 @@ static void _spi_shifting_with_sd_card ()
 			ADD_ANS(_stop_transmission_answer);
 			_read_b = 0;
 			// actually we don't do too much, as on receiving a new command callback will be deleted before this switch-case block
-#ifdef DEBUG_SDEXT
-			DEBUG("SDEXT: REGIO: block counter before CMD12: %d" NL, blocks);
-#endif
+			SD_DEBUG("SDEXT: REGIO: block counter before CMD12: %d" NL, blocks);
 			blocks = 0;
 			break;
 		case 17: // CMD17: read a single block, babe
@@ -295,19 +364,17 @@ static void _spi_shifting_with_sd_card ()
 				_read_b = 32; // address error, if no SD card image ... [this is bad TODO, better error handling]
 			else {
 				off_t ret, _offset = (cmd[1] << 24) | (cmd[2] << 16) | (cmd[3] << 8) | cmd[4];
-#ifdef DEBUG_SDEXT
-				DEBUG("SDEXT: REGIO: seek to %d in the image file." NL, _offset);
-#endif
+				SD_DEBUG("SDEXT: REGIO: seek to %ld in the image file." NL, _offset);
 				z80ex_w_states(100);	// TODO: fake some wait states here, actully this is the WRONG method, as not the Z80 should wait but the SD card's answer ...
 				if (_offset > sd_card_size - 512UL) {
 					_read_b = 32; // address error, TODO: what is the correct answer here?
-					DEBUG("SDEXT: access beyond the card size!" NL);
+					SD_DEBUG("SDEXT: access beyond the card size!" NL);
 				} else {
 					//fseek(sdf, _offset, SEEK_SET);
 					ret = lseek(sdfd, _offset, SEEK_SET);
 					if (ret != _offset) {
 						_read_b = 32; // address error, TODO: what is the correct answer here?
-						DEBUG("SDEXT: seek error to %ld (got: %ld)" NL, _offset, ret);
+						SD_DEBUG("SDEXT: seek error to %ld (got: %ld)" NL, _offset, ret);
 					} else {
 						_block_read();
 						if (cmd[0] == 18)
@@ -317,8 +384,14 @@ static void _spi_shifting_with_sd_card ()
 				}
 			}
 			break;
+		case 24: // CMD24: write block
+		case 25: // CMD25: write multiple blocks
+			blocks = 0;
+			writing = -1;	// signal writing (-2 for not-write mode), also the write position into the buffer
+			_read_b = 0;	// R1 answer, OK
+			break;
 		default: // unimplemented command, heh!
-			DEBUG("SDEXT: REGIO: unimplemented command %d = %02Xh" NL, cmd[0], cmd[0]);
+			SD_DEBUG("SDEXT: REGIO: unimplemented command %d = %02Xh" NL, cmd[0], cmd[0]);
 			_read_b = 4; // illegal command :-/
 			break;
 	}
@@ -330,12 +403,12 @@ static void flash_erase ( int sector )	// erase sectors 0 or 1, or both if -1 is
 {
 	if (sector < 1) {
 		memset(flash[0], 0xFF, 0xC000);		// erase sector 0, it's only 48K accessible on SD/EP so it does not matter, real flash would be 64K here too
-		DEBUG("SDEXT: FLASH: erasing sector 0!" NL);
+		SD_DEBUG("SDEXT: FLASH: erasing sector 0!" NL);
 		WARNING_WINDOW("Erasing flash sector 0! You can safely ignore this warning.");
 	}
 	if (abs(sector) == 1) {
 		memset(flash[1], 0xFF, 0x10000);	// erase sector 1
-		DEBUG("SDEXT: FLASH: erasing sector 1!" NL);
+		SD_DEBUG("SDEXT: FLASH: erasing sector 1!" NL);
 		WARNING_WINDOW("Erasing flash sector 1! You can safely ignore this warning.");
 	}
 }
@@ -349,19 +422,19 @@ static Uint8 flash_rd_bus_op ( int sector, Uint16 addr )
 		switch (addr & 0xFF) {
 			case 0x00:
 				byte = 1;	// manufacturer ID
-				DEBUG("SDEXT: FLASH: cmd 0x90 get manufacturer ID, result = %02Xh" NL, byte);
+				SD_DEBUG("SDEXT: FLASH: cmd 0x90 get manufacturer ID, result = %02Xh" NL, byte);
 				break;
 			case 0x02:
 				byte = 0x23;	// device ID, top boot block
-				DEBUG("SDEXT: FLASH: cmd 0x90 get device ID, result = %02Xh" NL, byte);
+				SD_DEBUG("SDEXT: FLASH: cmd 0x90 get device ID, result = %02Xh" NL, byte);
 				break;
 			case 0x04:
 				byte = 0;	// sector protect status, etc?
-				DEBUG("SDEXT: FLASH: cmd 0x90 get sector protect status, result = %02Xh" NL, byte);
+				SD_DEBUG("SDEXT: FLASH: cmd 0x90 get sector protect status, result = %02Xh" NL, byte);
 				break;
 			default:
 				byte = flash[sector][addr];	// not sure what to do in case of non-valid query "code"
-				DEBUG("SDEXT: FLASH: cmd 0x90 unknown info requested (%d), accesssing flash content instead." NL, addr & 0xFF);
+				SD_DEBUG("SDEXT: FLASH: cmd 0x90 unknown info requested (%d), accesssing flash content instead." NL, addr & 0xFF);
 				break;
 		}
 	else
@@ -378,7 +451,7 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 	int idaddr = addr & 0x3FFF;
 	if (flash_command == 0x90)
 		flash_bus_cycle = 0;    // autoselect mode does not have wr cycles more (only rd)
-	DEBUG("SDEXT: FLASH: WR OP: sector %d addr %04Xh data %02Xh flash-bus-cycle %d flash-command %02Xh" NL, sector, addr, data, flash_bus_cycle, flash_command);
+	SD_DEBUG("SDEXT: FLASH: WR OP: sector %d addr %04Xh data %02Xh flash-bus-cycle %d flash-command %02Xh" NL, sector, addr, data, flash_bus_cycle, flash_command);
 	if (flash_wr_protect)
 		return;	// write protection on flash, do not accept any write bus op
 	switch (flash_bus_cycle) {
@@ -386,22 +459,22 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 			flash_command = 0;	// invalidate command
 			if (data == 0xB0 || data == 0x30) {
 				//WARNING_WINDOW("SDEXT FLASH erase suspend/resume (cmd %02Xh) is not emulated yet :-(", data);
-				DEBUG("SDEXT: FLASH: erase suspend/resume is not yet supported, ignoring ..." NL);
+				SD_DEBUG("SDEXT: FLASH: erase suspend/resume is not yet supported, ignoring ..." NL);
 				return; // well, erase suspend/resume is currently not supported :-(
 			}
 			if (data == 0xF0) {
-				DEBUG("SDEXT: FLASH: reset command" NL);
+				SD_DEBUG("SDEXT: FLASH: reset command" NL);
 				return; // reset command
 			}
 			if (idaddr != 0xAAA || data != 0xAA) {
-				DEBUG("SDEXT: FLASH: invalid command sequence at the beginning [bus_cycle=0]" NL);
+				SD_DEBUG("SDEXT: FLASH: invalid command sequence at the beginning [bus_cycle=0]" NL);
 				return; // invalid cmd seq
 			}
 			flash_bus_cycle = 1;
 			return;
 		case 1:
 			if (idaddr != 0x555 || data != 0x55) { // invalid cmd seq
-				DEBUG("SDEXT: FLASH: invalid command sequence [bus_cycle=1]" NL);
+				SD_DEBUG("SDEXT: FLASH: invalid command sequence [bus_cycle=1]" NL);
 				flash_bus_cycle = 0;
 				return;
 			}
@@ -409,12 +482,12 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 			return;
 		case 2:
 			if (idaddr != 0xAAA) {
-				DEBUG("SDEXT: FLASH: invalid command sequence [bus_cycle=2]" NL);
+				SD_DEBUG("SDEXT: FLASH: invalid command sequence [bus_cycle=2]" NL);
 				flash_bus_cycle = 0; // invalid cmd seq
 				return;
 			}
 			if (data != 0x90 && data != 0x80 && data != 0xA0) {
-				DEBUG("SDEXT: FLASH: unknown command [bus_cycle=2]" NL);
+				SD_DEBUG("SDEXT: FLASH: unknown command [bus_cycle=2]" NL);
 				flash_bus_cycle = 0; // invalid cmd seq
 				return;
 			}
@@ -427,7 +500,7 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 				Uint8 oldbyte = flash[sector][addr];
 				Uint8 newbyte = oldbyte & data;
 				flash[sector][addr] = newbyte;
-				DEBUG("SDEXT: FLASH: programming: sector %d address %04Xh data-req %02Xh, result %02Xh->%02Xh" NL, sector, addr, data, oldbyte, newbyte);
+				SD_DEBUG("SDEXT: FLASH: programming: sector %d address %04Xh data-req %02Xh, result %02Xh->%02Xh" NL, sector, addr, data, oldbyte, newbyte);
 				if (flash_warn_programming) {
 					WARNING_WINDOW("Flash programming detected! There will be no further warnings on more bytes.\nYou can safely ignore this warning.");
 					flash_warn_programming = 0;
@@ -438,7 +511,7 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 			}
 			// only flash command 0x80 can be left, 0x90 handled before "switch", 0xA0 just before ...
 			if (idaddr != 0xAAA || data != 0xAA) { // invalid cmd seq
-				DEBUG("SDEXT: FLASH: invalid command sequence [bus_cycle=3]" NL);
+				SD_DEBUG("SDEXT: FLASH: invalid command sequence [bus_cycle=3]" NL);
 				flash_command = 0;
 				flash_bus_cycle = 0;
 				return;
@@ -447,7 +520,7 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 			return;
 		case 4:	// only flash command 0x80 can get this far ...
 			if (idaddr != 0x555 || data != 0x55) { // invalid cmd seq
-				DEBUG("SDEXT: FLASH: invalid command sequence [bus_cycle=4]" NL);
+				SD_DEBUG("SDEXT: FLASH: invalid command sequence [bus_cycle=4]" NL);
 				flash_command = 0;
 				flash_bus_cycle = 0;
 				return;
@@ -477,30 +550,22 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 
 Uint8 sdext_read_cart ( Uint16 addr )
 {
-#ifdef DEBUG_SDEXT
-	DEBUG("SDEXT: read cart @ %04X [CPU: seg=%02X, pc=%04X]" NL, addr, ports[0xB0 | (Z80_PC >> 14)], Z80_PC);
-#endif
+	SD_DEBUG("SDEXT: read cart @ %04X [CPU: seg=%02X, pc=%04X]" NL, addr, ports[0xB0 | (Z80_PC >> 14)], Z80_PC);
 	if (addr < 0xC000) {
 		Uint8 byte = flash_rd_bus_op(0, addr);
-#ifdef DEBUG_SDEXT
-		DEBUG("SDEXT: reading base ROM, ROM offset = %04X, result = %02X" NL, addr, byte);
-#endif
+		SD_DEBUG("SDEXT: reading base ROM, ROM offset = %04X, result = %02X" NL, addr, byte);
 		return byte;
 	}
 	if (addr < 0xE000) {
 		Uint8 byte;
 		addr = rom_page_ofs + (addr & 0x1FFF);
 		byte = flash_rd_bus_op(1, addr);
-#ifdef DEBUG_SDEXT
-		DEBUG("SDEXT: reading paged ROM, ROM offset = %04X, result = %02X" NL, addr, byte);
-#endif
+		SD_DEBUG("SDEXT: reading paged ROM, ROM offset = %04X, result = %02X" NL, addr, byte);
 		return byte;
 	}
 	if (addr < 0xFC00) {
 		addr -= 0xE000;
-#ifdef DEBUG_SDEXT
-		DEBUG("SDEXT: reading RAM at offset %04X, result = %02X" NL, addr, sd_ram_ext[addr]);
-#endif
+		SD_DEBUG("SDEXT: reading RAM at offset %04X, result = %02X" NL, addr, sd_ram_ext[addr]);
 		return sd_ram_ext[addr];
 	}
 	if (is_hs_read) {
@@ -508,35 +573,25 @@ Uint8 sdext_read_cart ( Uint16 addr )
 		// also, there is a fundamental difference compared to "normal" read: each reads triggers SPI shifting in HS mode, but not in regular mode, there only write does that!
 		Uint8 old = _read_b; // HS-read initiates an SPI shift, but the result (AFAIK) is the previous state, as shifting needs time!
 		_spi_shifting_with_sd_card();
-#ifdef DEBUG_SDEXT
-		DEBUG("SDEXT: REGIO: R: DATA: SPI data register HIGH SPEED read %02X [future byte %02X] [shited out was: %02X]" NL, old, _read_b, _write_b);
-#endif
+		SD_DEBUG("SDEXT: REGIO: R: DATA: SPI data register HIGH SPEED read %02X [future byte %02X] [shited out was: %02X]" NL, old, _read_b, _write_b);
 		return old;
 	} else
 		switch (addr & 3) {
 			case 0: 
 				// regular read (not HS) only gives the last shifted-in data, that's all!
-#ifdef DEBUG_SDEXT
-				DEBUG("SDEXT: REGIO: R: DATA: SPI data register regular read %02X" NL, _read_b);
-#endif
+				SD_DEBUG("SDEXT: REGIO: R: DATA: SPI data register regular read %02X" NL, _read_b);
 				return _read_b;
 			case 1: // status reg: bit7=wp1, bit6=insert, bit5=changed (insert/changed=1: some of the cards not inserted or changed)
-#ifdef DEBUG_SDEXT
-				DEBUG("SDEXT: REGIO: R: status" NL);
-#endif
+				SD_DEBUG("SDEXT: REGIO: R: status" NL);
 				return status;
 				//return 0xFF - 32 + changed;
 				//return changed | 64;
 			case 2: // ROM pager [hmm not readble?!]
-#ifdef DEBUG_SDEXT
-				DEBUG("SDEXT: REGIO: R: rom pager" NL);
-#endif
+				SD_DEBUG("SDEXT: REGIO: R: rom pager" NL);
 				return 0xFF;
 				return rom_page_ofs >> 8;
 			case 3: // HS read config is not readable?!]
-#ifdef DEBUG_SDEXT
-				DEBUG("SDEXT: REGIO: R: HS config" NL);
-#endif
+				SD_DEBUG("SDEXT: REGIO: R: HS config" NL);
 				return 0xFF;
 				return is_hs_read;
 			default:
@@ -551,9 +606,7 @@ Uint8 sdext_read_cart ( Uint16 addr )
 
 void sdext_write_cart ( Uint16 addr, Uint8 data )
 {
-#ifdef DEBUG_SDEXT
-	DEBUG("SDEXT: write cart @ %04X with %02X [CPU: seg=%02X, pc=%04X]" NL, addr, data, ports[0xB0 | (Z80_PC >> 14)], Z80_PC);
-#endif
+	SD_DEBUG("SDEXT: write cart @ %04X with %02X [CPU: seg=%02X, pc=%04X]" NL, addr, data, ports[0xB0 | (Z80_PC >> 14)], Z80_PC);
 	if (addr < 0xC000) {		// segments 4-6, call flash WR emulation (sector 0, last 16K cannot be accessed by the EP ever!)
 		flash_wr_bus_op(0, addr, data);
 		return;
@@ -564,18 +617,14 @@ void sdext_write_cart ( Uint16 addr, Uint8 data )
 	}
 	if (addr < 0xFC00) {		// SDEXT's RAM (7K), writable
 		addr -= 0xE000;
-#ifdef DEBUG_SDEXT
-		DEBUG("SDEXT: writing RAM at offset %04X" NL, addr);
-#endif
+		SD_DEBUG("SDEXT: writing RAM at offset %04X" NL, addr);
 		sd_ram_ext[addr] = data;
 		return;
 	}
 	// rest 1K is the (memory mapped) I/O area
 	switch (addr & 3) {
 		case 0:	// data register
-#ifdef DEBUG_SDEXT
-			DEBUG("SDEXT: REGIO: W: DATA: SPI data register to %02X" NL, data);
-#endif
+			SD_DEBUG("SDEXT: REGIO: W: DATA: SPI data register to %02X" NL, data);
 			if (!is_hs_read) _write_b = data;
 			_write_specified = data;
 			_spi_shifting_with_sd_card();
@@ -585,22 +634,16 @@ void sdext_write_cart ( Uint16 addr, Uint8 data )
 				status &= 255 - 32;
 			cs0 = data & 128;
 			cs1 = data & 64;
-#ifdef DEBUG_SDEXT
-			DEBUG("SDEXT: REGIO: W: control register to %02X CS0=%d CS1=%d" NL, data, cs0, cs1);
-#endif
+			SD_DEBUG("SDEXT: REGIO: W: control register to %02X CS0=%d CS1=%d" NL, data, cs0, cs1);
 			break;
 		case 2: // ROM pager register
 			rom_page_ofs = (data & 0xE0) << 8;	// only high 3 bits count
-#ifdef DEBUG_SDEXT
-			DEBUG("SDEXT: REGIO: W: paging ROM to %02X" NL, data);
-#endif
+			SD_DEBUG("SDEXT: REGIO: W: paging ROM to %02X" NL, data);
 			break;
 		case 3: // HS (high speed) read mode to set: bit7=1
 			is_hs_read = data & 128;
 			_write_b = is_hs_read ? 0xFF : _write_specified;
-#ifdef DEBUG_SDEXT
-			DEBUG("SDEXT: REGIO: W: HS read mode is %s" NL, is_hs_read ? "set" : "reset");
-#endif
+			SD_DEBUG("SDEXT: REGIO: W: HS read mode is %s" NL, is_hs_read ? "set" : "reset");
 			break;
 		default:
 			ERROR_WINDOW("SDEXT: FATAL, unhandled (WR) case");
