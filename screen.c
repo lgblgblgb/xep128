@@ -17,6 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xep128.h"
+#define XEP128_NEED_SDL_WMINFO
 #include "screen.h"
 #include "dave.h"
 #include "configuration.h"
@@ -34,6 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 int is_fullscreen = 0;
 SDL_Window   *sdl_win = NULL;
+SDL_SysWMinfo sdl_wminfo;
 static SDL_Renderer *sdl_ren = NULL;
 static SDL_Texture  *sdl_tex = NULL, *sdl_osdtex = NULL;
 int warn_for_mouse_grab = 1;
@@ -345,6 +347,11 @@ int screen_init ( void )
         );
         if (!sdl_win) {
 		ERROR_WINDOW("Cannot open SDL window: %s", SDL_GetError());
+		return 1;
+	}
+	SDL_VERSION(&sdl_wminfo.version);
+	if (!SDL_GetWindowWMInfo(sdl_win, &sdl_wminfo)) {
+		ERROR_WINDOW("Cannot issue WMInfo call: %s", SDL_GetError());
 		return 1;
 	}
 	SDL_SetWindowMinimumSize(sdl_win, SCREEN_WIDTH, SCREEN_HEIGHT * 2);

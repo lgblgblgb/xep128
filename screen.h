@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define __XEP128_SCREEN_H_INCLUDED
 
 #include <SDL_video.h>
+#ifdef XEP128_NEED_SDL_WMINFO
+#	include <SDL_syswm.h>
+#endif
 
 #define SCREEN_WIDTH	736
 #define SCREEN_HEIGHT	288
@@ -31,6 +34,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 extern int is_fullscreen, warn_for_mouse_grab;
 extern SDL_Window *sdl_win;
+#ifdef XEP128_NEED_SDL_WMINFO
+extern SDL_SysWMinfo sdl_wminfo;
+#endif
 extern Uint32 sdl_winid;
 
 extern int  _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
