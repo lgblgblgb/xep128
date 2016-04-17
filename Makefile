@@ -24,11 +24,17 @@ OBJS	= $(SRCS:.c=.o)
 ZIP	= xep128-$(ARCH).zip
 
 
-all:
+do-all:
 	@echo "Compiler:     $(CC) $(CFLAGS) $(CPPFLAGS)"
 	@echo "Linker:       $(CC) $(LDFLAGS) $(LIBS)"
 	@echo "Architecture: $(ARCH) [$(ARCH_DESC)]"
 	$(MAKE) $(PRG)
+
+deb:
+	if [ x$(ARCH) != xnative ]; then echo "*** You must set architecture to native first, with: make set-arch TO=native" ; false ; fi
+	$(MAKE) all
+	@echo "*** Debian package building is TODO ..."
+	@false
 
 set-arch:
 	if [ x$(TO) = x ]; then echo "*** Must specify architecture with TO=..." ; false ; fi
@@ -75,9 +81,10 @@ install: $(PRG) $(ROM) $(SDIMG)
 	cp $(ROM) $(SDIMG) $(DATADIR)/
 
 buildinfo.c:
+	if [ -s .git/refs/heads/master ]; then cat .git/refs/heads/master > .git-commit-info ; fi
 	echo "const char *BUILDINFO_ON  = \"`whoami`@`uname -n` on `uname -s` `uname -r`\";" > buildinfo.c
 	echo "const char *BUILDINFO_AT  = \"`date -R`\";" >> buildinfo.c
-	echo "const char *BUILDINFO_GIT = \"`git show | head -n 1 | cut -f2 -d' '`\";" >> buildinfo.c
+	echo "const char *BUILDINFO_GIT = \"`cat .git-commit-info`\";" >> buildinfo.c
 	echo "const char *BUILDINFO_CC  = __VERSION__;" >> buildinfo.c
 
 $(SDIMG):
@@ -100,7 +107,7 @@ zip:
 
 $(ZIP): $(PRG) $(ROM) $(ZIP_FILES_ARCH)
 	$(STRIP) $(PRG)
-	zip $(ZIP) $(PRG) $(ROM) $(ZIP_FILES_ARCH) README.md LICENSE CHANGES
+	zip $(ZIP) $(PRG) $(ROM) .git-commit-info $(ZIP_FILES_ARCH) README.md LICENSE CHANGES
 	@ls -l $(ZIP)
 
 publish: $(ZIP)
@@ -115,7 +122,7 @@ zclean:
 	rm -f z80ex/*.o
 
 clean:
-	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h $(ZIP)
+	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h $(ZIP) .git-commit-info*
 	$(MAKE) -C rom clean
 
 distclean:
@@ -153,7 +160,7 @@ valgrind:
 	valgrind --read-var-info=yes --leak-check=full --track-origins=yes ./$(PRG) -debug /tmp/xep128.debug > /tmp/xep128-valgrind.stdout 2> /tmp/xep128-valgrind.stderr
 	ls -l /tmp/xep128.debug /tmp/xep128-valgrind.stdout /tmp/xep128-valgrind.stderr
 
-.PHONY: all clean distclean strip commit publish data install zclean dep depend valgrind set-arch zip
+.PHONY: all clean distclean strip commit publish data install zclean dep depend valgrind set-arch zip deb do-all
 
 ifneq ($(wildcard .depend.$(ARCH)),)
 include .depend.$(ARCH)

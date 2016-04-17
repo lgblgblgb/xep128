@@ -7,3 +7,5 @@ ROM	= combined.rom
 DLL	= SDL2.dll
 DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
 
+all:
+	$(MAKE) do-all

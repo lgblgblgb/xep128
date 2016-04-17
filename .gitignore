@@ -49,5 +49,6 @@ arch/objs.*
 wiki
 *.img
 *.bak
+.git-commit-info*
 todo
 
