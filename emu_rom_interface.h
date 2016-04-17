@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #ifndef __XEP128_EMU_ROM_INTERFACE_H_INCLUDED
 #define __XEP128_EMU_ROM_INTERFACE_H_INCLUDED
 
-#define XEP_ERROR_CODE 0x76
+#define XEP_ERROR_CODE 1
 
 extern Uint8 exos_version;
 extern Uint8 exos_info[8];
