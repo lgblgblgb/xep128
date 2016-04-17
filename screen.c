@@ -397,6 +397,14 @@ int screen_init ( void )
 }
 
 
+/* During SDL or Native dialogs/widgets, it seems some events detected by SDL event _later_ which is of course not wanted.
+   This function simply "pops" out SDL events and do not use them to prevent them to be detected later by the emulator. */
+void sdl_burn_events ( void )
+{
+	SDL_Event e;
+	while (SDL_PollEvent(&e) != 0)
+		;	// do nothing
+}
 
 
 int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
@@ -409,6 +417,7 @@ int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
 	r = SDL_ShowSimpleMessageBox(sdlflag, WINDOW_TITLE, msg, sdl_win);
 	if (mg == SDL_TRUE) screen_grab(mg);
 	audio_start();
+	sdl_burn_events();
 	return r;
 }
 
@@ -459,5 +468,6 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
 	SDL_ShowMessageBox(&messageboxdata, &buttonid);
 	if (mg == SDL_TRUE) screen_grab(mg);
 	audio_start();
+	sdl_burn_events();
 	return buttonid;
 }

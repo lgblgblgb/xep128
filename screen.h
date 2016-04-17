@@ -49,6 +49,8 @@ extern void screen_present_frame (Uint32 *ep_pixels);
 extern int  screen_shot ( Uint32 *ep_pixels, const char *directory, const char *filename );
 extern int  screen_init ( void );
 
+extern void sdl_burn_events ( void );
+
 extern void osd_disable ( void );
 extern void osd_clear ( void );
 extern void osd_update ( void );
