@@ -9,10 +9,10 @@ BINDIR	= $(PREFIX)/bin
 DATADIR	= $(PREFIX)/lib/xep128
 CC	= $(CC_NATIVE)
 DEBUG	= 
-CFLAGS	= -falign-functions=16 -falign-loops=16 -Wall -Ofast -ffast-math -pipe $(shell $(SDLCFG_NATIVE) --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\"
+CFLAGS	= -falign-functions=16 -falign-loops=16 -Wall -Ofast -ffast-math -pipe $(shell $(SDLCFG_NATIVE) --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\" $(shell pkg-config --cflags-only-I gtk+-3.0)
 ZCFLAGS	= -ansi -falign-functions=16 -falign-loops=16 -fno-common -Wall -pipe -Ofast -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG_NATIVE) --cflags | cut -f1 -d' ') $(DEBUG) 
 CPPFLAGS= -I.
-LDFLAGS	= $(shell $(SDLCFG_NATIVE) --libs) -lm -lreadline $(DEBUG)
+LDFLAGS	= $(shell $(SDLCFG_NATIVE) --libs) -lm -lreadline $(DEBUG) $(shell pkg-config --libs gtk+-3.0)
 LIBS	=
 SRCS	= $(LINSRCS) $(SRCS_COMMON)
 OBJS	= $(SRCS:.c=.o)
