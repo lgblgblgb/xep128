@@ -1,0 +1,20 @@
+# Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
+# Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+# http://xep128.lgb.hu/
+
+ARCH_DESC	= "Native Unix/Linux like"
+PREFIX		= /usr/local
+BINDIR		= $(PREFIX)/bin
+DATADIR		= $(PREFIX)/lib/xep128
+CC		= gcc
+STRIP		= strip
+SDLCFG		= sdl2-config
+GTKPKGCFG	= pkg-config
+CFLAGS_ARCH	= -falign-functions=16 -falign-loops=16 -Wall -Ofast -ffast-math -pipe $(shell $(SDLCFG) --cflags) -DDATADIR=\"$(DATADIR)\" $(shell $(GTKPKGCFG) --cflags-only-I gtk+-3.0)
+ZCFLAGS_ARCH	= -ansi -falign-functions=16 -falign-loops=16 -fno-common -Wall -pipe -Ofast -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG) --cflags | cut -f1 -d' ')
+CPPFLAGS_ARCH	= -I.
+LDFLAGS_ARCH	= $(shell $(SDLCFG) --libs) -lm -lreadline $(shell $(GTKPKGCFG) --libs gtk+-3.0)
+LIBS_ARCH	=
+SRCS_ARCH	=
+PRG		= xep128
+

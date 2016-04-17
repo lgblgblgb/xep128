@@ -4,37 +4,45 @@
 
 include Makefile.common
 
-PREFIX	= /usr/local
-BINDIR	= $(PREFIX)/bin
-DATADIR	= $(PREFIX)/lib/xep128
-CC	= $(CC_NATIVE)
-DEBUG	= 
-CFLAGS	= -falign-functions=16 -falign-loops=16 -Wall -Ofast -ffast-math -pipe $(shell $(SDLCFG_NATIVE) --cflags) $(DEBUG) -DDATADIR=\"$(DATADIR)\" $(shell pkg-config --cflags-only-I gtk+-3.0)
-ZCFLAGS	= -ansi -falign-functions=16 -falign-loops=16 -fno-common -Wall -pipe -Ofast -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG_NATIVE) --cflags | cut -f1 -d' ') $(DEBUG) 
-CPPFLAGS= -I.
-LDFLAGS	= $(shell $(SDLCFG_NATIVE) --libs) -lm -lreadline $(DEBUG) $(shell pkg-config --libs gtk+-3.0)
-LIBS	=
-SRCS	= $(LINSRCS) $(SRCS_COMMON)
-OBJS	= $(SRCS:.c=.o)
-PRG	= xep128
-PRG_EXE	= xep128.exe
-SDIMG	= sdcard.img
-SDURL	= http://xep128.lgb.hu/files/sdcard.img
-ROM	= combined.rom
-DLL	= SDL2.dll
-DLLURL	= http://xep128.lgb.hu/files/SDL2.dll
-ZIP32	= xep128-win32.zip
+ifneq ($(wildcard .arch),)
+include .arch
+else
 ARCH	= native
+endif
+include arch/Makefile.$(ARCH)
+
+DEBUG	=
+
+CFLAGS	= $(CFLAGS_ARCH) $(DEBUG)
+ZCFLAGS = $(ZCFLAGS_ARCH) $(DEBUG)
+CPPFLAGS= $(CPPFLAGS_ARCH) -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell echo $(ARCH) | tr 'a-z' 'A-Z')
+LDFLAGS	= $(LDFLAGS_ARCH) $(DEBUG)
+LIBS	= $(LIBS_ARCH)
+SRCS	= $(SRCS_COMMON) $(SRCS_ARCH)
+
+OBJS	= $(SRCS:.c=.o)
+
 
 all:
-	@echo "Compiler: $(CC) $(CFLAGS) $(CPPFLAGS)"
-	@echo "Linker:   $(CC) $(LDFLAGS) $(LIBS)"
+	@echo "Compiler:     $(CC) $(CFLAGS) $(CPPFLAGS)"
+	@echo "Linker:       $(CC) $(LDFLAGS) $(LIBS)"
+	@echo "Architecture: $(ARCH) [$(ARCH_DESC)]"
 	$(MAKE) $(PRG)
 
-%.o: %.c Makefile Makefile.common
+set-arch:
+	if [ x$(TO) = x ]; then echo "*** Must specify architecture with TO=..." ; false ; fi
+	if [ x$(TO) = x$(ARCH) ]; then echo "*** Already this ($(ARCH)) architecture is set" ; false ; fi
+	if [ ! -f arch/Makefile.$(TO) ]; then echo "*** This architecture ($(TO)) is not supported" ; false ; fi
+	mkdir -p arch/objs.$(TO) arch/objs.$(ARCH)
+	echo "ARCH = $(TO)" > .arch
+	mv *.o arch/objs.$(ARCH)/ 2>/dev/null || true
+	mv arch/objs.$(TO)/*.o . 2>/dev/null || true
+	@echo "OK, architecture is set to $(TO) (from $(ARCH))."
+
+%.o: %.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-%.s: %.c Makefile Makefile.common
+%.s: %.c
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 z80ex/z180ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
@@ -45,21 +53,6 @@ z80ex/z80ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex.c
 z80ex/z80ex_dasm-$(ARCH).o: z80ex/z80ex_dasm.c $(ZDEPS)
 	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex_dasm.c
-
-ztest:	z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o z80ex/z80ex-$(ARCH).o z80ex/z80ex_dasm-$(ARCH).o
-	$(MAKE) -f Makefile.win32 ztest
-	@echo "**** RESULT:" ; ls -l z80ex/*.o
-
-ui-gtk.o: ui-gtk.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(shell pkg-config --cflags gtk+-3.0) $< -o $@
-
-screen.o: app_icon.c
-
-emu_rom_interface.o: xep_rom_syms.h
-
-emu_monitor.o: xep_rom_syms.h
-
-roms.o: xep_rom.hex
 
 xep_rom.rom: xep_rom.asm
 	sjasm -s xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom xep_rom.lst xep_rom.sym ; false; }
@@ -99,18 +92,10 @@ $(ROM):
 data:	$(SDIMG) $(ROM)
 	rm -f buildinfo.c
 
-$(PRG): .depend $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o Makefile Makefile.common
+$(PRG): .depend.$(ARCH) $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.o
 	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(LDFLAGS) $(LIBS)
-
-win32:	$(DLL) xep_rom.hex xep_rom_syms.h
-	@echo "*** BUILDING FOR WINDOWS ***"
-	rm -f buildinfo.c
-	$(MAKE) buildinfo.c
-	$(MAKE) -f Makefile.win32
-	@ls -l $(PRG_EXE)
-	@file $(PRG_EXE)
 
 $(ZIP32): $(PRG_EXE) $(ROM) $(DLL)
 	$(STRIP_WIN32) $(PRG_EXE)
@@ -123,20 +108,21 @@ publish: $(ZIP32)
 	@ls -l www/files/
 
 strip:	$(PRG)
-	strip $(PRG)
+	$(STRIP) $(PRG)
 
 zclean:
 	rm -f z80ex/*.o
 
 clean:
-	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h .depend
+	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h
 	$(MAKE) -C rom clean
 
 distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
 	$(MAKE) zclean
-	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) $(PRG_EXE) $(ZIP32)
+	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) $(ZIP32) .arch .depend.*
+	rm -f arch/objs.*/*.o
 
 help:
 	$(MAKE) $(PRG)
@@ -149,7 +135,7 @@ commit:
 	EDITOR="vim -c 'startinsert'" git commit -a
 	git push
 
-.depend:
+.depend.$(ARCH):
 	$(MAKE) depend
 
 dep:
@@ -158,16 +144,16 @@ dep:
 depend:
 	$(MAKE) xep_rom.hex
 	$(MAKE) xep_rom_syms.h
-	$(CC) -MM $(CFLAGS) $(CPPFLAGS) $(SRCS) > .depend
+	$(CC) -MM $(CFLAGS) $(CPPFLAGS) $(SRCS) > .depend.$(ARCH)
 
 valgrind:
 	@echo "*** valgrind is useful mainly if you built Xep128 with the -g flag ***"
 	valgrind --read-var-info=yes --leak-check=full --track-origins=yes ./$(PRG) -debug /tmp/xep128.debug > /tmp/xep128-valgrind.stdout 2> /tmp/xep128-valgrind.stderr
 	ls -l /tmp/xep128.debug /tmp/xep128-valgrind.stdout /tmp/xep128-valgrind.stderr
 
-.PHONY: all clean distclean strip commit win32 publish data install ztest zclean dep depend valgrind
+.PHONY: all clean distclean strip commit win32 publish data install ztest zclean dep depend valgrind set-arch
 
-ifneq ($(wildcard .depend),)
-include .depend
+ifneq ($(wildcard .depend.$(ARCH)),)
+include .depend.$(ARCH)
 endif
 

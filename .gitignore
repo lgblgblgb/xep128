@@ -42,7 +42,9 @@ buildinfo.c
 xep_rom.lst
 xep_rom_syms.h
 screenshot*.png
-.depend
+.depend.*
+.arch
+arch/objs.*
 .*.swp
 wiki
 *.img
