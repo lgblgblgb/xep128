@@ -402,16 +402,18 @@ int screen_init ( void )
 void sdl_burn_events ( void )
 {
 	SDL_Event e;
+	int c = 0;
 	while (SDL_PollEvent(&e) != 0)
-		;	// do nothing
+		c++;	// do nothing, just count events to be logged in case of debug mode
+	kbd_matrix_reset();	// also reset the keyboard matrix as it seems some keys can be detected "stucked" ...
+	mouse_reset_button();	// ... and also the mouse buttons :)
+	DEBUG("SDL: burn: dropped %d event(s)" NL, c);
 }
 
 
 int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
 {
         int mg = mouse_grab, r;
-        kbd_matrix_reset();
-        mouse_reset_button();
 	audio_stop();
 	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
 	r = SDL_ShowSimpleMessageBox(sdlflag, WINDOW_TITLE, msg, sdl_win);
@@ -461,8 +463,6 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
 		items = p + 1;
 	}
 	/* win grab, kbd/mouse emu reset etc before the window! */
-	kbd_matrix_reset();
-	mouse_reset_button();
 	audio_stop();
 	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
 	SDL_ShowMessageBox(&messageboxdata, &buttonid);
