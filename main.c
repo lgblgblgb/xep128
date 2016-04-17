@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "rtc.h"
 #include "fileio.h"
 #include "z80.h"
+#include "gui.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -306,6 +307,7 @@ int main (int argc, char *argv[])
 	fileio_init(app_pref_path, "files");
 	if (screen_init())
 		return 1;
+	xepgui_init();
 	audio_init(config_getopt_int("audio"));
 	z80ex_init();
 	set_ep_cpu(CPU_Z80);

@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "z80.h"
 #include "cpu.h"
 #include "emu_rom_interface.h"
+#include "gui.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -139,7 +140,7 @@ void fileio_func_open_channel_remember ( void )
 void fileio_func_open_or_create_channel ( int create )
 {
 	int r;
-	char fnbuf[256];
+	char fnbuf[PATH_MAX + 1];
 	if (exos_channels[channel] >= 0) {
 		DEBUGPRINT("FILEIO: open/create channel, already used channel for %d, fd is %d" NL, channel, exos_channels[channel]);
 		Z80_A = 0xF9;	// channel number is already used! (maybe it's useless to be tested, as EXOS wouldn't allow that anyway?)
@@ -147,9 +148,19 @@ void fileio_func_open_or_create_channel ( int create )
 	}
 	get_file_name(fnbuf);
 	if (!*fnbuf) {
-		xep_set_error(HOST_OS_STR "Empty file name");
-		Z80_A = XEP_ERROR_CODE;
-		return;
+		r = xepgui_file_selector(
+			XEPGUI_FSEL_OPEN | XEPGUI_FSEL_FLAG_STORE_DIR,
+			WINDOW_TITLE " - Select file for load via FILE: device",
+			fileio_cwd,
+			fnbuf,
+			sizeof fnbuf
+		);
+		if (r) {
+			xep_set_error(HOST_OS_STR "No file selected");
+			Z80_A = XEP_ERROR_CODE;
+			return;
+		}
+		memmove(fnbuf, fnbuf + strlen(fileio_cwd), strlen(fnbuf + strlen(fileio_cwd)) + 1);
 	}
 	r = open_host_file(fileio_cwd, fnbuf, create);
 	//xep_set_error(ERRSTR());
