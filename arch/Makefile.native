@@ -17,4 +17,5 @@ LDFLAGS_ARCH	= $(shell $(SDLCFG) --libs) -lm -lreadline $(shell $(GTKPKGCFG) --l
 LIBS_ARCH	=
 SRCS_ARCH	=
 PRG		= xep128
+ZIP_FILES_ARCH	=
 

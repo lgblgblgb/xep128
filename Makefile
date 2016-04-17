@@ -21,6 +21,7 @@ LIBS	= $(LIBS_ARCH)
 SRCS	= $(SRCS_COMMON) $(SRCS_ARCH)
 
 OBJS	= $(SRCS:.c=.o)
+ZIP	= xep128-$(ARCH).zip
 
 
 all:
@@ -37,6 +38,7 @@ set-arch:
 	echo "ARCH = $(TO)" > .arch
 	mv *.o arch/objs.$(ARCH)/ 2>/dev/null || true
 	mv arch/objs.$(TO)/*.o . 2>/dev/null || true
+	rm -f $(PRG)
 	@echo "OK, architecture is set to $(TO) (from $(ARCH))."
 
 %.o: %.c
@@ -78,10 +80,6 @@ buildinfo.c:
 	echo "const char *BUILDINFO_GIT = \"`git show | head -n 1 | cut -f2 -d' '`\";" >> buildinfo.c
 	echo "const char *BUILDINFO_CC  = __VERSION__;" >> buildinfo.c
 
-$(DLL):
-	@echo "**** Fetching Win32 SDL2 DLL from $(DLLURL) ..."
-	wget -O $(DLL) $(DLLURL) || { rm -f $(DLL) ; false; }
-
 $(SDIMG):
 	@echo "**** Fetching SDcard image from $(SDURL) ..."
 	wget -O $(SDIMG) $(SDURL) || { rm -f $(SDIMG) ; false; }
@@ -97,14 +95,17 @@ $(PRG): .depend.$(ARCH) $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH)
 	$(MAKE) buildinfo.o
 	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(LDFLAGS) $(LIBS)
 
-$(ZIP32): $(PRG_EXE) $(ROM) $(DLL)
-	$(STRIP_WIN32) $(PRG_EXE)
-	zip $(ZIP32) $(PRG_EXE) $(ROM) $(DLL) README.md LICENSE CHANGES
-	@ls -l $(ZIP32)
+zip:
+	$(MAKE) $(ZIP)
 
-publish: $(ZIP32)
+$(ZIP): $(PRG) $(ROM) $(ZIP_FILES_ARCH)
+	$(STRIP) $(PRG)
+	zip $(ZIP) $(PRG) $(ROM) $(ZIP_FILES_ARCH) README.md LICENSE CHANGES
+	@ls -l $(ZIP)
+
+publish: $(ZIP)
 	test -f rom/$(ROM) && cp rom/$(ROM) www/files/ || true
-	test -f $(ZIP32) && cp $(ZIP32) www/files/ || true
+	test -f $(ZIP) && cp $(ZIP) www/files/ || true
 	@ls -l www/files/
 
 strip:	$(PRG)
@@ -114,15 +115,16 @@ zclean:
 	rm -f z80ex/*.o
 
 clean:
-	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h
+	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h $(ZIP)
 	$(MAKE) -C rom clean
 
 distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
 	$(MAKE) zclean
-	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) $(ZIP32) .arch .depend.*
-	rm -f arch/objs.*/*.o
+	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) xep128-*.zip .arch .depend.*
+	rm -f arch/objs.*/*.o || true
+	rmdir arch/objs.* 2>/dev/null || true
 
 help:
 	$(MAKE) $(PRG)
@@ -151,7 +153,7 @@ valgrind:
 	valgrind --read-var-info=yes --leak-check=full --track-origins=yes ./$(PRG) -debug /tmp/xep128.debug > /tmp/xep128-valgrind.stdout 2> /tmp/xep128-valgrind.stderr
 	ls -l /tmp/xep128.debug /tmp/xep128-valgrind.stdout /tmp/xep128-valgrind.stderr
 
-.PHONY: all clean distclean strip commit win32 publish data install ztest zclean dep depend valgrind set-arch
+.PHONY: all clean distclean strip commit publish data install zclean dep depend valgrind set-arch zip
 
 ifneq ($(wildcard .depend.$(ARCH)),)
 include .depend.$(ARCH)

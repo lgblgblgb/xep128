@@ -17,4 +17,9 @@ LDFLAGS_ARCH	= $(shell $(SDLCFG) --libs)
 LIBS_ARCH	=
 SRCS_ARCH	=
 PRG		= xep128.exe
+ZIP_FILES_ARCH	= $(DLL)
+
+$(DLL):
+	@echo "**** Fetching Win32 SDL2 DLL from $(DLLURL) ..."
+	wget -O $(DLL) $(DLLURL) || { rm -f $(DLL) ; false; }
 
