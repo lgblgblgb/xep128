@@ -33,6 +33,8 @@ OPTIONS:
 	Sets SDL specific option(s) including rendering related stuffs [default: auto]
 -skiplogo
 	Disables (1) Enterprise logo on start-up via XEP ROM [default: 0]
+-xeprom
+	Enables XEP internal ROM (non-zero value), otherwise disable [default: 1]
 -epkey
 	Define a given EP/emu key, format epkey@xy=SDLname, where x/y are row/col in hex or spec code (ie screenshot, etc). [default: -]
 

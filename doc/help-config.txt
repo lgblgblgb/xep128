@@ -17,6 +17,7 @@ ram = 128	# RAM size in Kbytes (decimal) or segment specification(s) prefixed wi
 sdimg = sdcard.img	# SD-card disk image (VHD) file name/path
 sdl = auto	# Sets SDL specific option(s) including rendering related stuffs
 skiplogo = 0	# Disables (1) Enterprise logo on start-up via XEP ROM
+xeprom = 1	# Enables XEP internal ROM (non-zero value), otherwise disable
 
 # ROM image, format is "rom@xx=filename" (xx=start segment in hex), use rom@00 for EXOS or combined ROM set
 

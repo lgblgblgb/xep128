@@ -29,7 +29,7 @@ int xep_rom_seg = -1;
 int xep_rom_addr;
 const char *rom_name_tab[0x100];
 static const char xep_rom_description[] = "(Xep128-internal)";
-
+static int reloading = 0;	// allows to re-load ROM config run-time, this non-zero after the first call of roms_load()
 
 
 static FILE *sram_open ( int seg, const char *mode, char *path )
@@ -95,11 +95,17 @@ int roms_load ( void )
 {
 	int seg, last = 0;
 	char path[PATH_MAX + 1];
+	if (reloading)	// in case of already defined (reloading) memory model, we want to back our SRAM segments up - if any at all ...
+		sram_save_all_segments();
 	for (seg = 0; seg < 0x100; seg++ ) {
 		memory_segment_map[seg] = (seg >= 0xFC ? VRAM_SEGMENT : UNUSED_SEGMENT);	// 64K VRAM is default, you cannot override that!
+		if (reloading && rom_name_tab[seg] && rom_name_tab[seg] != xep_rom_description)
+			free((void*)rom_name_tab[seg]); // already defined (reloading) situation, we want to free used memory as well
 		rom_name_tab[seg] = NULL;
 	}
+	reloading = 1;	// set reloading flag, in next invocation of roms_load(), it will be done in config reload mode!
 	memset(memory, 0xFF, 0x400000);
+	xep_rom_seg = -1;
 	for (seg = 0; seg < 0x100; seg++ ) {
 		void *option = config_getopt("rom", seg, NULL);
 		if (option) {
@@ -107,6 +113,14 @@ int roms_load ( void )
 			int lseg = seg;
 			FILE *f;
 			config_getopt_pointed(option, &name);
+			if (!strcasecmp(name, "XEP") && seg) {
+				if (memory_segment_map[seg] == UNUSED_SEGMENT) {
+					DEBUG("CONFIG: ROM: segment %02Xh assigned to internal XEP ROM" NL, seg);
+					xep_rom_seg = seg;
+				} else
+					ERROR_WINDOW("XEP ROM forced segment assignment cannot be done since segment %02X is not unused", seg);
+				continue;
+			}
 			DEBUG("CONFIG: ROM: segment %02Xh file %s" NL, seg, name);
 			f = open_emu_file(name, "rb", path);
 			if (f == NULL) {
@@ -158,21 +172,35 @@ int roms_load ( void )
 			return -1;
 		}
 	}
-	/* search place for XEP ROM */
-	if (memory_segment_map[last + 1] == UNUSED_SEGMENT) {	// TODO: XEP ROM may not work with non-Zozo EXOSes as they check only some segments with special alignments
-		last++;
-		xep_rom_seg = last;
-		xep_rom_addr = last << 14;
-		memcpy(memory + xep_rom_addr, xep_rom_image, sizeof xep_rom_image);
-		memory_segment_map[last] = ROM_SEGMENT;
-		rom_name_tab[last] = xep_rom_description;
-		DEBUGPRINT("CONFIG: ROM: XEP internal ROM image installed in segment %02Xh" NL, last);
+	/* XEP ROM: guess where to place it, or disable it ... */
+	if (config_getopt_int("xeprom")) {
+		// XEP ROM is enabled with 'xeprom' directive
+		if (xep_rom_seg == -1) {	// not assigned manually, try to find a place for it ...
+			xep_rom_seg = last + 1;	// ... with simply using the segment after the last used ROM segment
+			DEBUGPRINT("CONFIG: ROM: automatic XEP ROM image placer selected segment is %02Xh" NL, xep_rom_seg);
+		}
+	} else {
+		// XEP ROM is disabled (with 'xeprom' directive), _IF_ it was not assigned manually
+		if (xep_rom_seg == -1) {
+			DEBUGPRINT("CONFIG: ROM: XEP ROM is disabled by configuration!" NL);
+			INFO_WINDOW("XEP internal ROM image is disabled by configuration.\nXep128 will work, but no XEP feature will be available.");
+		}
 	}
-	if (xep_rom_seg == -1) {
-		ERROR_WINDOW("XEP internal ROM image cannot be installed. Xep128 will work, but :XEP commands won't!");
-	}
-	/* end of the game :) */
-	DEBUGPRINT("CONFIG: ROM: DONE. Last used segment is %02Xh." NL, last);
-	return last << 14;
+	/* XEP ROM: now install our internal ROM, if it's allowed/OK to do so */
+	if (xep_rom_seg > 0) {
+		if (memory_segment_map[xep_rom_seg] == UNUSED_SEGMENT) {
+			xep_rom_addr = xep_rom_seg << 14;
+			memcpy(memory + xep_rom_addr, xep_rom_image, sizeof xep_rom_image);
+			memory_segment_map[xep_rom_seg] = ROM_SEGMENT;
+			rom_name_tab[xep_rom_seg] = xep_rom_description;
+			DEBUGPRINT("CONFIG: ROM: XEP internal ROM image has been installed in segment %02Xh" NL, xep_rom_seg);
+		} else {
+			DEBUGPRINT("CONFIG: ROM: XEP internal ROM image CANNOT be installed because segment %02Xh is used!!" NL, xep_rom_seg);
+			ERROR_WINDOW("XEP internal ROM image cannot be installed.\nXep128 will work, but no XEP feature will be available.");
+			xep_rom_seg = -1;
+		}
+	} else
+		xep_rom_seg = -1;
+	return 0;
 }
 

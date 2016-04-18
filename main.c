@@ -314,7 +314,7 @@ int main (int argc, char *argv[])
 	ep_pixels = nick_init();
 	if (ep_pixels == NULL)
 		return 1;
-	if (roms_load() <= 0)
+	if (roms_load())
 		return 1;
 	primo_rom_seg = primo_search_rom();
 	ep_set_ram_config(config_getopt_str("ram"));
