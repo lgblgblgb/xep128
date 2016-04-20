@@ -1,6 +1,6 @@
 include ../arch/Makefile.native
 
-COMS	= z180test.com irclet.com intfreq.com vinttest.com
+COMS	= z180test.com irclet.com intfreq.com vinttest.com exos10ts.com
 ELFS	= z80-emulated-cpu-speed-test
 CFLAGS	= -Wall -O3 -ffast-math -pipe -DZ80EX_USER_HEADER=\"../z80ex_config.h\" $(shell $(SDLCFG) --cflags)
 ARCH	= native
