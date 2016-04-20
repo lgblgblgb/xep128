@@ -31,6 +31,7 @@ EXOS_FN_BASIC:		DB 5, "BASIC"
 
 TEST_FILE_EXDOS		DB 10, 'F:TEST.FIL'
 TEST_FILE_FILEIO	DB 13, 'FILE:TEST.FIL'
+TEST_FILE_NAKED		DB 8, 'TEST.FIL'
 
 CHANNEL_VIDEO           = 1
 CHANNEL_KEYBOARD        = 2
@@ -248,13 +249,17 @@ set_p_in_st:
 select_test_mode:
 	CALL	getkey
 	LD	DE, TEST_FILE_EXDOS
+	CP	'e'
+	RET	Z
+	LD	DE, TEST_FILE_NAKED
 	CP	'n'
 	RET	Z
-	CP	'x'
-	RET	Z
-	CP	'f'
-	JR	NZ, select_test_mode
 	LD	DE, TEST_FILE_FILEIO
+	CP	'f'
+	RET	Z
+	CP	'x'
+	JR	NZ, select_test_mode
+	OR	A	; will set NZ
 	RET
 
 
@@ -265,12 +270,11 @@ select_test_mode:
 main:
 	CALL	ui_init_std
 .again:
-	IPRINT	"LGB's ugly EXOS-10 test.\r\nPlease select with keys: n = normal EXDOS or f = FILE: or x = to exit\r\nYour selection (n/f/x)? "
+	IPRINT	"LGB's ugly EXOS-10 test.\r\nPlease select with keys: e = EXDOS or f = FILE: or n = naked or x = to exit\r\nYour selection (e/f/n/x)? "
 	CALL	select_test_mode
-	CP	'x'
-	RET	Z
+	RET	NZ
 	LD	(test_file), DE
-	IPRINT	"\r\nTest file selected: "
+	IPRINT	"\r\nTest file selected = "
 	LD	DE, (test_file)
 	CALL	print_exos_string
 	; Create/recreate our test file ...
