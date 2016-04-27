@@ -82,7 +82,7 @@ static inline Uint16 dave_render_audio_sample ( void )
 		ports[0xA7] & 7
 	);
 #endif
-	return (left << 8) | right;
+	return (right << 8) | left;
 }
 
 
