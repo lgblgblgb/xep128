@@ -304,6 +304,16 @@ static void cmd_setdate ( void ) {
 
 
 
+static void cmd_ddn ( void ) {
+	char *arg = get_mon_arg(ARG_ONE);
+	if (arg) {
+		xep_set_default_device_name(arg);
+	} else
+		MPRINTF("Command needs an argument, the default device name to be set\n");
+}
+
+
+
 static void cmd_ram ( void ) {
 	char *arg = get_mon_arg(ARG_ONE);
 	int r = arg ? *arg : 0;
@@ -645,6 +655,7 @@ static const struct commands_st commands[] = {
 	{ "CD",		"", 3, "Host OS directory change/query for FILE:", cmd_cd },
 	{ "CLOSE",	"", 3, "Close console/monitor window", cmd_close },
 	{ "CPU",	"", 3, "Set/query CPU type/clock", cmd_cpu },
+	{ "DDN",	"", 1, "Set default device name via EXOS 19", cmd_ddn },
 	{ "DIR",	"", 3, "Directory listing from host OS for FILE:", cmd_dir },
 	{ "DISASM",	"D", 3, "Disassembly memory", cmd_disasm },
 	{ "EMU",	"", 3, "Emulation info", cmd_emu },
