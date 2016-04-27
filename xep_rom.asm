@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 ; This symbol is also exported for the C code, so the trap handler will recognize it
 xepsym_ed_trap_opcode	= 0xBC
 
+xepsym_default_device_name_string = $FFE0
 xepsym_exos_info_struct	= $FFF0
 
 ; Great help: http://ep.homeserver.hu/Dokumentacio/Konyvek/EXOS_2.1_technikal_information/exos/kernel/Ch6.html
@@ -103,24 +104,22 @@ fileio_not_used_call:
 	RET
 
 allocate_channel_buffer:
-	TRAP	xepsym_fileio_open_channel_remember
+	TRAP	xepsym_fileio_open_channel_remember	; this will store A register as channel number in fileio.c
 	PUSH	DE
 	PUSH	IX
 	LD	DE, 1
-	EXOS	27
+	EXOS	27		; allocate channel buffer RAM
 	POP	IX
 	POP	DE
-	RET
+	RET			; A (error code of EXOS 27) will be checked by the caller
 
 fileio_open_channel:
-	CALL	allocate_channel_buffer
-	RET	NZ
+	CALL	allocate_channel_buffer	; A (error code) will be checked by the next trap!
 	TRAP	xepsym_fileio_open_channel
 	RET
 
 fileio_create_channel:
-	CALL	allocate_channel_buffer
-	RET	NZ
+	CALL	allocate_channel_buffer	; A (error code) will be checked by the next trap!
 	TRAP	xepsym_fileio_create_channel
 	RET
 
@@ -236,6 +235,32 @@ xepsym_set_time:
 	JP	xepsym_print_xep_buffer.nopush
 
 
+set_default_device_name:
+.is_file_handler = $ + 1
+	LD	C, 0
+	LD	DE, xepsym_default_device_name_string
+	LD	A, (DE)
+	OR	A
+	RET	Z	; if EXOS string is zero in its length, skip its setting
+	EXOS	19
+	PUSH	AF
+	LD	DE, xepsym_error_message_buffer
+	CALL	enable_write
+	EXOS	28
+	POP	AF
+	TRAP	xepsym_trap_set_default_device_name_feedback
+	RET
+
+xepsym_set_default_device_name_is_file_handler = set_default_device_name.is_file_handler
+
+xepsym_set_default_device_name:
+	PUSH	AF
+	PUSH	BC
+	PUSH	DE
+	CALL	set_default_device_name
+	JP	xepsym_print_xep_buffer.nopush
+
+
 ; Called on system initialization (EXOS action code 8)
 ; Currently it just sets date/time as xepsym_set_time would do as well ...
 xepsym_system_init:
@@ -247,12 +272,16 @@ xepsym_system_init:
 	CALL	enable_write
 	EXOS	20
 	TRAP	xepsym_trap_on_system_init ; also stores the version number, receives the info struct from EXOS
+	CALL	set_default_device_name
 	JP	xepsym_pop_and_ret
 
 ; Called on EXOS action code 1
 xepsym_cold_reset:
-	RET
-
+	PUSH	AF
+	PUSH	BC
+	PUSH	DE
+	CALL	set_default_device_name
+	JP	xepsym_pop_and_ret
 
 
 ; **** !! YOU MUST NOT PUT ANYTHING EXTRA AFTER THIS LINE, EMULATOR OVERWRITES THE AREA !! ****
@@ -264,4 +293,4 @@ xepsym_error_message_buffer:
 	ORG	xepsym_error_message_buffer + 64
 xepsym_error_message_buffer_size = $ - xepsym_error_message_buffer
 xepsym_cobuf:
-xepsym_cobuf_size = 0xFFF0 - xepsym_cobuf
+xepsym_cobuf_size = 0xFFE0 - xepsym_cobuf
