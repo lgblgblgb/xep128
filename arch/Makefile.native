@@ -10,10 +10,10 @@ CC		= gcc
 STRIP		= strip
 SDLCFG		= sdl2-config
 GTKPKGCFG	= pkg-config
-CFLAGS_ARCH	= -falign-functions=16 -falign-loops=16 -Wall -Ofast -ffast-math -pipe $(shell $(SDLCFG) --cflags) -DDATADIR=\"$(DATADIR)\" $(shell $(GTKPKGCFG) --cflags-only-I gtk+-3.0)
-ZCFLAGS_ARCH	= -ansi -falign-functions=16 -falign-loops=16 -fno-common -Wall -pipe -Ofast -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG) --cflags | cut -f1 -d' ')
+CFLAGS_ARCH	= -flto -Ofast -falign-functions=16 -falign-loops=16 -Wall -ffast-math -pipe $(shell $(SDLCFG) --cflags) -DDATADIR=\"$(DATADIR)\" $(shell $(GTKPKGCFG) --cflags-only-I gtk+-3.0)
+ZCFLAGS_ARCH	= -flto -Ofast -ansi -falign-functions=16 -falign-loops=16 -fno-common -Wall -pipe -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG) --cflags | cut -f1 -d' ')
 CPPFLAGS_ARCH	= -I.
-LDFLAGS_ARCH	= $(shell $(SDLCFG) --libs) -lm -lreadline $(shell $(GTKPKGCFG) --libs gtk+-3.0)
+LDFLAGS_ARCH	= -flto -Ofast $(shell $(SDLCFG) --libs) -lm -lreadline $(shell $(GTKPKGCFG) --libs gtk+-3.0)
 LIBS_ARCH	=
 SRCS_ARCH	=
 PRG		= xep128

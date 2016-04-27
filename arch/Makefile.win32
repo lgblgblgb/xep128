@@ -10,10 +10,10 @@ CC		= i686-w64-mingw32-gcc
 STRIP		= i686-w64-mingw32-strip
 SDLCFG		= /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config
 GTKPKGCFG	=
-CFLAGS_ARCH	= -Wall -falign-functions=16 -falign-loops=16 -Ofast -ffast-math -pipe $(shell $(SDLCFG) --cflags)
-ZCFLAGS_ARCH	= -ansi -falign-functions=16 -falign-loops=16 -fno-common -Wall -pipe -Ofast -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG) --cflags | cut -f1 -d' ')
+CFLAGS_ARCH	= -flto -Ofast -Wall -falign-functions=16 -falign-loops=16 -ffast-math -pipe $(shell $(SDLCFG) --cflags)
+ZCFLAGS_ARCH	= -flto -Ofast -ansi -falign-functions=16 -falign-loops=16 -fno-common -Wall -pipe -Iz80ex -I. -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG) --cflags | cut -f1 -d' ')
 CPPFLAGS_ARCH	= -I.
-LDFLAGS_ARCH	= $(shell $(SDLCFG) --libs)
+LDFLAGS_ARCH	= -flto -Ofast $(shell $(SDLCFG) --libs)
 LIBS_ARCH	=
 SRCS_ARCH	=
 PRG		= xep128.exe
