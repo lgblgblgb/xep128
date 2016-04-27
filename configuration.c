@@ -55,6 +55,8 @@ static const struct configOption_st configOptions[] = {
 	{ "audio",	CONFITEM_BOOL,	"0",		0, "Enable audio output"	},
 	{ "console",	CONFITEM_BOOL,	"0",		0, "Keep (1) console window open (or give console prompt on STDIN on Linux by default)" },
 	{ DEBUGFILE_OPT,CONFITEM_STR,	"none",		0, "Enable debug messages written to a specified file" },
+	{ "ddn",	CONFITEM_STR,	"none",		0, "Default device name (none = not to set)" },
+	{ "filedir",	CONFITEM_STR,	"@files",	0, "Default directory for FILE: device" },
 	{ "fullscreen",	CONFITEM_BOOL,	"0",		0, "Start in full screen"	},
 	{ "mousemode",	CONFITEM_INT,	"1",		0, "Set mouse mode, 1-3 = J-column 2,4,8 bytes and 4-6 the same for K-column" },
 	{ "primo",	CONFITEM_STR,	"none",		0, "Start in Primo emulator mode (if not \"none\")" },

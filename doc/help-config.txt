@@ -9,6 +9,8 @@
 audio = 0	# Enable audio output
 console = 0	# Keep (1) console window open (or give console prompt on STDIN on Linux by default)
 debug = none	# Enable debug messages written to a specified file
+ddn = none	# Default device name (none = not to set)
+filedir = @files	# Default directory for FILE: device
 fullscreen = 0	# Start in full screen
 mousemode = 1	# Set mouse mode, 1-3 = J-column 2,4,8 bytes and 4-6 the same for K-column
 primo = none	# Start in Primo emulator mode (if not "none")

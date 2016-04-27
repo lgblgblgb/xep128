@@ -15,6 +15,10 @@ OPTIONS:
 	Keep (1) console window open (or give console prompt on STDIN on Linux by default) [default: 0]
 -debug
 	Enable debug messages written to a specified file [default: none]
+-ddn
+	Default device name (none = not to set) [default: none]
+-filedir
+	Default directory for FILE: device [default: @files]
 -fullscreen
 	Start in full screen [default: 0]
 -mousemode
