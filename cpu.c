@@ -46,6 +46,7 @@ int CPU_CLOCK = DEFAULT_CPU_CLOCK;
 
 
 const char ROM_SEGMENT[] = "ROM";
+const char XEPROM_SEGMENT[] = "XEPROM";
 const char RAM_SEGMENT[] = "RAM";
 const char VRAM_SEGMENT[] = "VRAM";
 const char SRAM_SEGMENT[] = "SRAM";
@@ -185,8 +186,11 @@ int ep_init_ram ( void )
 		}
 		if (a == 0xFF || type != memory_segment_map[a] || rom_name_tab[a]) {
 			if (type) {
+				const char *name = rom_name_tab[from];
 				int s = (a == 0xFF) ? a : a - 1;
-				snprintf(dbuf, sizeof dbuf, "%02X-%02X %s %s", from, s, type, rom_name_tab[from] ? rom_name_tab[from] : "");
+				if (memory_segment_map[from] == ROM_SEGMENT && !name)
+					name = "(last ROM continues)";
+				snprintf(dbuf, sizeof dbuf, "%02X-%02X %s %s", from, s, type, name ? name : "");
 				DEBUGPRINT("CONFIG: MEM: %s" NL, dbuf);
 				strcat(dbuf, "\n");
 				s = mem_desc ? strlen(mem_desc) : 0;

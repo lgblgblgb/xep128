@@ -48,6 +48,7 @@ extern char *mem_desc;
 
 extern const char *memory_segment_map[0x100];
 extern const char ROM_SEGMENT[];
+extern const char XEPROM_SEGMENT[];
 extern const char RAM_SEGMENT[];
 extern const char VRAM_SEGMENT[];
 extern const char SRAM_SEGMENT[];
