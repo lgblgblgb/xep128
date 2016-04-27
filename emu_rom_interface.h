@@ -26,6 +26,7 @@ extern Uint8 exos_info[8];
 
 extern void exos_get_status_line ( char *buffer );
 extern void xep_set_time_consts ( char *descbuffer );
+extern void xep_set_default_device_name ( const char *name );
 extern void xep_rom_trap ( Uint16 pc, Uint8 opcode );
 extern void xep_set_error ( const char *msg );
 

@@ -90,6 +90,29 @@ void xep_set_time_consts ( char *descbuffer )
 
 
 
+/* Sets XEP ROM jump to the code fragment to utilize EXOS 19 call
+   to set default device name provided, with also storing the given
+   name */
+void xep_set_default_device_name ( const char *name )
+{
+	int l;
+	if (!name)
+		name = config_getopt_str("ddn");
+	if (!strcasecmp(name, "none"))
+		name = "";
+	l = strlen(name);
+	if (l < 16) {
+		if (l)
+			memcpy(XEPSYM_P(xepsym_default_device_name_string + 1), name, l);
+		SET_XEPSYM_BYTE(xepsym_default_device_name_string, l);
+		SET_XEPSYM_WORD(xepsym_jump_on_rom_entry, xepsym_set_default_device_name);
+		SET_XEPSYM_BYTE(xepsym_set_default_device_name_is_file_handler, strncasecmp(name, "TAPE", 4) ? 1 : 0);
+	} else
+		ERROR_WINDOW("Too long default device name is tried to be set, ignoring!");
+}
+
+
+
 static int exos_cmd_name_match ( const char *that, Uint16 addr )
 {
 	if (strlen(that) != Z80_B) return 0;
@@ -203,6 +226,9 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 		//
 		/* ---- FILEIO RELATED TRAPS ---- */
 		//
+		case xepsym_trap_set_default_device_name_feedback:
+			// TODO: handle this :)
+			break;
 		case xepsym_fileio_open_channel_remember:
 			fileio_func_open_channel_remember();
 			break;
