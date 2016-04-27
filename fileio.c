@@ -110,6 +110,7 @@ static int host_file_check ( int fd, int *file_size, char **filename_store, cons
    Note: EXOS is case-insensitve on file names.
    Host OS FS "under" Xep128 may (Win32) or may not (UNIX) be case sensitve, thus we walk through the directory with tring to find matching file name.
    Argument "create" must be non-zero for create channel call, otherwise it should be zero.
+   O_BINARY flag is a *MUST* for Windows! On non-windows systems we define O_BINARY as zero in a header file, thus using it won't affect non-win32 systems!
 */
 static int open_host_file ( const char *dirname, const char *filename, int create, char **used_filename, int *file_size )
 {
@@ -118,7 +119,7 @@ static int open_host_file ( const char *dirname, const char *filename, int creat
 	int mode = create ? (O_TRUNC | O_CREAT | O_RDWR) : O_RDWR;
 	dir = opendir(dirname);
 	if (!dir) {
-		//xep_set_error("Cannot open host dir");
+		xep_set_error(HOST_OS_STR "Cannot open base directory");
 		return -1;
 	}
 	while ((entry = readdir(dir))) {
@@ -179,14 +180,21 @@ void fileio_func_open_or_create_channel ( int create )
 {
 	int r;
 	char fnbuf[PATH_MAX + 1];
-	// channel number already set via fileio_func_open_channel_remember() in a separated XEP TRAP!
+	// check content of Z80 A register. It should be zero from channel RAM allocate func. If not, it's an error!
+	if (Z80_A) {
+		DEBUGPRINT("FILEIO: channel RAM allocation EXOS call in XEP ROM failed (A = %02Xh)? Return!" NL, Z80_A);
+		return;	// simply pass control back with the same error code in A we got
+	}
+	// channel number (C variable channel) already set via fileio_func_open_channel_remember() in a separated XEP TRAP!
 	if (fio_fd[channel] >= 0) {
 		DEBUGPRINT("FILEIO: open/create channel, already used channel for %d, fd is %d" NL, channel, fio_fd[channel]);
 		Z80_A = 0xF9;	// channel number is already used! (maybe it's useless to be tested, as EXOS wouldn't allow that anyway?)
 		return;
 	}
 	get_file_name(fnbuf);
+	DEBUGPRINT("FILEIO: file name got = \"%s\"" NL, fnbuf);
 	if (!*fnbuf) {
+		DEBUGPRINT("FILEIO: file name was empty \"%s\" ..." NL, fnbuf);
 		if (create)
 			r = -1;	// GUI for create is not yet supported ...
 		else
@@ -200,6 +208,7 @@ void fileio_func_open_or_create_channel ( int create )
 		if (r) {
 			xep_set_error(HOST_OS_STR "No file selected");
 			Z80_A = XEP_ERROR_CODE;
+			DEBUGPRINT("FILEIO: no file selected!" NL);
 			return;
 		}
 		memmove(fnbuf, fnbuf + strlen(fileio_cwd), strlen(fnbuf + strlen(fileio_cwd)) + 1);
