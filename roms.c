@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "roms.h"
 #include "cpu.h"
 #include "configuration.h"
+#include "emu_rom_interface.h"
 
 
 static const Uint8 xep_rom_image[] = {
@@ -28,7 +29,6 @@ static const Uint8 xep_rom_image[] = {
 int xep_rom_seg = -1;
 int xep_rom_addr;
 const char *rom_name_tab[0x100];
-static const char xep_rom_description[] = "(Xep128-internal)";
 static int reloading = 0;	// allows to re-load ROM config run-time, this non-zero after the first call of roms_load()
 
 
@@ -99,7 +99,7 @@ int roms_load ( void )
 		sram_save_all_segments();
 	for (seg = 0; seg < 0x100; seg++ ) {
 		memory_segment_map[seg] = (seg >= 0xFC ? VRAM_SEGMENT : UNUSED_SEGMENT);	// 64K VRAM is default, you cannot override that!
-		if (reloading && rom_name_tab[seg] && rom_name_tab[seg] != xep_rom_description)
+		if (reloading && rom_name_tab[seg])
 			free((void*)rom_name_tab[seg]); // already defined (reloading) situation, we want to free used memory as well
 		rom_name_tab[seg] = NULL;
 	}
@@ -117,6 +117,7 @@ int roms_load ( void )
 				if (memory_segment_map[seg] == UNUSED_SEGMENT) {
 					DEBUG("CONFIG: ROM: segment %02Xh assigned to internal XEP ROM" NL, seg);
 					xep_rom_seg = seg;
+					memory_segment_map[seg] = XEPROM_SEGMENT;
 				} else
 					ERROR_WINDOW("XEP ROM forced segment assignment cannot be done since segment %02X is not unused", seg);
 				continue;
@@ -159,7 +160,12 @@ int roms_load ( void )
 					ERROR_WINDOW("Bad ROM image \"%s\": not multiple of 16K bytes!", path);
 					return -1;
 				}
-				memory_segment_map[lseg] = ROM_SEGMENT;
+				// check if ROM image contains XEP128_ROM segment signature, if so, try to use XEP ROM from here
+				if (!memcmp(memory + (lseg << 14), "XEP__ROM", 8) && xep_rom_seg == -1) {
+					xep_rom_seg = lseg;
+					memory_segment_map[lseg] = XEPROM_SEGMENT;
+				} else
+					memory_segment_map[lseg] = ROM_SEGMENT;
 				if (lseg > last)
 					last = lseg;
 				if (ret != 0x4000)
@@ -188,11 +194,12 @@ int roms_load ( void )
 	}
 	/* XEP ROM: now install our internal ROM, if it's allowed/OK to do so */
 	if (xep_rom_seg > 0) {
-		if (memory_segment_map[xep_rom_seg] == UNUSED_SEGMENT) {
+		if (memory_segment_map[xep_rom_seg] == UNUSED_SEGMENT || memory_segment_map[xep_rom_seg] == XEPROM_SEGMENT) {
 			xep_rom_addr = xep_rom_seg << 14;
+			memset(memory + xep_rom_addr, 0, 0x4000);
 			memcpy(memory + xep_rom_addr, xep_rom_image, sizeof xep_rom_image);
-			memory_segment_map[xep_rom_seg] = ROM_SEGMENT;
-			rom_name_tab[xep_rom_seg] = xep_rom_description;
+			memory_segment_map[xep_rom_seg] = XEPROM_SEGMENT;
+			xep_set_default_device_name(NULL);
 			DEBUGPRINT("CONFIG: ROM: XEP internal ROM image has been installed in segment %02Xh" NL, xep_rom_seg);
 		} else {
 			DEBUGPRINT("CONFIG: ROM: XEP internal ROM image CANNOT be installed because segment %02Xh is used!!" NL, xep_rom_seg);
