@@ -11,12 +11,13 @@ ARCH	= native
 endif
 include arch/Makefile.$(ARCH)
 
-DEBUG	=
+# -flto is for link time optimization, CHANGE it to -g for debug material, but do NOT mix -g and -flto !!
+DEBUG	= -flto
 
-CFLAGS	= $(CFLAGS_ARCH) $(DEBUG)
-ZCFLAGS = $(ZCFLAGS_ARCH) $(DEBUG)
-CPPFLAGS= $(CPPFLAGS_ARCH) -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell echo $(ARCH) | tr 'a-z' 'A-Z')
-LDFLAGS	= $(LDFLAGS_ARCH) $(DEBUG)
+CFLAGS	= $(DEBUG) $(CFLAGS_ARCH)
+ZCFLAGS = $(DEBUG) $(ZCFLAGS_ARCH)
+CPPFLAGS= -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell echo $(ARCH) | tr 'a-z' 'A-Z')
+LDFLAGS	= $(DEBUG) $(LDFLAGS_ARCH)
 LIBS	= $(LIBS_ARCH)
 SRCS	= $(SRCS_COMMON) $(SRCS_ARCH)
 
