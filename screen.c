@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 int is_fullscreen = 0;
 SDL_Window   *sdl_win = NULL;
 SDL_SysWMinfo sdl_wminfo;
+SDL_PixelFormat *sdl_pixel_format;
 static SDL_Renderer *sdl_ren = NULL;
 static SDL_Texture  *sdl_tex = NULL, *sdl_osdtex = NULL;
 int warn_for_mouse_grab = 1;
@@ -392,6 +393,7 @@ int screen_init ( void )
 	} else
 		ERROR_WINDOW("Not enough memory for OSD pixel buffer. OSD won't work");
         sdl_winid = SDL_GetWindowID(sdl_win);
+	sdl_pixel_format = SDL_AllocFormat(SCREEN_FORMAT);
 	DEBUG("SDL: everything seems to be OK ..." NL);
 	return 0;
 }

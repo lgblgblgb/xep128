@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 extern int is_fullscreen, warn_for_mouse_grab;
 extern SDL_Window *sdl_win;
+extern SDL_PixelFormat *sdl_pixel_format;
 #ifdef XEP128_NEED_SDL_WMINFO
 extern SDL_SysWMinfo sdl_wminfo;
 #endif

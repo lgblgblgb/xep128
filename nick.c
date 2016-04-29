@@ -103,8 +103,8 @@ Uint32 *nick_init ( void )
 		r = (((a << 2) & 4) | ((a >> 2) & 2) | ((a >> 6) & 1)) * 255 / 7;
 		g = (((a << 1) & 4) | ((a >> 3) & 2) | ((a >> 7) & 1)) * 255 / 7;
 		b = (                 ((a >> 1) & 2) | ((a >> 5) & 1)) * 255 / 3;
-		//full_palette[a] = SDL_MapRGBA(SCREEN_FORMAT, r, g, b, 0xFF);
-		full_palette[a] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+		full_palette[a] = SDL_MapRGBA(sdl_pixel_format, r, g, b, 0xFF);
+		//full_palette[a] = (0xFF << 24) | (r << 16) | (g << 8) | b;
 		//DEBUG("PAL#%d = (%d,%d,%d) = %d" NL, a, r, g, b, full_palette[a]);
 		// this is translation table for  4 colour modes
 		col4trans[a * 4 + 0] = ((a >> 2) & 2) | ((a >> 7) & 1);
