@@ -1,3 +1,5 @@
 *.com
 *.lst
 z80-emulated-cpu-speed-test
+cpm-minimal-emulator
+*.exe
