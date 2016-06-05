@@ -39,7 +39,7 @@ static int memsegs[4] VARALIGN;
 Uint8 memory[0x400000] VARALIGN;
 Uint8 ports[0x100] VARALIGN;
 const char *memory_segment_map[0x100];
-static int is_ram_seg[0x100] VARALIGN;
+static Uint8 is_ram_seg[0x100] VARALIGN;
 static int mem_ws_all, mem_ws_m1;
 int nmi_pending = 0;
 int CPU_CLOCK = DEFAULT_CPU_CLOCK;
