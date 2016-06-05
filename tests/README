@@ -48,3 +48,11 @@ z80-emulated-cpu-speed-test.c
 
   A lame little (native, not Z80) program which links to z80ex.
   It tries to messure the speed of Z80 emulation.
+
+cpm-minimal-emulator.c
+
+  A very primitive CP/M emulator using the same Z80 emulation
+  as Xep128 does. Only calls (and in a way) are emulated at
+  BDOS/CBIOS level what tools M80 and L80 needs to be able to
+  run on Windows or Linux.
+
