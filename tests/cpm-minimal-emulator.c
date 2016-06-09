@@ -65,7 +65,7 @@ void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 		DEBUG("CPM: FATAL: someone tried to write system area at address %04Xh PC = %04Xh\n", addr, Z80_PC);
 		exit(1);
 	}
-	if (addr < 0x80) {
+	if (addr < 0x10) {
 		DEBUG("CPM: warning, someone has just written low-area memory at address %02Xh PC = %04Xh\n", addr, Z80_PC);
 	}
 	memory[addr] = value;
@@ -90,6 +90,24 @@ void z80ex_reti_cb ( void ) {
 
 void z80ex_z180_cb (Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76) {
 }
+
+
+
+static void write_filename_to_fcb ( Uint16 fcb_addr, const char *fn )
+{
+	char *fcb = (char*)memory + fcb_addr, *p;
+	*(fcb++) = 0;
+	memset(fcb, 32, 8 + 3);
+	if (!*fn)
+		return;
+	p = strchr(fn, '.');
+	if (p) {
+		memcpy(fcb, fn, p - fn >= 8 ?  8 : p - fn);
+		memcpy(fcb + 8, p + 1, strlen(p + 1) >= 3 ? 3 : strlen(p + 1));
+	} else
+		memcpy(fcb, fn, strlen(fn) > 8 ? 8 : strlen(fn));
+}
+
 
 
 /* Intitialize CP/M emulation */
@@ -130,6 +148,8 @@ static int cpm_init ( int argc, char **argv )
 	// Now fill buffer of the command line
 	memory[0x81] = 0;
 	for (a = 2; a < argc; a++) {
+		if (a <= 3)
+			write_filename_to_fcb(a == 2 ? 0x5C : 0x6C, argv[a]);
 		if (memory[0x81])
 			strcat((char*)memory + 0x81, " ");
 		strcat((char*)memory + 0x81, argv[a]);
@@ -325,6 +345,25 @@ static int bdos_read_next_record ( Uint16 fcb_addr )
 }
 
 
+static int bdos_random_access_read_record ( Uint16 fcb_addr )
+{
+	int offs, a;
+	struct fcb_st *p = fcb_search(fcb_addr);
+	DEBUG("CPM: RANDOM-ACCESS-READ: FCB=%04Xh VALID?=%s DMA=%04Xh\n", fcb_addr, p ? "YES" : "NO", dma_address);
+	if (!p)
+		return 9;	// invalid FCB
+	offs = 128 * (memory[fcb_addr + 0x21] | (memory[fcb_addr + 0x22] << 8));	// FIXME: is this more than 16 bit?
+	DEBUG("CPM: RANDOM-ACCESS-READ: file offset = %d\n", offs);
+	if (fseek(p->fp, offs, SEEK_SET) < 0) {
+		DEBUG("CPM: RANDOM-ACCESS-READ: Seek ERROR!\n");
+		return 6;	// out of range
+	}
+	DEBUG("CPM: RANDOM-ACCESS-READ: Seek OK. calling bdos_read_next_record for read ...\n");
+	a = bdos_read_next_record(fcb_addr);
+	fseek(p->fp, offs, SEEK_SET);	// re-seek. According to the spec sequential read should be return with the same record. Odd enough this whole FCB mess ...
+	return a;
+}
+
 
 static int bdos_write_next_record ( Uint16 fcb_addr )
 {
@@ -433,6 +472,9 @@ static void bdos_call ( int func )
 		case 26:	// Set DMA address
 			DEBUG("CPM: SETDMA: to %04Xh\n", Z80_DE);
 			dma_address = Z80_DE;
+			break;
+		case 33:	// Random access read record (note: file pointer should be modified that sequential read reads the SAME [??] record then!!!)
+			Z80_A = Z80_L = bdos_random_access_read_record(Z80_DE);
 			break;
 		default:
 			DEBUG("CPM: BDOS: FATAL: unsupported call %d\n", func);
