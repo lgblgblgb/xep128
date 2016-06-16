@@ -19,12 +19,37 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #ifndef __XEP128_Z80_H_INCLUDED
 #define __XEP128_Z80_H_INCLUDED
 
+/* Modified Z80ex features requested */
 #define Z80EX_Z180_SUPPORT
 #define Z80EX_ED_TRAPPING_SUPPORT
+#define Z80EX_CALLBACK_PROTOTYPE extern
 
-#define Z80EX_USER_HEADER "z80ex_config.h"
+/* Types, instead of Z80ex's own, we want our SDL ones */
+#include "SDL_types.h"
+#define Z80EX_TYPES_DEFINED
+#define Z80EX_BYTE		Uint8
+#define Z80EX_SIGNED_BYTE	Sint8
+#define Z80EX_WORD		Uint16
+#define Z80EX_DWORD		Uint32
 
-#include "z80ex_config.h"
+/* Endian related stuffs for Z80ex */
+#include "SDL_endian.h"
+#ifndef SDL_BYTEORDER
+#	error "SDL_BYTEORDER is not defined!"
+#endif
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+#	ifdef Z80EX_WORDS_BIG_ENDIAN
+#		undef Z80EX_WORDS_BIG_ENDIAN
+#	endif
+#	define ENDIAN_GOOD
+#elif SDL_BYTEORDER == SDL_BIG_ENDIAN
+#	ifndef Z80EX_WORDS_BIG_ENDIAN
+#		define Z80EX_WORDS_BIG_ENDIAN
+#	endif
+#	define ENDIAN_UGLY
+#else
+#	error "SDL_BYTEORDER is not SDL_LIL_ENDIAN neither SDL_BIG_ENDIAN"
+#endif
 
 #include "z80ex/z80ex.h"
 #include "z80ex/z80ex_dasm.h"

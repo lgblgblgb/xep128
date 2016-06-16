@@ -29,7 +29,7 @@ typedef struct {
 	int t_states2;
 } z80ex_opc_dasm;
 
-#include "opcodes/opcodes_dasm.c"
+#include "opcodes_dasm.c"
 
 static const char *formats[] = {
 	"$%02X", /*bytes, # was deleted*/

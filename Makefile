@@ -15,7 +15,6 @@ include arch/Makefile.$(ARCH)
 DEBUG	= -flto
 
 CFLAGS	= $(DEBUG) $(CFLAGS_ARCH)
-ZCFLAGS = $(DEBUG) $(ZCFLAGS_ARCH)
 CPPFLAGS= -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell echo $(ARCH) | tr 'a-z' 'A-Z')
 LDFLAGS	= $(DEBUG) $(LDFLAGS_ARCH)
 LIBS	= $(LIBS_ARCH)
@@ -54,15 +53,6 @@ set-arch:
 %.s: %.c
 	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-z80ex/z180ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
-	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex.c
-z80ex/z180ex_dasm-$(ARCH).o: z80ex/z80ex_dasm.c $(ZDEPS)
-	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex_dasm.c
-z80ex/z80ex-$(ARCH).o: z80ex/z80ex.c $(ZDEPS)
-	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex.c
-z80ex/z80ex_dasm-$(ARCH).o: z80ex/z80ex_dasm.c $(ZDEPS)
-	$(CC) $(ZCFLAGS) -c -o $@ z80ex/z80ex_dasm.c
-
 xep_rom.rom: xep_rom.asm
 	sjasm -s xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom xep_rom.lst xep_rom.sym ; false; }
 
@@ -98,10 +88,10 @@ $(ROM):
 data:	$(SDIMG) $(ROM)
 	rm -f buildinfo.c
 
-$(PRG): .depend.$(ARCH) $(OBJS) z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o
+$(PRG): .depend.$(ARCH) $(OBJS)
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.o
-	$(CC) -o $(PRG) $(OBJS) buildinfo.o z80ex/z180ex-$(ARCH).o z80ex/z180ex_dasm-$(ARCH).o $(LDFLAGS) $(LIBS)
+	$(CC) -o $(PRG) $(OBJS) buildinfo.o $(LDFLAGS) $(LIBS)
 
 zip:
 	$(MAKE) $(ZIP)
@@ -119,9 +109,6 @@ publish: $(ZIP)
 strip:	$(PRG)
 	$(STRIP) $(PRG)
 
-zclean:
-	rm -f z80ex/*.o
-
 clean:
 	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h $(ZIP) .git-commit-info*
 	$(MAKE) -C rom clean
@@ -129,7 +116,6 @@ clean:
 distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
-	$(MAKE) zclean
 	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) xep128-*.zip .arch .depend.*
 	rm -f arch/objs.*/*.o || true
 	rmdir arch/objs.* 2>/dev/null || true
@@ -161,7 +147,7 @@ valgrind:
 	valgrind --read-var-info=yes --leak-check=full --track-origins=yes ./$(PRG) -debug /tmp/xep128.debug > /tmp/xep128-valgrind.stdout 2> /tmp/xep128-valgrind.stderr
 	ls -l /tmp/xep128.debug /tmp/xep128-valgrind.stdout /tmp/xep128-valgrind.stderr
 
-.PHONY: all clean distclean strip commit publish data install zclean dep depend valgrind set-arch zip deb do-all
+.PHONY: all clean distclean strip commit publish data install dep depend valgrind set-arch zip deb do-all
 
 ifneq ($(wildcard .depend.$(ARCH)),)
 include .depend.$(ARCH)

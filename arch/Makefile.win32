@@ -12,7 +12,6 @@ SDLCFG		= /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config
 GTKPKGCFG	=
 GENOPTS		= -Ofast -fno-common -falign-functions=16 -falign-loops=16 -ffast-math
 CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(shell $(SDLCFG) --cflags)
-ZCFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. -Iz80ex -ansi -DZ80EX_USER_HEADER=\"z80ex_config.h\" $(shell $(SDLCFG) --cflags | cut -f1 -d' ')
 LDFLAGS_ARCH	= $(GENOPTS) $(shell $(SDLCFG) --libs)
 LIBS_ARCH	=
 SRCS_ARCH	=

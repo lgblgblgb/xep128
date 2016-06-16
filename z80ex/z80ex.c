@@ -24,13 +24,13 @@
 typedef void (*z80ex_opcode_fn) (void);
 
 #include "ptables.c"
-#include "opcodes/opcodes_base.c"
-#include "opcodes/opcodes_dd.c"
-#include "opcodes/opcodes_fd.c"
-#include "opcodes/opcodes_cb.c"
-#include "opcodes/opcodes_ed.c"
-#include "opcodes/opcodes_ddcb.c"
-#include "opcodes/opcodes_fdcb.c"
+#include "opcodes_base.c"
+#include "opcodes_dd.c"
+#include "opcodes_fd.c"
+#include "opcodes_cb.c"
+#include "opcodes_ed.c"
+#include "opcodes_ddcb.c"
+#include "opcodes_fdcb.c"
 #include "z180ex.c"
 
 /* do one opcode (instruction or prefix) */
