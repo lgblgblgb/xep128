@@ -25,13 +25,52 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../z80ex/z80ex.h"
 
 #define ED_TRAP_OPCODE	0xBC
 #define CBIOS_JUMP_TABLE_ADDR	0xFE00
 #define CBIOS_ENTRIES		((0x10000 - CBIOS_JUMP_TABLE_ADDR) / 3)
 // BDOS entry point
 #define BDOS_ENTRY_ADDR		0xFD00
+
+
+
+/* Modified Z80ex features requested */
+//#define Z80EX_Z180_SUPPORT
+#define Z80EX_ED_TRAPPING_SUPPORT
+#define Z80EX_CALLBACK_PROTOTYPE static inline
+
+/* Types, instead of Z80ex's own, we want our SDL ones */
+#include "SDL_types.h"
+#define Z80EX_TYPES_DEFINED
+#define Z80EX_BYTE              Uint8
+#define Z80EX_SIGNED_BYTE       Sint8
+#define Z80EX_WORD              Uint16
+#define Z80EX_DWORD             Uint32
+
+/* Endian related stuffs for Z80ex */
+#include "SDL_endian.h"
+#ifndef SDL_BYTEORDER
+#       error "SDL_BYTEORDER is not defined!"
+#endif
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+#       ifdef Z80EX_WORDS_BIG_ENDIAN
+#               undef Z80EX_WORDS_BIG_ENDIAN
+#       endif
+#       define ENDIAN_GOOD
+#elif SDL_BYTEORDER == SDL_BIG_ENDIAN
+#       ifndef Z80EX_WORDS_BIG_ENDIAN
+#               define Z80EX_WORDS_BIG_ENDIAN
+#       endif
+#       define ENDIAN_UGLY
+#else
+#       error "SDL_BYTEORDER is not SDL_LIL_ENDIAN neither SDL_BIG_ENDIAN"
+#endif
+
+//#include "../z80ex/z80ex.h"
+
+#include "../z80ex/z80ex.c"
+
+
 
 
 #define DEBUG(...) fprintf(stderr, __VA_ARGS__)
@@ -56,11 +95,11 @@ static struct fcb_st fcb_table[MAX_OPEN_FILES];
 
 
 
-Z80EX_BYTE z80ex_mread_cb(Z80EX_WORD addr, int m1_state) {
+static inline Z80EX_BYTE z80ex_mread_cb(Z80EX_WORD addr, int m1_state) {
 	return memory[addr];
 }
 
-void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
+static inline void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 	if (addr >= BDOS_ENTRY_ADDR) {
 		DEBUG("CPM: FATAL: someone tried to write system area at address %04Xh PC = %04Xh\n", addr, Z80_PC);
 		exit(1);
@@ -71,25 +110,22 @@ void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 	memory[addr] = value;
 }
 
-Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
+static inline Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 	DEBUG("CPM: warning, someone tried to read I/O port %04Xh at PC = %04Xh\n", port16, Z80_PC);
 	return 0xFF;
 }
 
-void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
+static inline void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 	DEBUG("CPM: warning, someone tried to write I/O port %04Xh at PC = %04Xh\n", port16, Z80_PC);
 }
 
-Z80EX_BYTE z80ex_intread_cb( void ) {
+static inline Z80EX_BYTE z80ex_intread_cb( void ) {
 	return 0xFF;
 }
 
-void z80ex_reti_cb ( void ) {
+static inline void z80ex_reti_cb ( void ) {
 }
 
-
-void z80ex_z180_cb (Z80EX_WORD pc, Z80EX_BYTE prefix, Z80EX_BYTE series, Z80EX_BYTE opcode, Z80EX_BYTE itc76) {
-}
 
 
 
@@ -147,6 +183,8 @@ static int cpm_init ( int argc, char **argv )
 	memory[4] = 0;
 	// Now fill buffer of the command line
 	memory[0x81] = 0;
+	memset(memory + 0x5C + 1, 32, 11);
+	memset(memory + 0x6C + 1, 32, 11);
 	for (a = 2; a < argc; a++) {
 		if (a <= 3)
 			write_filename_to_fcb(a == 2 ? 0x5C : 0x6C, argv[a]);

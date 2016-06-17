@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <sys/time.h>
-#include "../z80ex/z80ex.h"
+
+#include "../z80.h"
+#include "../z80ex/z80ex.c"
+
 
 Z80EX_CONTEXT z80ex;
 
@@ -55,7 +58,7 @@ int main ( void )
 	mhz = t_all / (double)elapsed;
 	printf("Microseconds for test: %d\nT-states for Z80: %lld\nEstimated Z80 clock speed: %lfMHz\nZ80 4MHz compared: x%02lf\n",
 		elapsed,
-		t_all,
+		(long long int)t_all,
 		mhz,
 		mhz / 4.0
 	);
