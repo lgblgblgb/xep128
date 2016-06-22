@@ -25,7 +25,6 @@ extern char *app_pref_path, *app_base_path;
 extern char current_directory[PATH_MAX + 1];
 extern char sdimg_path[PATH_MAX + 1];
 extern SDL_version sdlver_compiled, sdlver_linked;
-extern int sdl_v204;
 
 extern int  config_init ( int argc, char **argv );
 extern void *config_getopt ( const char *name, const int subopt, void *value );

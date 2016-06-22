@@ -79,8 +79,6 @@ char *app_pref_path, *app_base_path;
 char current_directory[PATH_MAX + 1];
 SDL_version sdlver_compiled, sdlver_linked;
 FILE *debug_file = NULL;
-int sdl_v204;
-
 
 
 
@@ -450,8 +448,8 @@ static void save_sample_config ( const char *name )
 
 
 
-#if !SDL_VERSION_ATLEAST(2, 0, 2)
-#	error "We need SDL2 version 2.0.2 at least!"
+#if !SDL_VERSION_ATLEAST(2, 0, 4)
+#	error "We need SDL2 version 2.0.4 at least!"
 #endif
 
 
@@ -490,7 +488,10 @@ int config_init ( int argc, char **argv )
 #endif
 	SDL_VERSION(&sdlver_compiled);
 	SDL_GetVersion(&sdlver_linked);
-	sdl_v204 = (sdlver_linked.major >= 2 && (sdlver_linked.patch >= 4 || sdlver_linked.minor)); // used to work-around linked/compiled mismatch and using 2.0.4 features ...
+	if (sdlver_linked.major < 2 || (sdlver_linked.minor == 0 && sdlver_linked.patch < 4)) {
+		ERROR_WINDOW("Too old SDL library linked, at least version 2.0.4 is required.");
+		return 1;
+	}
 	/* SDL info on paths */
 	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
 	app_base_path = SDL_GetBasePath();

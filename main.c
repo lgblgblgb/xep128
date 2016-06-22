@@ -270,11 +270,7 @@ void emu_one_frame(int rasters, int frameskip)
 				if (e.wheel.windowID == sdl_winid)
 					emu_mouse_wheel(
 						e.wheel.x, e.wheel.y,
-#if SDL_VERSION_ATLEAST(2, 0, 4)
-						sdl_v204 ? e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED : 0
-#else
-						0
-#endif
+						e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED
 					);
 				break;
 			case SDL_MOUSEBUTTONDOWN:
