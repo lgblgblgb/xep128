@@ -12,7 +12,7 @@ endif
 include arch/Makefile.$(ARCH)
 
 # -flto is for link time optimization, CHANGE it to -g for debug material, but do NOT mix -g and -flto !!
-DEBUG	= -flto
+DEBUG	=
 
 CFLAGS	= $(DEBUG) $(CFLAGS_ARCH)
 CPPFLAGS= -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell echo $(ARCH) | tr 'a-z' 'A-Z')
