@@ -494,10 +494,16 @@ int config_init ( int argc, char **argv )
 	/* SDL info on paths */
 	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
 	app_base_path = SDL_GetBasePath();
-	if (app_pref_path == NULL) app_pref_path = SDL_strdup("?");
-	if (app_base_path == NULL) app_base_path = SDL_strdup("?");
+	if (!app_pref_path) {
+		ERROR_WINDOW("Cannot query preferences directory: %s", ERRSTR());
+		return 1;
+	}
+	if (!app_base_path) {
+		ERROR_WINDOW("Cannot query base directory: %s", ERRSTR());
+		return 1;
+	}
 	if (getcwd(current_directory, sizeof current_directory) == NULL) {
-		ERROR_WINDOW("Cannot query the current directory: %s", ERRSTR());
+		ERROR_WINDOW("Cannot query current directory: %s", ERRSTR());
 		return 1;
 	}
 	strcat(current_directory, DIRSEP);
