@@ -187,13 +187,13 @@ for using outside of certain opcode execution)*/
 /*read byte from port*/
 #define READ_PORT(result, port, t_state) \
 { \
-	result=(z80ex_pread_cb(cpu, (port))); \
+	result=(z80ex_pread_cb((port))); \
 }
 
 /*write byte to memory*/
 #define WRITE_MEM(addr, vbyte, t_state) \
 { \
-	z80ex.mwrite_cb(addr, vbyte); \
+	z80ex_mwrite_cb(addr, vbyte); \
 }
 
 /*write byte to port*/
