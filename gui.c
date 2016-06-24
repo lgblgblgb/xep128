@@ -95,7 +95,7 @@ int xepgui_file_selector ( int dialog_mode, const char *dialog_title, char *defa
 }
 
 
-#else
+#elif defined(XEP128_GTK)
 /* ---------------------------------------- LINUX/UNIX STUFFS based on GTK ---------------------------------------- */
 
 
@@ -146,4 +146,17 @@ int xepgui_file_selector ( int dialog_mode, const char *dialog_title, char *defa
 	sdl_burn_events();
 	return res != GTK_RESPONSE_ACCEPT;
 }
+#else
+/* ----------------------------- NO GUI IS AVAILABLE ---------------------- */
+
+void xepgui_init ( void ) {
+}
+
+void xepgui_iteration ( void ) {
+}
+
+int xepgui_file_selector ( int dialog_mode, const char *dialog_title, char *default_dir, char *selected, int path_max_size ) {
+	return 1;
+}
+
 #endif
