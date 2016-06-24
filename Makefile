@@ -2,7 +2,16 @@
 # Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
 # http://xep128.lgb.hu/
 
-include Makefile.common
+SRCS_COMMON = lodepng.c screen.c font_16x16.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c primoemu.c emu_rom_interface.c w5300.c apu.c keyboard_mapping.c configuration.c roms.c console.c emu_monitor.c joystick.c fileio.c gui.c z80.c z80dasm.c
+
+SDIMG	= sdcard.img
+SDURL	= http://xep128.lgb.hu/files/sdcard.img
+ROM	= combined.rom
+DLL	= SDL2.dll
+DLLURL	= http://xep128.lgb.hu/files/SDL-2.0.4.dll
+
+all:
+	$(MAKE) do-all
 
 ifneq ($(wildcard .arch),)
 include .arch
@@ -14,8 +23,7 @@ include arch/Makefile.$(ARCH)
 # -flto is for link time optimization, CHANGE it to -g for debug material, but do NOT mix -g and -flto !!
 DEBUG	=
 
-CFLAGS	= $(DEBUG) $(CFLAGS_ARCH)
-CPPFLAGS= -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell echo $(ARCH) | tr 'a-z' 'A-Z')
+CFLAGS	= $(DEBUG) $(CFLAGS_ARCH) -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell echo $(ARCH) | tr 'a-z' 'A-Z')
 LDFLAGS	= $(DEBUG) $(LDFLAGS_ARCH)
 LIBS	= $(LIBS_ARCH)
 SRCS	= $(SRCS_COMMON) $(SRCS_ARCH)
@@ -25,7 +33,7 @@ ZIP	= xep128-$(ARCH).zip
 
 
 do-all:
-	@echo "Compiler:     $(CC) $(CFLAGS) $(CPPFLAGS)"
+	@echo "Compiler:     $(CC) $(CFLAGS)"
 	@echo "Linker:       $(CC) $(LDFLAGS) $(LIBS)"
 	@echo "Architecture: $(ARCH) [$(ARCH_DESC)]"
 	$(MAKE) $(PRG)
@@ -48,10 +56,10 @@ set-arch:
 	@echo "OK, architecture is set to $(TO) (from $(ARCH))."
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 %.s: %.c
-	$(CC) -S $(CFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -S $(CFLAGS) $< -o $@
 
 xep_rom.rom: xep_rom.asm
 	sjasm -s xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom xep_rom.lst xep_rom.sym ; false; }
@@ -140,7 +148,7 @@ dep:
 depend:
 	$(MAKE) xep_rom.hex
 	$(MAKE) xep_rom_syms.h
-	$(CC) -MM $(CFLAGS) $(CPPFLAGS) $(SRCS) > .depend.$(ARCH)
+	$(CC) -MM $(CFLAGS) $(SRCS) > .depend.$(ARCH)
 
 valgrind:
 	@echo "*** valgrind is useful mainly if you built Xep128 with the -g flag ***"
