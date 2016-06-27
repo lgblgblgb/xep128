@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "emu_monitor.h"
 #include "xep_rom_syms.h"
 #include "cpu.h"
-#include "cpu_z180.h"
+#include "z180.h"
 #include "configuration.h"
 #include "emu_rom_interface.h"
 #include "fileio.h"

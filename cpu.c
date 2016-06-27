@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "xep128.h"
 #include "cpu.h"
 #include "apu.h"
-#include "cpu_z180.h"
+#include "z180.h"
 #include "dave.h"
 #include "nick.h"
 #include "rtc.h"

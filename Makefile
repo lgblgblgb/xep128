@@ -2,7 +2,7 @@
 # Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
 # http://xep128.lgb.hu/
 
-SRCS_COMMON = lodepng.c screen.c font_16x16.c main.c cpu.c cpu_z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c primoemu.c emu_rom_interface.c w5300.c apu.c keyboard_mapping.c configuration.c roms.c console.c emu_monitor.c joystick.c fileio.c gui.c z80.c z80dasm.c
+SRCS_COMMON = lodepng.c screen.c font_16x16.c main.c cpu.c z180.c nick.c dave.c input.c exdos_wd.c sdext.c rtc.c printer.c zxemu.c primoemu.c emu_rom_interface.c w5300.c apu.c keyboard_mapping.c configuration.c roms.c console.c emu_monitor.c joystick.c fileio.c gui.c z80.c z80dasm.c
 
 SDIMG	= sdcard.img
 SDURL	= http://xep128.lgb.hu/files/sdcard.img
