@@ -62,12 +62,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 //#define ERRSTR()		sys_errlist[errno]
 #define ERRSTR()		strerror(errno)
 
-#if UINT_MAX >= 0xffffffffffffffff
-#	define ARCH_64BIT
-#	define ARCH_BITS 64
-#else
+#if UINTPTR_MAX == 0xffffffff
 #	define ARCH_32BIT
 #	define ARCH_BITS 32
+#else
+#	define ARCH_64BIT
+#	define ARCH_BITS 64
 #endif
 
 #ifdef _WIN32
