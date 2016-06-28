@@ -1,0 +1,24 @@
+# Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
+# Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+# http://xep128.lgb.hu/
+
+ARCH_DESC	= "Windows WIN32 cross-compilation on UNIX"
+PREFIX		=
+BINDIR		=
+DATADIR		=
+CC		= x86_64-w64-mingw32-gcc
+STRIP		= x86_64-w64-mingw32-strip
+SDLCFG		= /usr/local/cross-tools/x86_64-w64-mingw32/bin/sdl2-config
+GTKPKGCFG	=
+GENOPTS		= -Ofast -fno-common -falign-functions=16 -falign-loops=16 -ffast-math
+CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(shell $(SDLCFG) --cflags)
+LDFLAGS_ARCH	= $(GENOPTS) $(shell $(SDLCFG) --libs)
+LIBS_ARCH	=
+SRCS_ARCH	=
+PRG		= xep128_w64.exe
+ZIP_FILES_ARCH	= $(DLL)
+
+$(DLL):
+	@echo "**** Fetching Win32 SDL2 DLL from $(DLLURL) ..."
+	wget -O $(DLL) $(DLLURL) || { rm -f $(DLL) ; false; }
+
