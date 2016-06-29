@@ -473,6 +473,57 @@ int is_help_request_option ( const char *opt )
 
 
 
+static int get_path_info ( void )
+{
+	FILE *f;
+	char buffer[PATH_MAX + 1];
+	app_pref_path = NULL;	// to signal that it's not got yet
+	/* Get base path (where executable is */
+	app_base_path = SDL_GetBasePath();
+	if (!app_base_path) {
+		ERROR_WINDOW("Cannot query base directory: %s", ERRSTR());
+		return 1;
+	}
+	/* Check for pref dir override file in the same directory where executable is (base path) */
+	snprintf(buffer, sizeof buffer, "%s%cxep128.dir", app_base_path, DIRSEP[0]);
+	f = fopen(buffer, "r");
+	if (f) {
+		char *p = fgets(buffer, sizeof buffer, f);
+		fclose(f);
+		if (p) {
+			p = strchr(buffer, 13);
+			if (p)
+				*p = 0;
+			p = strchr(buffer, 10);
+			if (p)
+				*p = 0;
+			if (*buffer == '.')
+				app_pref_path = strdup(app_base_path);
+			else if (*buffer)
+				app_pref_path = strdup(buffer);
+		}
+	}
+	/* Pref dir stuff */
+	if (app_pref_path) {
+		printf("CONFIG: Overriding pref path to: %s" NL, app_pref_path);
+	} else {
+		app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
+		if (!app_pref_path) {
+			ERROR_WINDOW("Cannot query preferences directory: %s", ERRSTR());
+			return 1;
+		}
+	}
+	/* Get current directory */
+	if (getcwd(current_directory, sizeof current_directory) == NULL) {
+		ERROR_WINDOW("Cannot query current directory: %s", ERRSTR());
+		return 1;
+	}
+	strcat(current_directory, DIRSEP);
+	return 0;
+}
+
+
+
 
 
 int config_init ( int argc, char **argv )
@@ -493,21 +544,8 @@ int config_init ( int argc, char **argv )
 		return 1;
 	}
 	/* SDL info on paths */
-	app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
-	app_base_path = SDL_GetBasePath();
-	if (!app_pref_path) {
-		ERROR_WINDOW("Cannot query preferences directory: %s", ERRSTR());
+	if (get_path_info())
 		return 1;
-	}
-	if (!app_base_path) {
-		ERROR_WINDOW("Cannot query base directory: %s", ERRSTR());
-		return 1;
-	}
-	if (getcwd(current_directory, sizeof current_directory) == NULL) {
-		ERROR_WINDOW("Cannot query current directory: %s", ERRSTR());
-		return 1;
-	}
-	strcat(current_directory, DIRSEP);
 	/* ugly hack: pre-parse comand line to find debug statement (to be worse, it does not handle single argument options too well ... */
 	while (testparsing < argc) {
 		if (!strcmp(argv[testparsing], "-" DEBUGFILE_OPT) && testparsing != argc - 1 && strcmp(argv[testparsing + 1], "none")) {
