@@ -403,13 +403,15 @@ int screen_init ( void )
    This function simply "pops" out SDL events and do not use them to prevent them to be detected later by the emulator. */
 void sdl_burn_events ( void )
 {
-	SDL_Event e;
-	int c = 0;
-	while (SDL_PollEvent(&e) != 0)
-		c++;	// do nothing, just count events to be logged in case of debug mode
+	SDL_PumpEvents();
+	SDL_FlushEvent(SDL_KEYDOWN);
+	SDL_FlushEvent(SDL_KEYUP);
+	SDL_FlushEvent(SDL_MOUSEMOTION);
+	SDL_FlushEvent(SDL_MOUSEWHEEL);
+	SDL_FlushEvent(SDL_MOUSEBUTTONDOWN);
+	SDL_FlushEvent(SDL_MOUSEBUTTONUP);
 	kbd_matrix_reset();	// also reset the keyboard matrix as it seems some keys can be detected "stucked" ...
 	mouse_reset_button();	// ... and also the mouse buttons :)
-	DEBUG("SDL: burn: dropped %d event(s)" NL, c);
 }
 
 
