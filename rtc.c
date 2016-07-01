@@ -74,9 +74,7 @@ static int _rtc_conv(int bin, int is_hour)
 
 static void _rtc_update(void)
 {
-	//time_t now = time(NULL);
-	time_t now = emu_getunixtime();
-	struct tm *t = localtime(&now);
+	struct tm *t = localtime(&unix_time);
 	cmos_ram[   0] = _rtc_conv(t->tm_sec, 0);
 	cmos_ram[   2] = _rtc_conv(t->tm_min, 0);
 	cmos_ram[   4] = _rtc_conv(t->tm_hour, 1);
@@ -92,7 +90,7 @@ static void _rtc_update(void)
 		t->tm_hour,
 		t->tm_min,
 		t->tm_sec,
-		now
+		unix_time
 	);
 }
 

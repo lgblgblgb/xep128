@@ -21,9 +21,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 extern void *alloc_xep_aligned_mem ( size_t size );
 extern void emu_one_frame(int rasters, int frameskip);
-extern time_t emu_getunixtime ( void );
 extern int  set_cpu_clock ( int hz );
 
 extern int paused;
+extern time_t unix_time;
 
 #endif

@@ -74,8 +74,7 @@ void xep_set_error ( const char *msg )
 
 void xep_set_time_consts ( char *descbuffer )
 {
-	time_t now = emu_getunixtime();
-	struct tm *t = localtime(&now);
+	struct tm *t = localtime(&unix_time);
 	SET_XEPSYM_BYTE(xepsym_settime_hour,    BIN2BCD(t->tm_hour));
 	SET_XEPSYM_WORD(xepsym_settime_minsec,  (BIN2BCD(t->tm_min) << 8) | BIN2BCD(t->tm_sec));
 	SET_XEPSYM_BYTE(xepsym_setdate_year,    BIN2BCD(t->tm_year - 80));

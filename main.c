@@ -44,6 +44,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <stdlib.h>
 #include <SDL.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 
@@ -54,13 +55,13 @@ static int guarded_exit = 0;
 static unsigned int ticks;
 int paused = 0;
 static int cpu_cycles_for_dave_sync = 0;
-static double td_balancer = 0;
-static struct timeval tv_old;
+static int td_balancer;
+static Uint64 et_old;
 static int td_em_ALL = 0, td_pc_ALL = 0, td_count_ALL = 0;
 static double balancer;
 static double SCALER;
 static int sram_ready = 0;
-
+time_t unix_time;
 
 
 
@@ -106,6 +107,56 @@ static void shutdown_sdl(void)
 
 
 
+static int get_elapsed_time ( Uint64 t_old, Uint64 *t_new, time_t *store_unix_time )
+{
+#ifdef XEP128_OLD_TIMING
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	if (store_unix_time)
+		*store_unix_time = tv.tv_sec;
+	*t_new = tv.tv_sec * 1000000UL + tv.tv_usec;
+	return *t_new - t_old;
+#else
+	if (store_unix_time)
+		*store_unix_time = time(NULL);
+	*t_new = SDL_GetPerformanceCounter();
+	return 1000000 * (*t_new - t_old) / SDL_GetPerformanceFrequency();
+#endif
+}
+
+
+
+static inline void emu_sleep ( int td )
+{
+	if (td <= 0)
+		return;
+#ifdef XEP128_SLEEP_IS_SDL_DELAY
+	SDL_Delay(td / 1000);
+#elif defined(XEP128_SLEEP_IS_USLEEP)
+	usleep(td);
+#else
+	struct timespec req, rem;
+	td *= 1000;
+	req.tv_sec  = td / 1000000000UL;
+	req.tv_nsec = td % 1000000000UL;
+	for (;;) {
+		if (nanosleep(&req, &rem)) {
+			if (errno == EINTR) {
+				req.tv_sec = rem.tv_sec;
+				req.tv_nsec = rem.tv_nsec;
+			} else {
+				ERROR_WINDOW("Nanosleep() returned with unhandlable error");
+				return;
+			}
+		} else
+			return;
+	}
+#endif
+}
+
+
+
+
 /* This is the emulation timing stuff
  * Should be called at the END of the emulation loop.
  * Input parameter: microseconds needed for the "real" (emulated) computer to do our loop 
@@ -113,9 +164,8 @@ static void shutdown_sdl(void)
 static void emu_timekeeping_delay ( int td_em )
 {
 	int td, td_pc;
-	struct timeval tv_new;
-	gettimeofday(&tv_new, NULL);
-	td_pc = (tv_new.tv_sec - tv_old.tv_sec) * 1000000 + (tv_new.tv_usec - tv_old.tv_usec); // get realtime since last call in microseconds
+	Uint64 et_new;
+	td_pc = get_elapsed_time(et_old, &et_new, NULL);	// get realtime since last call in microseconds
 	if (td_pc < 0) return; // time goes backwards? maybe time was modified on the host computer. Skip this delay cycle
 	//td_ep = 1000000 * rasters * 57 / NICK_SLOTS_PER_SEC; // microseconds would need for an EP128 to do this
 	td = td_em - td_pc; // the time difference (+X = PC is faster - real time EP emulation, -X = EP is faster - real time EP emulation is not possible)
@@ -140,16 +190,14 @@ static void emu_timekeeping_delay ( int td_em )
 	/* for reporting only: END */
 	if (td > 0) {
 		td_balancer += td;
-		if (td_balancer > 0)
-			usleep((int)td_balancer);
+		emu_sleep(td_balancer);
 	}
 	/* Purpose:
 	 * get the real time spent sleeping (sleep is not an exact science on a multitask OS)
 	 * also this will get the starter time for the next frame
 	 */
-	gettimeofday(&tv_old, NULL); // to calc
 	// calculate real time slept
-	td = (tv_old.tv_sec - tv_new.tv_sec) * 1000000 + (tv_old.tv_usec - tv_new.tv_usec);
+	td = get_elapsed_time(et_new, &et_old, &unix_time);
 	DEBUG("Really slept = %d" NL, td);
 	if (td < 0) return; // invalid, sleep was about for _minus_ time? eh, give me that time machine, dude! :)
 	td_balancer -= td;
@@ -157,23 +205,19 @@ static void emu_timekeeping_delay ( int td_em )
 		td_balancer = 0;
 	else if (td_balancer < -1000000)
 		td_balancer = 0;
-	DEBUG("Balancer = %lf" NL, td_balancer);
+	DEBUG("Balancer = %d" NL, td_balancer);
 	//unix_time = tv_old.tv_sec; // publish current time
 }
 
 
-time_t emu_getunixtime ( void )
-{
-	return tv_old.tv_sec;
-}
 
 
 /* Should be started on each time, emulation is started/resumed (ie after any delay in emulation like pause, etc)
  * You DO NOT need this during the active emulation loop! */
 void emu_timekeeping_start ( void )
 {
-	gettimeofday(&tv_old, NULL);
-	td_balancer = 0.0;
+	(void)get_elapsed_time(0, &et_old, &unix_time);
+	td_balancer = 0;
 }
 
 
