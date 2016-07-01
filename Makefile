@@ -41,8 +41,7 @@ do-all:
 deb:
 	if [ x$(ARCH) != xnative ]; then echo "*** You must set architecture to native first, with: make set-arch TO=native" ; false ; fi
 	$(MAKE) all
-	@echo "*** Debian package building is TODO ..."
-	@false
+	arch/deb-build-simple
 
 set-arch:
 	if [ x$(TO) = x ]; then echo "*** Must specify architecture with TO=..." ; false ; fi
@@ -124,7 +123,7 @@ clean:
 distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
-	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) xep128-*.zip .arch .depend.*
+	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) xep128-*.zip .arch .depend.* xep128_*.deb
 	rm -f arch/objs.*/*.o || true
 	rmdir arch/objs.* 2>/dev/null || true
 

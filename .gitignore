@@ -51,4 +51,4 @@ wiki
 *.bak
 .git-commit-info*
 todo
-
+*.deb
