@@ -110,6 +110,7 @@ static void shutdown_sdl(void)
 static int get_elapsed_time ( Uint64 t_old, Uint64 *t_new, time_t *store_unix_time )
 {
 #ifdef XEP128_OLD_TIMING
+#define __TIMING_METHOD_DESC "gettimeofday()"
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	if (store_unix_time)
@@ -117,6 +118,7 @@ static int get_elapsed_time ( Uint64 t_old, Uint64 *t_new, time_t *store_unix_ti
 	*t_new = tv.tv_sec * 1000000UL + tv.tv_usec;
 	return *t_new - t_old;
 #else
+#define __TIMING_METHOD_DESC "SDL_GetPerformanceCounter"
 	if (store_unix_time)
 		*store_unix_time = time(NULL);
 	*t_new = SDL_GetPerformanceCounter();
@@ -131,10 +133,13 @@ static inline void emu_sleep ( int td )
 	if (td <= 0)
 		return;
 #ifdef XEP128_SLEEP_IS_SDL_DELAY
+#define __SLEEP_METHOD_DESC "SDL_Delay"
 	SDL_Delay(td / 1000);
 #elif defined(XEP128_SLEEP_IS_USLEEP)
+#define __SLEEP_METHOD_DESC "usleep"
 	usleep(td);
 #else
+#define __SLEEP_METHOD_DESC "nanosleep"
 	struct timespec req, rem;
 	td *= 1000;
 	req.tv_sec  = td / 1000000000UL;
@@ -248,8 +253,6 @@ int set_cpu_clock_with_osd ( int hz )
 void emu_one_frame(int rasters, int frameskip)
 {
 	SDL_Event e;
-	if (!frameskip)
-		screen_present_frame(ep_pixels);
 	while (SDL_PollEvent(&e) != 0)
 		switch (e.type) {
 			case SDL_WINDOWEVENT:
@@ -326,6 +329,9 @@ void emu_one_frame(int rasters, int frameskip)
 				joy_sdl_event(&e);
 				break;
 		}
+	if (!frameskip)
+		screen_present_frame(ep_pixels);	// this should be after the event handler, as eg screenshot function needs locked texture state if this feature is used at all
+	xepgui_iteration();
 	monitor_process_queued();
 	rtc_update_trigger = 1; // triggers RTC update on the next RTC register read. Woooo!
 	emu_timekeeping_delay(1000000.0 * rasters * 57.0 / (double)NICK_SLOTS_PER_SEC);
@@ -344,10 +350,14 @@ int main (int argc, char *argv[])
 	if (config_init(argc, argv))
 		return 1;
 	guarded_exit = 1;	// turn on guarded exit, with custom de-init stuffs
+	DEBUGPRINT("EMU: sleeping = \"%s\", timing = \"%s\"" NL,
+		__SLEEP_METHOD_DESC, __TIMING_METHOD_DESC
+	);
 	fileio_init(app_pref_path, "files");
 	if (screen_init())
 		return 1;
-	xepgui_init();
+	if (xepgui_init())
+		return 1;
 	audio_init(config_getopt_int("audio"));
 	z80ex_init();
 	set_ep_cpu(CPU_Z80);

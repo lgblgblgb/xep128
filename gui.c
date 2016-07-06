@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #ifdef _WIN32
 #	include <windows.h>
 #	define XEP128_HWND sdl_wminfo.info.win.window
-#else
+#elif defined(XEP128_GTK)
 #	include <gtk/gtk.h>
 #endif
 
@@ -53,8 +53,9 @@ static void store_dir_from_file_selection ( char *store_dir, const char *filenam
 /* ---------------------------------------- Windows STUFFS based on Win32 native APIs ---------------------------------------- */
 
 
-void xepgui_init ( void )
+int xepgui_init ( void )
 {
+	return 0;
 }
 
 
@@ -99,10 +100,14 @@ int xepgui_file_selector ( int dialog_mode, const char *dialog_title, char *defa
 /* ---------------------------------------- LINUX/UNIX STUFFS based on GTK ---------------------------------------- */
 
 
-void xepgui_init ( void )
+int xepgui_init ( void )
 {
-	gtk_init(NULL, NULL);
+	if (!gtk_init_check(NULL, NULL)) {
+		ERROR_WINDOW("Cannot initialize GTK");
+		return 1;
+	}
 	xepgui_iteration();	// consume possible peding (if any?) GTK stuffs after initialization - maybe not needed at all?
+	return 0;
 }
 
 
@@ -149,7 +154,8 @@ int xepgui_file_selector ( int dialog_mode, const char *dialog_title, char *defa
 #else
 /* ----------------------------- NO GUI IS AVAILABLE ---------------------- */
 
-void xepgui_init ( void ) {
+int xepgui_init ( void ) {
+	return 0;
 }
 
 void xepgui_iteration ( void ) {

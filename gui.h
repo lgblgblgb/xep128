@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define XEPGUI_FSEL_SAVE		2
 #define XEPGUI_FSEL_FLAG_STORE_DIR	0x100
 
-extern void xepgui_init ( void );
+extern int  xepgui_init ( void );
 extern void xepgui_iteration ( void );
 extern int  xepgui_file_selector ( int dialog_mode, const char *dialog_title, char *default_dir, char *selected, int path_max_size );
 
