@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef __XEP128_CPU_Z180_H_INCLUDED
-#define __XEP128_CPU_Z180_H_INCLUDED
+#ifndef __XEP128_Z180_H_INCLUDED
+#define __XEP128_Z180_H_INCLUDED
 
 #include "z80.h"
 
