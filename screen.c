@@ -364,12 +364,10 @@ int screen_init ( void )
 		return 1;
 	}
 	SDL_RenderSetLogicalSize(sdl_ren, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
-#if SDL_VERSION_ATLEAST(2, 0, 4)
 	XEP128_SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_PING, "wmping", "0");		// disable WM ping, SDL dialog boxes makes WMs things Xep128 is dead :-/
-#endif
 	XEP128_SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "quality", "1");		// render scale quality 0, 1, 2
 	XEP128_SDL_SetHint(SDL_HINT_RENDER_VSYNC, "vsync", "0");			// disable vsync
-#if defined(_WIN32) && SDL_VERSION_ATLEAST(2, 0, 4)
+#ifdef _WIN32
 	XEP128_SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "noaltf4", "1");	// 1 = disable ALT-F4 close on Windows
 #endif
 	XEP128_SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "focuslossmin", "1");	// 1 = do minimize the SDL_Window if it loses key focus when in fullscreen mode

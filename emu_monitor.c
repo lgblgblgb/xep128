@@ -543,19 +543,13 @@ static void cmd_sdl ( void )
 		case SDL_SYSWM_UNKNOWN:	break;
 		case SDL_SYSWM_WINDOWS:	subsystem = "Microsoft Windows(TM)";	break;
 		case SDL_SYSWM_X11:	subsystem = "X Window System";		break;
-#if SDL_VERSION_ATLEAST(2, 0, 3)
 		case SDL_SYSWM_WINRT:	subsystem = "WinRT";			break;
-#endif
 		case SDL_SYSWM_DIRECTFB:subsystem = "DirectFB";			break;
 		case SDL_SYSWM_COCOA:	subsystem = "Apple OS X";		break;
 		case SDL_SYSWM_UIKIT:	subsystem = "UIKit";			break;
-#if SDL_VERSION_ATLEAST(2, 0, 2)
 		case SDL_SYSWM_WAYLAND:	subsystem = "Wayland";			break;
 		case SDL_SYSWM_MIR:	subsystem = "Mir";			break;
-#endif
-#if SDL_VERSION_ATLEAST(2, 0, 4)
 		case SDL_SYSWM_ANDROID:	subsystem = "Android";			break;
-#endif
 	}
 	MPRINTF(WINDOW_TITLE " is running with SDL version %d.%d.%d on %s (id=%d)\n",
 		(int)sdl_wminfo.version.major,
