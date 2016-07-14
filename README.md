@@ -1,4 +1,6 @@
 # Xep128
+
+[![Join the chat at https://gitter.im/lgblgblgb/xep128](https://badges.gitter.im/lgblgblgb/xep128.svg)](https://gitter.im/lgblgblgb/xep128?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Xep128 is an Enterprise-128 (a Z80 based, 8 bit computer) emulator (uses SDL2
 and z80ex) with the main focus on emulating somewhat "exotic" hardware
 additions.
@@ -8,25 +10,23 @@ Written by (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
 Xep128 main site: http://xep128.lgb.hu/
 Source repository: http://github.com/lgblgblgb/xep128
 
-Xep128 uses Z80 emulator "Z80ex": https://sourceforge.net/projects/z80ex/
-and lodePNG to write screenshots.
+Xep128 uses (modified, by me) Z80 emulator "Z80ex": https://sourceforge.net/projects/z80ex/
+and lodePNG to write screenshots: http://lodev.org/lodepng/
 
 Xep128 is licensed under the terms of GNU/GPL v2, for more information please
 read file LICENSE. You can find the source on github, see above.
 
 WARNING! Xep128 is in early alpha stage currently! It lacks many important
-features (no sound, not so precise nick emulation, etc etc), and it's not
+features (no/ugly sound, not so precise nick emulation, etc etc), and it's not
 comfortable to use, there is only CLI/config file based configuration, etc.
-It will change later, hopefully.
 
-Currently it's mainly for Linux and/or UNIX-like systems, but since it's an SDL
-based project, it would be not that hard to port to Windows. There is some
-on-going try (by me) to build for Windows on Linux, see later in this document
-for details, if you want to try Xep128 on Windows.
+Currently it's mainly for Linux and/or UNIX-like systems and Windows, however
+since I don't use Windows, I can't test if it really works (cross compiled on
+Linux).
 
 Please note, that it's not the "best" Enterprise-128 emulator on the planet,
 for that, you should use ep128emu project instead. Also, my emulator is not so
-cycle exact for now, it does not emulate sound (currently), it also lacks
+cycle exact for now, it does not emulate sound quite well (currently), it also lacks
 debugger what ep128emu has. However it emulates some "more exotic" (not so much
 traditional) hardware additions becomes (or becoming) popular among EP users
 recently: mouse support, APU ("FPU"), SD card reader and soon limited wiznet
@@ -35,24 +35,19 @@ w5300 emulation (Ethernet connection with built-in TCP/IP support).
 # Installation on Linux / UNIX like OS (from source)
 
 You can download the ZIP'ed repository from https://github.com/lgblgblgb/xep128
-or you can clone the repository, whatever. You need the SDL2 development
-libraries installed, on Debian/Ubuntu like systems, it can be done something
-like this:
+or you can clone the repository, whatever. You need the SDL2,
+libreadline and GTK3 _development_ installed (also some additional tools like
+the C compulter), on Debian/Ubuntu like systems, it can be done something
+like this (do not forget, that you should do this as root, so probably you
+need "sudo" before this command):
 
- apt-get install libsdl2-dev
-
-You also need GNU variant of make (BSD make probably won't work). And of
-course a C compiler, gcc (it should be OK with LLVM's clang as well, however
-I haven't tried that, and also you need to modify Makefile). You may want to
-install the mentioned packages, just to be sure (remember, if you are not
-the root user, you may need to do it with command 'sudo'):
-
- apt-get install libsdl2-dev make gcc wget
+ apt-get install libsdl2-dev make gcc wget libreadline6-dev libgtk-3-dev
 
 You will also need the sjasm Z80 assembler somewhere in your PATH, if you
 modified xep_rom.asm at least (otherwise sjasm is not needed).
 
-In the source, you need to issue the command "make". It will compile the
+In the source, you need to issue the command "make" (though if you modified
+source I would recommend to say "make dep" first). It will compile the
 emulator, you should have an executable "xep128" at the end. Now you need
 the ROM image and the SD card image. You can download it by hand (please
 read the Windows section about the URLs), or you can do it with the following
@@ -96,13 +91,6 @@ Put the file into the same directory where you put the content of xep128.zip.
 Now, you can try to execute xep128.exe ...
 
 # Usage
-
-Currently, the emulator outputs tons of information to the console/terminal
-you started from, which can slow down the whole X server. You may want to
-redirect the stdout to /dev/null or into a file (if you need it later) so
-the terminal won't make your X server busy to render that amount of text
-emited by the emulator :) Note: *this is not the case for Windows port,
-you can ignore this warning then*.
 
 Mouse emulation more or less works: it emulates the "boxsoft mouse interface".
 If you click into the emulation window, it enters into "mouse grab" mode,
@@ -277,14 +265,12 @@ an average EP user. It's more about emulation of some unusal add-ons.
 
 Just to mention some problems with Xep128:
 
-* no write disk access (with SD card)
 * no EXDOS/WD emulation
 * no menu/UI whatever
 * no debugger
 * no precise Nick emulation
 * no slowdown of VRAM access, would be on a real machine
 * no sound [in-progress now]
-* no joystick emulation yet
 
 # Credits
 
