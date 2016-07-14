@@ -72,7 +72,7 @@ I've never used Windows, nor I have Windows installed. So the best I will
 be able to do is trying to cross-compile for Windows on Linux.
 
 You can try to compile Xep128 yourself using Linux with cross compiling
-target for win32 (*make win32*).
+target for win32 or win64 (*make ARCH=win32* or *make ARCH=win64*).
 
 **Or you can try my build (WARNING! Not tested, I have no windows!)**
 

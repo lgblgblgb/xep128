@@ -13,11 +13,8 @@ DLLURL	= http://xep128.lgb.hu/files/SDL-2.0.4.dll
 all:
 	$(MAKE) do-all
 
-ifneq ($(wildcard .arch),)
-include .arch
-else
 ARCH	= native
-endif
+
 include arch/Makefile.$(ARCH)
 
 # -flto is for link time optimization, CHANGE it to -g for debug material, but do NOT mix -g and -flto !!
@@ -27,8 +24,10 @@ CFLAGS	= $(DEBUG) $(CFLAGS_ARCH) -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell ech
 LDFLAGS	= $(DEBUG) $(LDFLAGS_ARCH)
 LIBS	= $(LIBS_ARCH)
 SRCS	= $(SRCS_COMMON) $(SRCS_ARCH)
+OPREFIX	= arch/objs/$(ARCH)--
+DEPFILE	= $(OPREFIX)make.depend
 
-OBJS	= $(SRCS:.c=.o)
+OBJS	= $(addprefix $(OPREFIX), $(SRCS:.c=.o))
 ZIP	= xep128-$(ARCH).zip
 
 
@@ -39,22 +38,11 @@ do-all:
 	$(MAKE) $(PRG)
 
 deb:
-	if [ x$(ARCH) != xnative ]; then echo "*** You must set architecture to native first, with: make set-arch TO=native" ; false ; fi
-	$(MAKE) all
+	if [ x$(ARCH) != xnative ]; then echo "*** DEB package building is only allowed for ARCH=native" ; false ; fi
+	$(MAKE) all ARCH=native
 	arch/deb-build-simple
 
-set-arch:
-	if [ x$(TO) = x ]; then echo "*** Must specify architecture with TO=..." ; false ; fi
-	if [ x$(TO) = x$(ARCH) ]; then echo "*** Already this ($(ARCH)) architecture is set" ; false ; fi
-	if [ ! -f arch/Makefile.$(TO) ]; then echo "*** This architecture ($(TO)) is not supported" ; false ; fi
-	mkdir -p arch/objs.$(TO) arch/objs.$(ARCH)
-	echo "ARCH = $(TO)" > .arch
-	mv *.o arch/objs.$(ARCH)/ 2>/dev/null || true
-	mv arch/objs.$(TO)/*.o . 2>/dev/null || true
-	rm -f $(PRG)
-	@echo "OK, architecture is set to $(TO) (from $(ARCH))."
-
-%.o: %.c
+$(OPREFIX)%.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
 %.s: %.c
@@ -95,7 +83,7 @@ $(ROM):
 data:	$(SDIMG) $(ROM)
 	rm -f buildinfo.c
 
-$(PRG): .depend.$(ARCH) $(OBJS)
+$(PRG): $(DEPFILE) $(OBJS)
 	rm -f buildinfo.c
 	$(MAKE) buildinfo.o
 	$(CC) -o $(PRG) $(OBJS) buildinfo.o $(LDFLAGS) $(LIBS)
@@ -123,9 +111,8 @@ clean:
 distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
-	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) xep128-*.zip .arch .depend.* xep128_*.deb
-	rm -f arch/objs.*/*.o || true
-	rmdir arch/objs.* 2>/dev/null || true
+	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) xep128-*.zip xep128_*.deb
+	rm -f arch/objs/*
 
 help:
 	$(MAKE) $(PRG)
@@ -138,7 +125,7 @@ commit:
 	EDITOR="vim -c 'startinsert'" git commit -a
 	git push
 
-.depend.$(ARCH):
+$(DEPFILE):
 	$(MAKE) depend
 
 dep:
@@ -147,16 +134,16 @@ dep:
 depend:
 	$(MAKE) xep_rom.hex
 	$(MAKE) xep_rom_syms.h
-	$(CC) -MM $(CFLAGS) $(SRCS) > .depend.$(ARCH)
+	$(CC) -MM $(CFLAGS) $(SRCS) | awk '/^[^.:\t ]+\.o:/ { print "$(OPREFIX)" $$0 ; next } { print }' > $(DEPFILE)
 
 valgrind:
 	@echo "*** valgrind is useful mainly if you built Xep128 with the -g flag ***"
 	valgrind --read-var-info=yes --leak-check=full --track-origins=yes ./$(PRG) -debug /tmp/xep128.debug > /tmp/xep128-valgrind.stdout 2> /tmp/xep128-valgrind.stderr
 	ls -l /tmp/xep128.debug /tmp/xep128-valgrind.stdout /tmp/xep128-valgrind.stderr
 
-.PHONY: all clean distclean strip commit publish data install dep depend valgrind set-arch zip deb do-all
+.PHONY: all clean distclean strip commit publish data install dep depend valgrind zip deb do-all
 
-ifneq ($(wildcard .depend.$(ARCH)),)
-include .depend.$(ARCH)
+ifneq ($(wildcard $(DEPFILE)),)
+include $(DEPFILE)
 endif
 

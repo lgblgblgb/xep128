@@ -1,39 +1,7 @@
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
-
-# My files
 xep128
-xep128.exe
+*.exe
+*.hex
+*.dll
 sdcard.img
 combined.rom
 www
@@ -42,9 +10,6 @@ buildinfo.c
 xep_rom.lst
 xep_rom_syms.h
 screenshot*.png
-.depend.*
-.arch
-arch/objs.*
 .*.swp
 wiki
 *.img
