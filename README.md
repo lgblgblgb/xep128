@@ -1,4 +1,6 @@
 # Xep128
+
+[![Join the chat at https://gitter.im/lgblgblgb/xep128](https://badges.gitter.im/lgblgblgb/xep128.svg)](https://gitter.im/lgblgblgb/xep128?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Xep128 is an Enterprise-128 (a Z80 based, 8 bit computer) emulator (uses SDL2
 and z80ex) with the main focus on emulating somewhat "exotic" hardware
 additions.
