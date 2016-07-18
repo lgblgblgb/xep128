@@ -83,47 +83,47 @@ struct mouse_modes_st {
 static const struct mouse_modes_st mouse_modes[] = {
 	{	// MODE - 0: NOT USED POSITION
 	}, {	// MODE - 1:
-		name:		"BoxSoft J-col",
-		buttons:	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
-		nibbles:	4,
-		wrap:		0,
-		watchdog:	WATCHDOG_USEC(1500),
-		data_mask:	J_COLUMN
+		.name =		"BoxSoft J-col",
+		.buttons =	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
+		.nibbles =	4,
+		.wrap =		0,
+		.watchdog =	WATCHDOG_USEC(1500),
+		.data_mask =	J_COLUMN
 	}, {	// MODE - 2:
-		name:		"ExtMSX J-col",
-		buttons:	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
-		nibbles:	8,
-		wrap:		0,
-		watchdog:	WATCHDOG_USEC(1500),
-		data_mask:	J_COLUMN
+		.name =		"ExtMSX J-col",
+		.buttons =	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
+		.nibbles =	8,
+		.wrap =		0,
+		.watchdog =	WATCHDOG_USEC(1500),
+		.data_mask =	J_COLUMN
 	}, {	// MODE - 3:
-		name:		"EnterMice J-col",
-		buttons:	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
-		nibbles:	16,
-		wrap:		0,
-		watchdog:	WATCHDOG_USEC(1500),
-		data_mask:	J_COLUMN
+		.name =		"EnterMice J-col",
+		.buttons =	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
+		.nibbles =	16,
+		.wrap =		0,
+		.watchdog =	WATCHDOG_USEC(1500),
+		.data_mask =	J_COLUMN
 	}, {	// MODE - 4:
-		name:		"BoxSoft K-col",
-		buttons:	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
-		nibbles:	4,
-		wrap:		0,
-		watchdog:	WATCHDOG_USEC(1500),
-		data_mask:	K_COLUMN
+		.name =		"BoxSoft K-col",
+		.buttons =	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
+		.nibbles =	4,
+		.wrap =		0,
+		.watchdog =	WATCHDOG_USEC(1500),
+		.data_mask =	K_COLUMN
 	}, {	// MODE - 5:
-		name:		"ExtMSX K-col",
-		buttons:	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
-		nibbles:	8,
-		wrap:		0,
-		watchdog:	WATCHDOG_USEC(1500),
-		data_mask:	K_COLUMN
+		.name =		"ExtMSX K-col",
+		.buttons =	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
+		.nibbles =	8,
+		.wrap =		0,
+		.watchdog =	WATCHDOG_USEC(1500),
+		.data_mask =	K_COLUMN
 	}, {	// MODE - 6:
-		name:		"EnterMice K-col",
-		buttons:	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
-		nibbles:	16,
-		wrap:		0,
-		watchdog:	WATCHDOG_USEC(1500),
-		data_mask:	K_COLUMN
+		.name =		"EnterMice K-col",
+		.buttons =	{ BUTTON_MAIN, BUTTON_EX3, BUTTON_OTHER, BUTTON_EX4, BUTTON_EX5 },	// mapping for SDL left/middle/right/X1/X2 events to EP
+		.nibbles =	16,
+		.wrap =		0,
+		.watchdog =	WATCHDOG_USEC(1500),
+		.data_mask =	K_COLUMN
 	}
 };
 
