@@ -6,20 +6,28 @@ uname -a
 cd /srv/git || exit 1
 source .travis-info
 
+echo "<<< MARK: BUILD ALL BEGIN >>>"
+echo "<<< MARK: BUILD NATIVE BEGIN >>>"
 make ARCH=native
 b1="$?"
-make ARCH=win32
+echo "<<< MARK: BUILD NATIVE END >>>"
+echo "<<< MARK: BUILD DEB BEGIN >>>"
+make deb
 b2="$?"
-make ARCH=win64
+echo "<<< MARK: BUILD DEB END >>>"
+echo "<<< MARK: BUILD WIN32 BEGIN >>>"
+make ARCH=win32
 b3="$?"
+echo "<<< MARK: BUILD WIN32 END >>>"
+echo "<<< MARK: BUILD WIN64 BEGIN >>>"
+make ARCH=win64
+b4="$?"
+echo "<<< MARK: BUILD WIN64 END >>>"
+echo "<<< MARK: BUILD ALL END >>>"
 
-arch/bin2values.py
-
-echo "BUILD STATUS: native: $b1"
-echo "BUILD STATUS: win32:  $b2"
-echo "BUILD STATUS: win64:  $b3"
-
-set | grep TRAVIS
-
+echo "BUILD STATUS: native:  $b1"
+echo "BUILD STATUS: DEB-PKG: $b2"
+echo "BUILD STATUS: win32:   $b3"
+echo "BUILD STATUS: win64:   $b4"
 
 exit $b1

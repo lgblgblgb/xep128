@@ -92,7 +92,7 @@ install: $(PRG) $(ROM) $(SDIMG)
 buildinfo.c:
 	if [ -s .git/refs/heads/master ]; then cat .git/refs/heads/master > .git-commit-info ; fi
 	echo "const char *BUILDINFO_ON  = \"`whoami`@`uname -n` on `uname -s` `uname -r`\";" > buildinfo.c
-	echo "const char *BUILDINFO_AT  = \"`date -R`\";" >> buildinfo.c
+	echo "const char *BUILDINFO_AT  = \"`date`\";" >> buildinfo.c
 	echo "const char *BUILDINFO_GIT = \"`cat .git-commit-info`\";" >> buildinfo.c
 	echo "const char *BUILDINFO_CC  = __VERSION__;" >> buildinfo.c
 

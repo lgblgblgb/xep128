@@ -5,21 +5,12 @@ uname -a
 
 source .travis-info
 
+echo "<<< MARK: BUILD ALL BEGIN >>>"
+echo "<<< MARK: BUILD OSX BEGIN >>>"
 make ARCH=osx
 b="$?"
-
 ls -l xep128.osx
-
-make strip ARCH=osx
-
-ls -l xep128.osx
-
-ldd ./xep128.osx
-
-
-arch/bin2values.py
-
-set | grep TRAVIS
-
+echo "<<< MARK: BUILD OSX END >>>"
+echo "<<< MARK: BUILD ALL END >>>"
 
 exit $b
