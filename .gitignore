@@ -17,3 +17,4 @@ wiki
 .git-commit-info*
 todo
 *.deb
+*.s

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+echo "*** Running: $0 for $TRAVIS_OS_NAME"
+uname -a
+
+cd /srv/git || exit 1
+source .travis-info
+
+make ARCH=native
+b1="$?"
+make ARCH=win32
+b2="$?"
+make ARCH=win64
+b3="$?"
+
+arch/bin2values.py
+
+echo "BUILD STATUS: native: $b1"
+echo "BUILD STATUS: win32:  $b2"
+echo "BUILD STATUS: win64:  $b3"
+
+set | grep TRAVIS
+
+
+exit $b1

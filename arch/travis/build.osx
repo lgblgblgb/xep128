@@ -1,0 +1,25 @@
+#!/bin/bash
+
+echo "*** Running: $0 for $TRAVIS_OS_NAME"
+uname -a
+
+source .travis-info
+
+make ARCH=osx
+b="$?"
+
+ls -l xep128.osx
+
+make strip ARCH=osx
+
+ls -l xep128.osx
+
+ldd ./xep128.osx
+
+
+arch/bin2values.py
+
+set | grep TRAVIS
+
+
+exit $b

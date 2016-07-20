@@ -13,18 +13,24 @@ DLLURL	= http://xep128.lgb.hu/files/SDL-2.0.4.dll
 all:
 	$(MAKE) do-all
 
+RELEASE_TAG =
+
 ARCH	= native
+
+ARCHALL	= native win32 win64
 
 include arch/Makefile.$(ARCH)
 
 # -flto is for link time optimization, CHANGE it to -g for debug material, but do NOT mix -g and -flto !!
 DEBUG	=
 
+DEBUG_RELEASE = -flto
+
 CFLAGS	= $(DEBUG) $(CFLAGS_ARCH) -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell echo $(ARCH) | tr 'a-z' 'A-Z')
 LDFLAGS	= $(DEBUG) $(LDFLAGS_ARCH)
 LIBS	= $(LIBS_ARCH)
 SRCS	= $(SRCS_COMMON) $(SRCS_ARCH)
-OPREFIX	= arch/objs/$(ARCH)--
+OPREFIX	= arch/objs/$(ARCH)$(RELEASE_TAG)--
 DEPFILE	= $(OPREFIX)make.depend
 
 OBJS	= $(addprefix $(OPREFIX), $(SRCS:.c=.o))
@@ -37,9 +43,26 @@ do-all:
 	@echo "Architecture: $(ARCH) [$(ARCH_DESC)]"
 	$(MAKE) $(PRG)
 
+build-dist:
+	#rm -f arch/objs/*
+	for arch in $(ARCHALL) ; do $(MAKE) dep ARCH=$$arch RELEASE_TAG=-rel ; $(MAKE) ARCH=$$arch DEBUG=$(DEBUG_RELEASE) RELEASE_TAG=-rel ; $(MAKE) strip ARCH=$$arch DEBUG=$(DEBUG_RELEASE) RELEASE_TAG=-rel ; done
+
+build-dist-test:
+	ARCHALL="$(ARCHALL)" RELEASE_TAG=-debug DEBUG=-g STRIP=no arch/tester
+
+build-dist-rel:
+	ARCHALL="$(ARCHALL)" RELEASE_TAG=-rel DEBUG=$(DEBUG_RELEASE) STRIP=yes arch/tester
+
+publish-dist-test:
+	$(MAKE) build-dist-test
+	$(MAKE) rom
+	cat xep128.zip | ssh download.lgb.hu ".download.lgb.hu-files/pump xep128-devel.zip-`date '+%Y%m%d%H%M%S'`"
+
+
 deb:
-	if [ x$(ARCH) != xnative ]; then echo "*** DEB package building is only allowed for ARCH=native" ; false ; fi
-	$(MAKE) all ARCH=native
+	@if [ x$(ARCH) != xnative ]; then echo "*** DEB package building is only allowed for ARCH=native" >&2 ; false ; fi
+	$(MAKE) ARCH=native RELEASE_TAG=-rel DEBUG=$(DEBUG_RELEASE)
+	$(MAKE) strip ARCH=native RELEASE_TAG=-rel DEBUG=$(DEBUG_RELEASE)
 	arch/deb-build-simple
 
 $(OPREFIX)%.o: %.c
@@ -58,7 +81,7 @@ xep_rom_syms.h: xep_rom.sym
 	awk '$$1 ~ /xepsym_[^:. ]+:/ { gsub(":$$","",$$1); gsub("h$$","",$$3); print "#define " $$1 " 0x" $$3 }' xep_rom.sym > xep_rom_syms.h
 
 xep_rom.hex: xep_rom.rom
-	od -A n -t x1 -v xep_rom.rom | sed 's/ /,0x/g;s/^,/ /;s/$$/,/' > xep_rom.hex
+	arch/bin2values.py xep_rom.rom xep_rom.hex
 
 install: $(PRG) $(ROM) $(SDIMG)
 	$(MAKE) strip
@@ -85,8 +108,8 @@ data:	$(SDIMG) $(ROM)
 
 $(PRG): $(DEPFILE) $(OBJS)
 	rm -f buildinfo.c
-	$(MAKE) buildinfo.o
-	$(CC) -o $(PRG) $(OBJS) buildinfo.o $(LDFLAGS) $(LIBS)
+	$(MAKE) $(OPREFIX)buildinfo.o
+	$(CC) -o $(PRG) $(OBJS) $(OPREFIX)buildinfo.o $(LDFLAGS) $(LIBS)
 
 zip:
 	$(MAKE) $(ZIP)
@@ -105,7 +128,7 @@ strip:	$(PRG)
 	$(STRIP) $(PRG)
 
 clean:
-	rm -f $(OBJS) buildinfo.c buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h $(ZIP) .git-commit-info*
+	rm -f $(OBJS) buildinfo.c $(OPREFIX)buildinfo.o print.out xep_rom.hex xep_rom.lst xep_rom_syms.h $(ZIP) .git-commit-info*
 	$(MAKE) -C rom clean
 
 distclean:
@@ -118,12 +141,6 @@ help:
 	$(MAKE) $(PRG)
 	./$(PRG) -help | grep -Ev '^(PATH:|Platform:|GIT|LICENSE:) ' > doc/help-cli.txt
 	./$(PRG) -testparsing -config none | sed -e '1,/^--- /d' -e '/^--- /,$$d' > doc/help-config.txt
-
-commit:
-	git diff
-	git status
-	EDITOR="vim -c 'startinsert'" git commit -a
-	git push
 
 $(DEPFILE):
 	$(MAKE) depend
@@ -141,7 +158,7 @@ valgrind:
 	valgrind --read-var-info=yes --leak-check=full --track-origins=yes ./$(PRG) -debug /tmp/xep128.debug > /tmp/xep128-valgrind.stdout 2> /tmp/xep128-valgrind.stderr
 	ls -l /tmp/xep128.debug /tmp/xep128-valgrind.stdout /tmp/xep128-valgrind.stderr
 
-.PHONY: all clean distclean strip commit publish data install dep depend valgrind zip deb do-all
+.PHONY: all clean distclean strip publish data install dep depend valgrind zip deb do-all
 
 ifneq ($(wildcard $(DEPFILE)),)
 include $(DEPFILE)

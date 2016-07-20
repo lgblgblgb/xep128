@@ -1,0 +1,20 @@
+# Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
+# Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+# http://xep128.lgb.hu/
+
+ARCH_DESC	= "OSX"
+PREFIX		= /usr/local
+BINDIR		= $(PREFIX)/bin
+DATADIR		= $(PREFIX)/lib/xep128
+CC		= gcc
+STRIP		= strip
+SDLCFG		= sdl2-config
+GTKPKGCFG	= pkg-config
+GENOPTS		= -Ofast -fno-common -falign-functions=16 -ffast-math
+CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(shell $(SDLCFG) --cflags) -DDATADIR=\"$(DATADIR)\"
+LDFLAGS_ARCH	= $(GENOPTS) $(shell $(SDLCFG) --libs) -lm -lreadline
+LIBS_ARCH	=
+SRCS_ARCH	=
+PRG		= xep128.osx
+ZIP_FILES_ARCH	=
+

@@ -1,0 +1,2 @@
+#!/bin/bash
+set | awk -F= '/^TRAVIS[A-Z_]*=/  { print "export " $1 "=\"" $2 "\""  }' > .travis-info
