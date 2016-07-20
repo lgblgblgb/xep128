@@ -13,6 +13,10 @@ Makefile
   installed. Avoid 'make test' as it would use paths private
   to my own system!
 
+exos10ts.asm
+
+  EXOS 10 "file handler" function tests for the FILE: implementation.
+
 intfreq.asm
 
   A test program used to messure B4 port level width on different
@@ -28,6 +32,10 @@ irclet.asm
   IP parameters are hard-wired (MAC address, IP, gateway, even
   iRC server IP address), and slow (EXOS functions used to print).
   It's simply not suitable for daily usage.
+
+vinttest.asm
+
+  Nick video interrupt test.
 
 w5300-ep.md
 
@@ -48,11 +56,4 @@ z80-emulated-cpu-speed-test.c
 
   A lame little (native, not Z80) program which links to z80ex.
   It tries to messure the speed of Z80 emulation.
-
-cpm-minimal-emulator.c
-
-  A very primitive CP/M emulator using the same Z80 emulation
-  as Xep128 does. Only calls (and in a way) are emulated at
-  BDOS/CBIOS level what tools M80 and L80 needs to be able to
-  run on Windows or Linux.
 

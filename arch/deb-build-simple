@@ -15,10 +15,10 @@ Architecture: amd64
 Depends: libsdl2-2.0-0 (>= 2.0.4), libreadline6 (>= 6.3), libgtk-3-0 (>= 3.18), libc6 (>= 2.15)
 Maintainer: Gábor Lénárt <lgblgblgb@gmail.com>
 Description: Enterprise-128 software emulator
- Enterprise-128 is a Z80 based "home computer" released in 1984. This emulator
- uses SDL2 and tries to emulate it especially focusing on "exotic" hardware add-ons,
- including "modern" ones (ie: SD card reader). Z80 emulation is done with (modified)
- Z80ex CPU emulator.
+ Enterprise-64/128 is a Z80 based 'home computer' released in 1984. This emulator
+ uses SDL2 and tries to emulate it especially focusing on 'exotic' hardware add-ons,
+ including 'modern' ones (ie: SD card reader). Z80 emulation is done by (modified)
+ the Z80ex CPU emulator (included).
 Homepage: http://xep128.lgb.hu/" > .dist/xep128_$VERSION/DEBIAN/control
 
 echo "#!/bin/sh

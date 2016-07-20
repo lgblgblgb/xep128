@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 
+// #define Z80EX_OPSTEP_FAST_AND_ROUGH
+
 #include "../z80.h"
 #include "../z80ex/z80ex.c"
 

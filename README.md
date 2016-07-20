@@ -1,10 +1,13 @@
-# Xep128
+# Xep128 - An Enterprise-128 emulator
 
+
+[![Build Status](https://api.travis-ci.org/lgblgblgb/xep128.svg?branch=master)](https://travis-ci.org/lgblgblgb/xep128)
 [![Join the chat at https://gitter.im/lgblgblgb/xep128](https://badges.gitter.im/lgblgblgb/xep128.svg)](https://gitter.im/lgblgblgb/xep128?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+
 Xep128 is an Enterprise-128 (a Z80 based, 8 bit computer) emulator (uses SDL2
-and z80ex) with the main focus on emulating somewhat "exotic" hardware
-additions.
+and modified z80ex for Z80 emulation) with the main focus on emulating somewhat
+"exotic" hardware additions. Currently it runs on Linux/UNIX and Windows.
 
 Written by (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
 
@@ -36,16 +39,16 @@ w5300 emulation (Ethernet connection with built-in TCP/IP support).
 # Installation on Linux / UNIX like OS (from source)
 
 You can download the ZIP'ed repository from https://github.com/lgblgblgb/xep128
-or you can clone the repository, whatever. You need the SDL2,
-libreadline and GTK3 _development_ installed (also some additional tools like
-the C compulter), on Debian/Ubuntu like systems, it can be done something
-like this (do not forget, that you should do this as root, so probably you
-need "sudo" before this command):
+or you can clone the repository, whatever. You need the SDL2 (2.0.4 or newer!),
+libreadline and GTK3 _development_ libraries installed (also some additiona
+ tools like the C compulter), on Debian/Ubuntu like systems, it can be done
+something like this (do not forget, that you should do this as root, so probably
+you need "sudo" before this command):
 
  apt-get install libsdl2-dev make gcc wget libreadline6-dev libgtk-3-dev
 
-You will also need the sjasm Z80 assembler somewhere in your PATH, if you
-modified xep_rom.asm at least (otherwise sjasm is not needed).
+You will also need the sjasm (v0.42) Z80 assembler somewhere in your PATH, if
+you modified xep_rom.asm at least (otherwise sjasm is not needed).
 
 In the source, you need to issue the command "make" (though if you modified
 source I would recommend to say "make dep" first). It will compile the
@@ -72,16 +75,22 @@ I've never used Windows, nor I have Windows installed. So the best I will
 be able to do is trying to cross-compile for Windows on Linux.
 
 You can try to compile Xep128 yourself using Linux with cross compiling
-target for win32 or win64 (*make ARCH=win32* or *make ARCH=win64*).
+target for win32 or win64 (*make ARCH=win32* or *make ARCH=win64*) which
+itself needs mingw 32 and/or 64 bit cross-compiler installed, also with
+SDL2 (2.0.4, or newer!).
 
 **Or you can try my build (WARNING! Not tested, I have no windows!)**
 
 This is how:
 
-http://xep128.lgb.hu/files/xep128-win32.zip
+http://download.lgb.hu/?class=xep128-rel.zip
+http://download.lgb.hu/?class=xep128-test.zip
 
-Download and unzip this archive somewhere. It contains xep128.exe, the
-ROM file, and the SDL2 DLL.
+Download and unzip this archive somewhere (the two links are "rel" for release
+and "test" for even more brave people, but please note, that even "release"
+does not mean too much at this phase of development). It contains xep128.exe,
+the ROM file, and the SDL2 DLL. If you want to try the 64 bit version, you
+need to use xep128_64.exe, and SDL2_64.dll renamed to SDL2.dll back.
 
 You also need the SD card image (warning, 256Mbyte!), from here:
 
