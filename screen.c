@@ -28,9 +28,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #else
 #	include "png.h"
 #endif
-#include "app_icon.c"
-#include "font_16x16.h"
+#include "data/app_icon.c"
 #include <SDL.h>
+
+
+#include "data/font_16x16.c"
 
 
 int is_fullscreen = 0;
