@@ -19,7 +19,7 @@ ARCH	= native
 
 ARCHALL	= native win32 win64
 
-include arch/Makefile.$(ARCH)
+include build/Makefile.$(ARCH)
 
 # -flto is for link time optimization, CHANGE it to -g for debug material, but do NOT mix -g and -flto !!
 DEBUG	=
@@ -30,7 +30,7 @@ CFLAGS	= $(DEBUG) $(CFLAGS_ARCH) -DXEP128_ARCH=$(ARCH) -DXEP128_ARCH_$(shell ech
 LDFLAGS	= $(DEBUG) $(LDFLAGS_ARCH)
 LIBS	= $(LIBS_ARCH)
 SRCS	= $(SRCS_COMMON) $(SRCS_ARCH)
-OPREFIX	= arch/objs/$(ARCH)$(RELEASE_TAG)--
+OPREFIX	= build/objs/$(ARCH)$(RELEASE_TAG)--
 DEPFILE	= $(OPREFIX)make.depend
 
 OBJS	= $(addprefix $(OPREFIX), $(SRCS:.c=.o))
@@ -44,14 +44,14 @@ do-all:
 	$(MAKE) $(PRG)
 
 build-dist:
-	#rm -f arch/objs/*
+	#rm -f build/objs/*
 	for arch in $(ARCHALL) ; do $(MAKE) dep ARCH=$$arch RELEASE_TAG=-rel ; $(MAKE) ARCH=$$arch DEBUG=$(DEBUG_RELEASE) RELEASE_TAG=-rel ; $(MAKE) strip ARCH=$$arch DEBUG=$(DEBUG_RELEASE) RELEASE_TAG=-rel ; done
 
 build-dist-test:
-	ARCHALL="$(ARCHALL)" RELEASE_TAG=-debug DEBUG=-g STRIP=no arch/tester
+	ARCHALL="$(ARCHALL)" RELEASE_TAG=-debug DEBUG=-g STRIP=no build/tester
 
 build-dist-rel:
-	ARCHALL="$(ARCHALL)" RELEASE_TAG=-rel DEBUG=$(DEBUG_RELEASE) STRIP=yes arch/tester
+	ARCHALL="$(ARCHALL)" RELEASE_TAG=-rel DEBUG=$(DEBUG_RELEASE) STRIP=yes build/tester
 
 publish-dist-test:
 	$(MAKE) build-dist-test
@@ -63,7 +63,7 @@ deb:
 	@if [ x$(ARCH) != xnative ]; then echo "*** DEB package building is only allowed for ARCH=native" >&2 ; false ; fi
 	$(MAKE) ARCH=native RELEASE_TAG=-rel DEBUG=$(DEBUG_RELEASE)
 	$(MAKE) strip ARCH=native RELEASE_TAG=-rel DEBUG=$(DEBUG_RELEASE)
-	arch/deb-build-simple
+	build/deb-build-simple
 
 $(OPREFIX)%.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -81,7 +81,7 @@ xep_rom_syms.h: xep_rom.sym
 	awk '$$1 ~ /xepsym_[^:. ]+:/ { gsub(":$$","",$$1); gsub("h$$","",$$3); print "#define " $$1 " 0x" $$3 }' xep_rom.sym > xep_rom_syms.h
 
 xep_rom.hex: xep_rom.rom
-	arch/bin2values.py xep_rom.rom xep_rom.hex
+	build/bin2values.py xep_rom.rom xep_rom.hex
 
 install: $(PRG) $(ROM) $(SDIMG)
 	$(MAKE) strip
@@ -135,7 +135,7 @@ distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
 	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) xep128-*.zip xep128_*.deb
-	rm -f arch/objs/*
+	rm -f build/objs/*
 
 help:
 	$(MAKE) $(PRG)

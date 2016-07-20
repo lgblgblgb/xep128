@@ -29,7 +29,7 @@ done
 #ls -la /
 
 
-arch/travis/build.osx || exit 1
+build/travis/build.osx || exit 1
 
 #sdl2-config --cflags
 #sdl2-config --libs

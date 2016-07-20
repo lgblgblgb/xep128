@@ -64,7 +64,7 @@ echo "*** Calling builder"
 CMD="chown -R lgb:lgb /srv"
 echo $CMD
 $CMD || exit 1
-CMD="su - -c /srv/git/arch/travis/build.linux lgb"
+CMD="su - -c /srv/git/build/travis/build.linux lgb"
 echo $CMD
 echo
 echo
