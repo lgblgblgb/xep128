@@ -1,3 +1,3 @@
 xep_rom.lst
-xep_rom_syms.h
-xep_rom.hex
+xep_rom.rom
+xep_rom.sym

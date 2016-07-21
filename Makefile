@@ -71,18 +71,6 @@ $(OPREFIX)%.o: %.c
 %.s: %.c
 	$(CC) -S $(CFLAGS) $< -o $@
 
-data/xep_rom.rom: xep_rom.asm
-	cd data ; sjasm -s ../xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom xep_rom.lst xep_rom.sym ; false; }
-
-data/xep_rom.sym: xep_rom.asm
-	$(MAKE) data/xep_rom.rom
-
-data/xep_rom_syms.h: data/xep_rom.sym
-	awk '$$1 ~ /xepsym_[^:. ]+:/ { gsub(":$$","",$$1); gsub("h$$","",$$3); print "#define " $$1 " 0x" $$3 }' data/xep_rom.sym > data/xep_rom_syms.h
-
-data/xep_rom.hex: data/xep_rom.rom
-	build/bin2values.py data/xep_rom.rom data/xep_rom.hex
-
 install: $(PRG) $(ROM) $(SDIMG)
 	$(MAKE) strip
 	mkdir -p $(BINDIR) $(DATADIR)
@@ -128,7 +116,8 @@ strip:	$(PRG)
 	$(STRIP) $(PRG)
 
 clean:
-	rm -f $(OBJS) buildinfo.c $(OPREFIX)buildinfo.o print.out data/xep_rom.hex data/xep_rom.lst data/xep_rom_syms.h $(ZIP) .git-commit-info*
+	rm -f $(OBJS) buildinfo.c $(OPREFIX)buildinfo.o print.out $(ZIP) .git-commit-info*
+	$(MAKE) -C data clean
 	$(MAKE) -C rom clean
 
 distclean:
@@ -149,8 +138,6 @@ dep:
 	$(MAKE) depend
 
 depend:
-	$(MAKE) data/xep_rom.hex
-	$(MAKE) data/xep_rom_syms.h
 	$(CC) -MM $(CFLAGS) $(SRCS) | awk '/^[^.:\t ]+\.o:/ { print "$(OPREFIX)" $$0 ; next } { print }' > $(DEPFILE)
 
 valgrind:
