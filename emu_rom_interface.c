@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "xep128.h"
 #include "emu_rom_interface.h"
-#include "xep_rom_syms.h"
+#include "data/xep_rom_syms.h"
 #include "z80.h"
 #include "cpu.h"
 #include "roms.h"

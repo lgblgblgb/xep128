@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
 static const Uint8 xep_rom_image[] = {
-#include "xep_rom.hex"
+#include "data/xep_rom.hex"
 };
 int xep_rom_seg = -1;
 int xep_rom_addr;

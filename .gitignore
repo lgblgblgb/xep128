@@ -1,14 +1,11 @@
 xep128
 *.exe
-*.hex
 *.dll
 sdcard.img
 combined.rom
 www
 xep128-*.zip
 buildinfo.c
-xep_rom.lst
-xep_rom_syms.h
 screenshot*.png
 .*.swp
 wiki
