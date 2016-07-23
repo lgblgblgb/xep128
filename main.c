@@ -70,13 +70,10 @@ time_t unix_time;
    works, if you don't want to free() the result pointer!! */
 void *alloc_xep_aligned_mem ( size_t size )
 {
-	int o;
-	Uint8 *p = malloc(size + 15);
-	if (p == NULL)
-		return p;
-	o = 16 - ((int)p & 0xF);
-	DEBUG("ALIGNED-ALLOC: base_pointer=%p o=%d" NL, p, o);
-	return p + o;
+	// it seems _mm_malloc() is quite standard at least on gcc, mingw, clang ... so let's try to use it
+	void *p = _mm_malloc(size, __BIGGEST_ALIGNMENT__);
+	DEBUG("ALIGNED-ALLOC: base_pointer=%p size=%d alignment=%d" NL, p, (int)size, __BIGGEST_ALIGNMENT__);
+	return p;
 }
 
 
