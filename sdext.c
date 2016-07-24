@@ -175,9 +175,9 @@ void sdext_init ( void )
 		if (sd_card_size > MAX_CARD_SIZE || sd_card_size < MIN_CARD_SIZE) {
 			fclose(sdf);
 			sdf = NULL;
-			ERROR_WINDOW("SD card image file \"%s\" is too small or large, valid range is %ld - %ld Mbytes, but this one is %ld bytes long (about %ld Mbytes). SD access has been disabled!",
-				sdimg_path, MIN_CARD_SIZE >> 20, MAX_CARD_SIZE >> 20,
-				sd_card_size, sd_card_size >> 20
+			ERROR_WINDOW("SD card image file \"%s\" is too small or large, valid range is %d - %d Mbytes, but this one is %lld bytes long (about %d Mbytes). SD access has been disabled!",
+				sdimg_path, (int)(MIN_CARD_SIZE >> 20), (int)(MAX_CARD_SIZE >> 20),
+				(long long)sd_card_size, (int)(sd_card_size >> 20)
 
 			);
 			*sdimg_path = 0;
@@ -220,6 +220,7 @@ static void _block_read ( void )
 	//ret = fread(_buffer + 2, 1, 512, sdf);
 	ret = read(sdfd, _buffer + 2, 512);
 	SD_DEBUG("SDEXT: REGIO: fread retval = %d" NL, ret);
+	(void)ret;
 	_buffer[512 + 2] = 0; // CRC
 	_buffer[512 + 3] = 0; // CRC
 	ans_p = _buffer;

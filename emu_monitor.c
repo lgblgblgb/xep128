@@ -397,7 +397,7 @@ static void cmd_emu ( void )
 		"Run by: %s@%s %s %s\n"
 		"Drivers: %s %s\n"
 		"SDL c/l: %d.%d.%d %d.%d.%d\n"
-		"Base path: %s\nPref path: %s\nStart dir: %s\nSD img: %s [%ldM]\n",
+		"Base path: %s\nPref path: %s\nStart dir: %s\nSD img: %s [%dM]\n",
 #ifdef _WIN32
 		getenv("USERNAME"),
 #else
@@ -407,7 +407,7 @@ static void cmd_emu ( void )
 		sdlver_compiled.major, sdlver_compiled.minor, sdlver_compiled.patch,
 		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch,
 		app_base_path, app_pref_path, current_directory,
-		sdimg_path, sd_card_size >> 20
+		sdimg_path, (int)(sd_card_size >> 20)
 	);
 }
 
