@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 int w5300_int;
 
-static Uint8 wmem[0x20000];	// 128K of internal RAM of w5300
+//static Uint8 wmem[0x20000];	// 128K of internal RAM of w5300
 static Uint8 wregs[0x400];	// W5300 registers
 static Uint8 idm_ar0, idm_ar1, idm_ar;
 static Uint8 mr0, mr1;

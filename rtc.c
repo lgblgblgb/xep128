@@ -90,7 +90,7 @@ static void _rtc_update(void)
 		t->tm_hour,
 		t->tm_min,
 		t->tm_sec,
-		unix_time
+		(long int)unix_time
 	);
 }
 
