@@ -1,6 +1,123 @@
 This file contains somewhat "official" releases, and important steps. For
-proper ChangeLog, you should have a look on the GIT (github) commit log!
-Newer releases at the top ...
+proper ChangeLog, you should have a look on the GIT (github) commit log:
+
+https://github.com/lgblgblgb/xep128/commits/master
+
+This file only contains the *key* features of *bigger* releases (milestones,
+etc). Newer releases at the top ...
+
+
+	*** CANDIDATE *** MANY CHANGES, version number has been also changed from 0.3 to 0.4!
+	*** UNRELESED *** !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+	* FILE: supports write/save too!
+	  The usual char/block write EXOS functions should work.
+	  Writing after end of the file (after seek) should work,
+	  see later.
+
+	* FILE: supports EXOS 10 handler (file hander style func)
+	  (Suggested by Zozo, thanks)
+	  File size, file pointer can be read, file pointer can be
+	  set too ("seek"). Protection byte can be written/read
+	  but it's not stored if channel is closed (and it seems EXOS
+	  don't use protection byte too much anyway).
+
+	* FILE: correctly handles the open/create channel calls,
+	  on open, RD/WR file mode is used, but if host OS would deny
+	  this, still, read-only mode is tried to be open (it will cause
+	  EXOS error code returned on exos write char/block calls
+	  on that channel, of course)
+
+	* FILE: allows to seek, even over end of the file, giving EOF
+	  EXOS error code on trying to read, and extending file size
+	  to the given offset if written. Host OS file size is
+	  cached/calculated to avoid heavy usage of stat() functions
+	  towards the host OS.
+
+	* New config option / CLI switch and also monitor command: DDN
+	  It's default device name. Value of none (in case of config/cli)
+	  doesn't set one. Otherwise, the desired value is set. If you
+	  set this FILE (without ":"!) then the default device driver
+	  will be the FILE: fileio stuff. You may try to set DISK
+	  to set back to EXDOS stuffs (or in theory TAPE, but since
+	  Xep128 doesn't support tape, it does not make sense). Note
+	  that you can give invalid values which results normal channel
+	  functions fail with "device does not exist" error.
+
+	* New config option / CLI switch filedir
+	  It sets the default directory for FILE: operations. Of course
+	  you still can use :XEP CD command to change this run-time,
+	  or using the file selector window to do that.
+
+	* FILE: supports deleting file on "destroy channel" EXOS call
+
+	* !! SD card is finally *writable* from EP, not just read only :) !!
+
+	* Dave left/right channels were swapped according to Zozo :)
+	  [well, I have mono sound here even for my PC :-P]
+
+	* Re-worked EXOS error code handling with XEP ROM / Xep128
+	  own errors. Xep128 currently used error code 1, with custom
+	  msg answered in case of EXOS 28 call
+
+	* New Xep128 icon, thanks to gflorez! (also thanks for testing
+	  Xep128 so many times ... and EnterMice details)
+
+	* Native GUI file selectors (GTK on Linux, windows API on Win32)
+	  Currently it's used only by FILE: _loading_ if no file name was
+	  given. Navigating to another directory within the chooser before
+	  selecting file will cause to modify the fileio cwd, that is
+	  all further ops (even from just EP with given file name!) will
+	  use that directory.
+
+	* Minor keyboad layout fixes:
+		right shift was not mapped (reported by gflorez)
+		alt was not mapped (reported by Zozo)
+
+	* ROM configuration allows to manually place XEP internal ROM
+	  with giving a rom@xx option with name XEP (without @, or anything)
+	  Also, XEP internal ROM can be disabled with xeprom 0 option
+	  (only if it's not used in rom@xx to manually place it).
+	  Disabling XEP ROM can be useful to test a software when someone
+	  wants to be sure, that XEP ROM does not cause the problem ...
+	  Of course disabling XEP ROM will cause the lost of :XEP
+	  commands and FILE: interface.
+
+	* All loaded ROM at every 16K is checked for signature
+	  XEP__ROM (two "_" signs!) at the beginning of each segment.
+	  If signature found, XEP ROM will be installed there,
+	  overwriting that segment! Note, that :XEP RAM layout
+	  display routine will show somewhat odd result but you
+	  don't need to worry, it's just display :) At some point,
+	  we will stop use combined.rom anyway, especially if auto-install
+	  (via HTTP...) will be ready, which can load ROM images for
+	  the user from the web at the first run of Xep128 if they
+	  didn't exist.
+
+	* New build system (not so much interesting for end-user ...)
+
+	* Using newer gcc/mingw for Windows builds I put on-line as
+	  the "official version" in the hope that it can be faster
+
+	* Z80ex has tighter integration into the build process / dependency info
+
+	* At least SDL version 2.0.4 is required from now (many condition etc
+	  can be dropped, QueueAudio stuffs can be used in the future)
+
+	* More precise timing, using performance counters and nanosleep()
+	  (usleep() on windows though).
+
+	* Arch-dependent GUI iterator is called from per frame func as well
+	  (in case if needed in the future), init can fall back with some
+	  sane feedback (ie, GTK init_check instead of plain init)
+
+	* Lame .deb package builing from Makefile (without source package)
+
+	* Win64 builds (Windows 64 bit) as well
+
+	* Travis-build tests for Linux 64 bit, Windows 32 and 64 bit,
+	  and recently for OSX too!
 
 2016/Apr/07 --------------------------------------------------------------
 
