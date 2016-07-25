@@ -11,7 +11,7 @@ STRIP		= x86_64-w64-mingw32-strip
 SDLCFG		= /usr/local/cross-tools/x86_64-w64-mingw32/bin/sdl2-config
 GTKPKGCFG	=
 GENOPTS		= -Ofast -fno-common -falign-functions=16 -falign-loops=16 -ffast-math
-CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(shell $(SDLCFG) --cflags) -DXEP128_SLEEP_IS_USLEEP
+CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(shell $(SDLCFG) --cflags) -include arch/arch-win64.h
 LDFLAGS_ARCH	= $(GENOPTS) $(shell $(SDLCFG) --libs)
 LIBS_ARCH	=
 SRCS_ARCH	=

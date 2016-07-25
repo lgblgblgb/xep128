@@ -11,7 +11,7 @@ STRIP		= strip
 SDLCFG		= sdl2-config
 GTKPKGCFG	= pkg-config
 GENOPTS		= -Ofast -fno-common -falign-functions=16 -falign-loops=16 -ffast-math
-CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(shell $(SDLCFG) --cflags) -DDATADIR=\"$(DATADIR)\" $(shell $(GTKPKGCFG) --cflags-only-I gtk+-3.0) -DXEP128_GTK
+CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(shell $(SDLCFG) --cflags) $(shell $(GTKPKGCFG) --cflags-only-I gtk+-3.0) -include arch/arch-native.h
 LDFLAGS_ARCH	= $(GENOPTS) $(shell $(SDLCFG) --libs) -lm -lreadline $(shell $(GTKPKGCFG) --libs gtk+-3.0)
 LIBS_ARCH	=
 SRCS_ARCH	=

@@ -1,0 +1,3 @@
+#define XEP128_SLEEP_IS_USLEEP
+#define XEP128_ARCH "win64"
+#define XEP128_ARCH_WIN64

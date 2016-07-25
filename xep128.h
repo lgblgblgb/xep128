@@ -40,6 +40,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define CONFIG_W5300_SUPPORT
 #define DEFAULT_CPU_CLOCK	4000000
 
+#ifndef __BIGGEST_ALIGNMENT__
+#define __BIGGEST_ALIGNMENT__ 16
+#endif
+
 #if defined(__clang__)
 #	define CC_TYPE "clang"
 #elif defined(__MINGW32__)
