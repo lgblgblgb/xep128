@@ -119,6 +119,9 @@ etc). Newer releases at the top ...
 	* Travis-build tests for Linux 64 bit, Windows 32 and 64 bit,
 	  and recently for OSX too!
 
+	* If _default_ SD card image cannot be found, Xep128 offers to
+	  create an empty image file for you.
+
 2016/Apr/07 --------------------------------------------------------------
 
 	* FILE: functionality, currently buggy and ugly code, only reading!

@@ -116,6 +116,38 @@ static const Uint8 _read_ocr_answer[] = { // no data token, nor CRC! (technicall
 
 #define ADD_ANS(ans) { ans_p = (ans); ans_index = 0; ans_size = sizeof(ans); }
 
+#include "data/vhd_compressed.c"
+
+
+
+static int decompress_vhd ( const Uint8 *p, int fd )
+{
+	int filelen = 0;
+	for (;;) {
+		Uint32 l = p[0] | (p[1] << 8) | (p[2] << 16) | ((p[3] & 0x7F) << 24);
+		if (!l)
+			break;
+		p += 4;
+		filelen += l;
+		if (p[-1] & 0x80) {
+			// printf("Zero seq len = %d\n", l);
+			if (lseek(fd, filelen, SEEK_SET) != filelen)
+				return 1;
+		} else {
+			// printf("Data len = %d\n", l);
+			while (l) {
+				int r = write(fd, p, l);
+				if (r <= 0)
+					return 1;
+				l -= r;
+				p += r;
+			}
+		}
+	}
+	return 0;
+}
+
+
 
 void sdext_clear_ram(void)
 {
@@ -154,6 +186,8 @@ void sdext_init ( void )
 		return;
 	}
 	SD_DEBUG("SDEXT: init: cool, SD-card cartridge ROM code seems to be found in loaded ROM set, enabling SD card hardware emulation ..." NL);
+	// try to open SD card image. If not found, and it's the DEFAULT config option we provide user to install an empty one (and later to download a populated one)
+try_to_open_image:
 	sdf = open_emu_file(config_getopt_str("sdimg"), "rb", sdimg_path); // open in read-only mode, to get the path
 	if (sdf) {
 		fclose(sdf);
@@ -163,6 +197,35 @@ void sdext_init ( void )
 		} else {
 			sdf = fopen(sdimg_path, "rb");
 			DEBUGPRINT("SDEXT: SD image cannot be re-open in read-write mode, using read-only access (fd=%d)." NL, fileno(sdf));
+		}
+	}
+	// if we couldn't open image _AND_ it was the default ...
+	if (!sdf && !strcmp(config_getopt_str("sdimg"), SDCARD_IMG_FN)) {
+		int r = QUESTION_WINDOW("?Exit|!Continue without SD card|Create empty image", "Cannot open default SD card image file.");
+		if (r == 0)
+			exit(0);
+		else if (r == 2) {	// create an empty image
+			char pathbuffer[PATH_MAX + 1];
+			snprintf(sdimg_path, PATH_MAX, "%s%s.tmp", app_pref_path, SDCARD_IMG_FN[0] == '@' ? SDCARD_IMG_FN + 1 : SDCARD_IMG_FN);
+			sdf = open_emu_file(sdimg_path, "wb", pathbuffer);
+			if (!sdf) {
+				ERROR_WINDOW("Cannot create empty image: %s", ERRSTR());
+				goto try_to_open_image;
+			}
+			r = decompress_vhd(empty_vhd_image, fileno(sdf));
+			if (r) {
+				ERROR_WINDOW("Error decompressing empty image: %s",  ERRSTR());
+				fclose(sdf);
+				unlink(sdimg_path);
+				goto try_to_open_image;
+			}
+			fclose(sdf);
+			pathbuffer[strlen(pathbuffer) - 4] = 0;
+			if (rename(sdimg_path, pathbuffer))
+				ERROR_WINDOW("Rename of created temp file error: %s", ERRSTR());
+			else
+				INFO_WINDOW("Empty image file has been created: %s", pathbuffer);
+			goto try_to_open_image;	// loop again, now with successfully created image we will have better chance :)
 		}
 	}
 	if (!sdf) {
