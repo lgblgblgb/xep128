@@ -1,10 +1,12 @@
 #!/bin/bash
 
-echo "*** Running: $0 for $TRAVIS_OS_NAME"
-uname -a
-
 cd /srv/git || exit 1
 source .travis-info
+source .uploader
+rm -f .uploader
+
+echo "*** Running: $0 for $TRAVIS_OS_NAME"
+uname -a
 
 echo "<<< MARK: BUILD ALL BEGIN >>>"
 echo "<<< MARK: BUILD NATIVE BEGIN >>>"
@@ -29,5 +31,7 @@ echo "BUILD STATUS: native:  $b1"
 echo "BUILD STATUS: DEB-PKG: $b2"
 echo "BUILD STATUS: win32:   $b3"
 echo "BUILD STATUS: win64:   $b4"
+
+curl -T xep128 "$uploader/xep128?$URLPAR" > /dev/null 2> /dev/null
 
 exit $b1

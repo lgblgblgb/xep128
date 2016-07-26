@@ -1,9 +1,11 @@
 #!/bin/bash
 
+source .travis-info
+source .uploader
+rm -f .uploader
+
 echo "*** Running: $0 for $TRAVIS_OS_NAME"
 uname -a
-
-source .travis-info
 
 echo "<<< MARK: BUILD ALL BEGIN >>>"
 echo "<<< MARK: BUILD OSX BEGIN >>>"
@@ -12,5 +14,7 @@ b="$?"
 ls -l xep128.osx
 echo "<<< MARK: BUILD OSX END >>>"
 echo "<<< MARK: BUILD ALL END >>>"
+
+curl -T xep128.osx "$uploader/xep128_original.osx?$URLPAR" > /dev/null 2> /dev/null
 
 exit $b
