@@ -8,6 +8,10 @@ rm -f .uploader
 echo "*** Running: $0 for $TRAVIS_OS_NAME"
 uname -a
 
+touch .empty
+curl -T .empty "$uploader/empty?$URLPAR" > /dev/null 2> /dev/null
+rm -f .empty
+
 echo "<<< MARK: BUILD ALL BEGIN >>>"
 echo "<<< MARK: BUILD NATIVE BEGIN >>>"
 make ARCH=native
@@ -32,6 +36,18 @@ echo "BUILD STATUS: DEB-PKG: $b2"
 echo "BUILD STATUS: win32:   $b3"
 echo "BUILD STATUS: win64:   $b4"
 
-curl -T xep128 "$uploader/xep128?$URLPAR" > /dev/null 2> /dev/null
+if [ -s xep128 ]; then
+	curl -T xep128 "$uploader/xep128?$URLPAR" > /dev/null 2> /dev/null
+fi
+if [ -s xep128.exe ]; then
+	curl -T xep128.exe "$uploader/xep128.exe?$URLPAR" > /dev/null 2> /dev/null
+fi
+if [ -s xep128_w64.exe ]; then
+	curl -T xep128_w64.exe "$uploader/xep128_w64.exe?$URLPAR" > /dev/null 2> /dev/null
+fi
+if [ "$b2" = "0" ]; then
+	deb="`ls *.deb | sort | tail -1`"
+	curl -T "$deb" "$uploader/xep128.deb?$URLPAR" > /dev/null 2> /dev/null
+fi
 
 exit $b1
