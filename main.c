@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "fileio.h"
 #include "z80.h"
 #include "gui.h"
+#include "snapshot.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -339,6 +340,7 @@ void emu_one_frame(int rasters, int frameskip)
 
 int main (int argc, char *argv[])
 {
+	const char *snapshot;
 	atexit(shutdown_sdl);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		ERROR_WINDOW("Fatal SDL initialization problem: %s", SDL_GetError());
@@ -361,16 +363,25 @@ int main (int argc, char *argv[])
 	ep_pixels = nick_init();
 	if (ep_pixels == NULL)
 		return 1;
-	if (roms_load())
-		return 1;
-	primo_rom_seg = primo_search_rom();
-	ep_set_ram_config(config_getopt_str("ram"));
+	snapshot = config_getopt_str("snapshot");
+	if (strcmp(snapshot, "none")) {
+		if (ep128snap_load(snapshot))
+			snapshot = NULL;
+	} else
+		snapshot = NULL;
+	if (!snapshot) {
+		if (roms_load())
+			return 1;
+		primo_rom_seg = primo_search_rom();
+		ep_set_ram_config(config_getopt_str("ram"));
+	}
 	mouse_setup(config_getopt_int("mousemode"));
 	ep_reset();
 	kbd_matrix_reset();
 	joy_sdl_event(NULL); // this simply inits joy layer ...
 #ifdef CONFIG_SDEXT_SUPPORT
-	sdext_init();
+	if (!snapshot)
+		sdext_init();
 #endif
 #ifdef CONFIG_W5300_SUPPORT
 	w5300_init(NULL);
@@ -380,15 +391,17 @@ int main (int argc, char *argv[])
 	set_cpu_clock(DEFAULT_CPU_CLOCK);
 	emu_timekeeping_start();
 	audio_start();
-	if (config_getopt_str("fullscreen"))
+	if (config_getopt_int("fullscreen"))
 		screen_set_fullscreen(1);
 	DEBUGPRINT(NL "EMU: entering into main emulation loop" NL);
 	sram_ready = 1;
-	if (strcmp(config_getopt_str("primo"), "none")) {
+	if (strcmp(config_getopt_str("primo"), "none") && !snapshot) {
 		// TODO: da stuff ...
 		primo_emulator_execute();
 		OSD("Primo Emulator Mode");
 	}
+	if (snapshot)
+		ep128snap_set_cpu_and_io();
 	console_monitor_ready();	// OK to run monitor on console now!
 	/* Main loop of the emulator, an infinite one :) Use exit() to exit, as atexit() is
 	used to register proper "cleaner" function, including calling SDL_Quit() as well

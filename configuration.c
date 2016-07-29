@@ -66,6 +66,7 @@ static const struct configOption_st configOptions[] = {
 	{ "sdimg",	CONFITEM_STR,	SDCARD_IMG_FN,	0, "SD-card disk image (VHD) file name/path" },
 	{ "sdl",	CONFITEM_STR,	"auto",		0, "Sets SDL specific option(s) including rendering related stuffs" },
 	{ "skiplogo",	CONFITEM_INT,	"0",		0, "Disables (1) Enterprise logo on start-up via XEP ROM" },
+	{ "snapshot",	CONFITEM_STR,	"none",		0, "Load and use ep128emu snapshot" },
 	{ "xeprom",	CONFITEM_INT,	"1",		0, "Enables XEP internal ROM (non-zero value), otherwise disable" },
 	/* should be the last on the list, as this is handled specially not in the config storage for real */
 	{ "epkey",	CONFITEM_STR,	NULL,		1, "Define a given EP/emu key, format epkey@xy=SDLname, where x/y are row/col in hex or spec code (ie screenshot, etc)." },
