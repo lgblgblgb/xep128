@@ -1,13 +1,13 @@
 # Xep128 - An Enterprise-128 emulator
 
-
 [![Build Status](https://api.travis-ci.org/lgblgblgb/xep128.svg?branch=master)](https://travis-ci.org/lgblgblgb/xep128)
 [![Join the chat at https://gitter.im/lgblgblgb/xep128](https://badges.gitter.im/lgblgblgb/xep128.svg)](https://gitter.im/lgblgblgb/xep128?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
+[![Download](https://api.bintray.com/packages/lgblgblgb/generic/xep128/images/download.svg)](https://bintray.com/lgblgblgb/generic/xep128/_latestVersion)
 
 Xep128 is an Enterprise-128 (a Z80 based, 8 bit computer) emulator (uses SDL2
 and modified z80ex for Z80 emulation) with the main focus on emulating somewhat
-"exotic" hardware additions. Currently it runs on Linux/UNIX and Windows.
+"exotic" hardware additions. Currently it runs on Linux/UNIX, Windows and also
+on OSX (but OSX build may have some problems).
 
 Written by (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
 
