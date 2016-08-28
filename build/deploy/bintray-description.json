@@ -1,0 +1,23 @@
+{
+	"package": {
+		"name":		"xep128",
+		"repo":		"generic",
+		"subject":	"lgblgblgb"
+	},
+	"version": {
+		"name":		"current_version",
+		"desc":		"The current version",
+		"released":	"2016-08-28",
+		"gpgSign":	false
+	},
+	"files": [
+		{
+			"includePattern":	"DEPLOY/(.*\..*)",
+			"uploadPattern":	"$1",
+			"matrixParams":		{
+				"override": 	1 
+			}
+		}
+	],
+	"publish": true
+}

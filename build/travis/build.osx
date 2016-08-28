@@ -20,6 +20,8 @@ echo "<<< MARK: BUILD ALL END >>>"
 
 echo "BUILD STATUS: osx:     $b"
 
+mkdir DEPLOY
+
 if [ -s xep128.osx ]; then
 	echo "*** Deployment of binary (original) ..."
 	ls -l xep128.osx
@@ -36,6 +38,10 @@ if [ -s xep128.osx ]; then
 	cat $sdl > $sdl_local
 	curl -T xep128.osx "$uploader/xep128_mangled.osx?$URLPAR" > /dev/null 2> /dev/null
 	curl -T $sdl_local "$uploader/$sdl_local?$URLPAR" > /dev/null 2> /dev/null
+
+	mv xep128.osx xep128
+	zip DEPLOY/xep128-osx.zip xep128 $sdl_local README.md LICENSE
+	ls -l DEPLOY/xep128-osx.zip
 fi
 
 exit $b

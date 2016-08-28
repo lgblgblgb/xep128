@@ -36,18 +36,30 @@ echo "BUILD STATUS: DEB-PKG: $b2"
 echo "BUILD STATUS: win32:   $b3"
 echo "BUILD STATUS: win64:   $b4"
 
+mkdir DEPLOY
+
 if [ -s xep128 ]; then
 	curl -T xep128 "$uploader/xep128?$URLPAR" > /dev/null 2> /dev/null
 fi
 if [ -s xep128.exe ]; then
 	curl -T xep128.exe "$uploader/xep128.exe?$URLPAR" > /dev/null 2> /dev/null
+	rm -f SDL2.dll
+	cp /usr/local/cross-tools/i686-w64-mingw32/bin/SDL2.dll .
+	zip DEPLOY/xep128-win32.zip xep128.exe SDL2.dll README.md LICENSE
+	cp xep128.exe DEPLOY/xep128-win32.exe
 fi
 if [ -s xep128_w64.exe ]; then
 	curl -T xep128_w64.exe "$uploader/xep128_w64.exe?$URLPAR" > /dev/null 2> /dev/null
+	rm -f SDL2.dll
+	cp /usr/local/cross-tools/x86_64-w64-mingw32/bin/SDL2.dll .
+	cp xep128_w64.exe DEPLOY/xep128-win64.exe
+	cp xep128_w64.exe xep128.exe
+	zip DEPLOY/xep128-win64.zip xep128.exe SDL2.dll README.md LICENSE
 fi
 if [ "$b2" = "0" ]; then
 	deb="`ls *.deb | sort | tail -1`"
 	curl -T "$deb" "$uploader/xep128.deb?$URLPAR" > /dev/null 2> /dev/null
+	cp $deb DEPLOY/xep128_ubuntu_xenial_amd64.deb
 fi
 
 exit $b1
