@@ -1,0 +1,19 @@
+#include <winver.h>
+
+1 VERSIONINFO
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904E4"
+		BEGIN
+			VALUE "Comments",		"https://github.com/lgblgblgb/xep128/wiki"
+			VALUE "CompanyName",		"LGB (Gabor Lenart)"
+			VALUE "FileDescription",	"Xep128 - Enterprise 128 emulator"
+			VALUE "InternalName",		"xep128"
+			VALUE "LegalCopyright",		"GPL v2 or later"
+			VALUE "OriginalFilename",	"xep128"
+			VALUE "ProductName",		"Xep128"
+		END
+	END
+END
+1 ICON "data/logo.ico"

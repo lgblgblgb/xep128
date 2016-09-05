@@ -8,6 +8,7 @@ BINDIR		=
 DATADIR		=
 CC		= i686-w64-mingw32-gcc
 STRIP		= i686-w64-mingw32-strip
+WINDRES		= i686-w64-mingw32-windres
 SDLCFG		= /usr/local/cross-tools/i686-w64-mingw32/bin/sdl2-config
 GTKPKGCFG	=
 GENOPTS		= -Ofast -fno-common -falign-functions=16 -falign-loops=16 -ffast-math

@@ -36,6 +36,13 @@ DEPFILE	= $(OPREFIX)make.depend
 OBJS	= $(addprefix $(OPREFIX), $(SRCS:.c=.o))
 ZIP	= xep128-$(ARCH).zip
 
+ifdef WINDRES
+WRCSRC	= arch/windres.rc
+WRCOBJ	= $(OPREFIX)windres.res
+OBJS   += $(WRCOBJ)
+$(WRCOBJ): $(WRCSRC)
+	$(WINDRES) $< -O coff -o $@
+endif
 
 do-all:
 	@echo "Compiler:     $(CC) $(CFLAGS)"

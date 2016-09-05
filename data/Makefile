@@ -1,5 +1,8 @@
 all:
-	$(MAKE) xep_rom.hex
+	$(MAKE) xep_rom.hex logo.ico
+
+logo.ico: logo.png
+	convert $< $@
 
 xep_rom.hex: xep_rom.asm
 	sjasm -s xep_rom.asm xep_rom.rom || { rm -f xep_rom.rom xep_rom.lst xep_rom.sym ; false; }
