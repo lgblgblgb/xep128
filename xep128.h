@@ -35,6 +35,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define VARALIGN __attribute__ ((aligned (__BIGGEST_ALIGNMENT__)))
 
+// Ported from my Xemu project, found in Linux kernel, as a useful stuff :-)
+#ifdef __GNUC__
+#define likely(x)	__builtin_expect(!!(x), 1)
+#define unlikely(x)	__builtin_expect(!!(x), 0)
+#else
+#define likely(x)	(x)
+#define unlikely(x)	(x)
+#endif
+
 #define CONFIG_USE_LODEPNG
 #define CONFIG_SDEXT_SUPPORT
 #define CONFIG_W5300_SUPPORT
@@ -77,10 +86,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #ifdef _WIN32
 #	define DIRSEP "\\"
 #	define NL "\r\n"
+#	define PRINTF_LLD "%I64d"
+#	define PRINTF_LLU "%I64u"
 #else
 #	define DIRSEP "/"
 #	define NL "\n"
 #	define O_BINARY 0
+#	define PRINTF_LLD "%lld"
+#	define PRINTF_LLU "%llu"
 #endif
 
 extern FILE *debug_file;
@@ -111,12 +124,10 @@ extern int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
 #define INFO_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_INFORMATION, "INFO", __VA_ARGS__)
 #define WARNING_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_WARNING, "WARNING", __VA_ARGS__)
 #define ERROR_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_ERROR, "ERROR", __VA_ARGS__)
+#define FATAL(...)		do { ERROR_WINDOW(__VA_ARGS__); exit (1); } while(0)
 
-#define CHECK_MALLOC(p)		do {			\
-	if (!p) {	\
-		ERROR_WINDOW("Memory allocation error. Not enough memory?");	\
-		exit(1);	\
-	}	\
+#define CHECK_MALLOC(p)		do {	\
+	if (!p) FATAL("Memory allocation error. Not enough memory?");	\
 } while(0)
 
 extern int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg );
