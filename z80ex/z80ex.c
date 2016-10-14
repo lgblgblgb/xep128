@@ -69,7 +69,7 @@ int z80ex_step(void)
 						temp_byte_s = (d & 0x80)? -(((~d) & 0x7f)+1): d;
 						opcode = READ_OP();
 #ifdef Z80EX_Z180_SUPPORT
-						if (z80ex.z180) {
+						if (unlikely(z80ex.z180)) {
 							if ((opcode & 7) != 6 || opcode == 0x36)
 								ofn = trapping(z80ex.prefix, 0xCB, opcode, ITC_B3);
 							else
@@ -79,7 +79,7 @@ int z80ex_step(void)
 							ofn = (z80ex.prefix == 0xDD) ? opcodes_ddcb[opcode] : opcodes_fdcb[opcode];
 					} else { /* FD/DD prefixed base opcodes */
 #ifdef Z80EX_Z180_SUPPORT
-						if (z80ex.z180 && opcodes_ddfd_bad_for_z180[opcode]) {
+						if (unlikely(z80ex.z180 && opcodes_ddfd_bad_for_z180[opcode])) {
 							ofn = trapping(z80ex.prefix, 0x00, opcode, ITC_B2);
 						} else {
 #endif
@@ -102,14 +102,14 @@ int z80ex_step(void)
 					}
 #endif
 #ifdef Z80EX_Z180_SUPPORT
-					if (z80ex.z180)
+					if (unlikely(z80ex.z180))
 						ofn = opcodes_ed_z180[opcode];
 					else
 #endif
 						ofn = opcodes_ed[opcode];
 					if (ofn == NULL) {
 #ifdef Z80EX_Z180_SUPPORT
-						if (z80ex.z180)
+						if (unlikely(z80ex.z180))
 							ofn = trapping(0x00, 0xED, opcode, ITC_B2);
 						else
 #endif
@@ -119,7 +119,7 @@ int z80ex_step(void)
 				
 				case 0xCB: /* CB opcodes */
 #ifdef Z80EX_Z180_SUPPORT
-					if (z80ex.z180 && (opcode & 0xF8) == 0x30)
+					if (unlikely(z80ex.z180 && (opcode & 0xF8) == 0x30))
 						ofn = trapping(0x00, 0xCB, opcode, ITC_B2);
 					else
 #endif

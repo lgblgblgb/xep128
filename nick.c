@@ -606,7 +606,7 @@ void nick_render_slot ( void )
 			if (pixels >= pixels_limit_vsync_long_force)
 				_update();
 			visible = (pixels >= pixels_limit_up && pixels < pixels_limit_bottom && (!frameskip));
-			if ((vm | ((a >> 2) & 0x18)) >= 8*4 ) {
+			if (unlikely((vm | ((a >> 2) & 0x18)) >= 8*4 )) {
 				ERROR_WINDOW("FATAL ERROR: NICK: render funcarray bound check failure!");
 				exit(1);
 			}

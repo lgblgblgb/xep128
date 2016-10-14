@@ -122,6 +122,9 @@ etc). Newer releases at the top ...
 	* If _default_ SD card image cannot be found, Xep128 offers to
 	  create an empty image file for you.
 
+	* Ability to load ep128emu snapshot files, limited precision
+	  of state restore only though ...
+
 2016/Apr/07 --------------------------------------------------------------
 
 	* FILE: functionality, currently buggy and ugly code, only reading!
