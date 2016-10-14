@@ -95,7 +95,9 @@ static const Uint8 _stop_transmission_answer[] = {
 	0, 0, 0, 0, // "stuff byte" and some of it is the R1 answer anyway
 	0xFF // SD card is ready again
 };
-static const Uint8 _read_csd_answer[] = {
+#define __CSD_OFS 2
+#define CSD(a) _read_csd_answer[(__CSD_OFS) + (a)]
+static Uint8 _read_csd_answer[] = {
 	0xFF, // waiting a bit
 	0xFE, // data token
 	// the CSD itself
@@ -171,6 +173,137 @@ static int sdext_detect_rom ( void )
 
 
 
+#if 0
+static inline off_t _assert_on_csd_size_mismatch ( off_t expected_size, int expected_mult, int expected_blocknr, int expected_blocklen )
+{
+	int mult = 2 ** (i["C_SIZE_MULT"] + 2)
+	int blocknr = (i["C_SIZE"] + 1) * mult
+	int blocklen = 2 ** i["READ_BL_LEN"]
+	off_t size = (off_t)blocknr * (off_t)blocklen;
+	if (size != expected_size || mult != expected_mult || blocknr != excepted_blocknr || blocklen != expected_blocklen)
+		FATAL("Internal CSD size calculation failure!\nExpected=" PRINTF_LLD " Got=" PRINTF_LLD " (mult=%d blocknr=%d blocklen=%d)",
+			(long long)expected_size, (long long)size,
+			mult, blocknr, blocklen
+		);
+}
+#endif
+
+
+
+static int _size_calc ( off_t size )
+{
+	int blen_i;
+	for (blen_i = 9; blen_i < 12; blen_i++) {
+		int mult_i;
+		int blen = 1 << blen_i;
+		for (mult_i = 0; mult_i < 8; mult_i++) {
+			int mult = 1 << (mult_i + 2);
+			int res = size / blen;
+			if (!(size % blen) && !(res % mult)) {
+				res = (res / mult) - 1;
+				if (res < 4096 && res > 0) {
+					//printf("MAY HIT with blen=%d[%d],mult=%d[%d],result=%d\n",
+					//        blen, blen_i, mult, mult_i, res
+					//);
+					CSD( 5) = (CSD( 5) & 0xF0) | blen_i;
+					CSD( 6) = (CSD( 6) & 0xFC) | (res >> 10);
+					CSD( 7) = (res >> 2) & 0xFF;
+					CSD( 8) = (CSD( 8) & 0x3F) | ((res & 3) << 6);
+					CSD( 9) = (CSD( 9) & 0xFC) | (mult_i >> 1);
+					CSD(10) = (CSD(10) & 0x7F) | ((mult_i & 1) << 7);
+					// CHECKING the result follows now!
+					//_assert_on_csd_size_mismatch(size, mult, res, blen);
+					return 0;
+				}
+			}
+		}
+	}
+	return 1;
+}
+
+
+
+static int sdext_check_and_set_size ( void )
+{
+	off_t new_size;
+	int is_vhd;
+	if (sd_card_size < MIN_CARD_SIZE) {
+		ERROR_WINDOW(
+			"SD card image file \"%s\" is too small, minimal size is " PRINTF_LLD " Mbytes, but this one is " PRINTF_LLD " bytes long (about " PRINTF_LLD " Mbytes). SD access has been disabled!",
+			sdimg_path, (long long)(MIN_CARD_SIZE >> 20), (long long)sd_card_size, (long long)(sd_card_size >> 20)
+		);
+		return 1;
+	}
+	/* check for VHD footer (not the real part of the image, +512 bytes structure at the end) */
+	is_vhd = -1;
+	if (lseek(sdfd, sd_card_size - 512, SEEK_SET) == sd_card_size - 512) {
+		if (read(sdfd, _buffer, 512) == 512) {
+			Uint8 *p = NULL;
+			if (!memcmp(_buffer + 1, "conectix", 8)) {
+				sd_card_size++;		// old, buggy Microsoft tool maybe, 511 bytes footer instead of 512. Treating size as the normalized one
+				p = _buffer + 1;
+				DEBUG("SDEXT: warning, old buggy Microsoft VHD file, activating workaround!" NL);
+			} else if (!memcmp(_buffer, "conectix", 8))
+				p = _buffer;
+			if (p) {
+				if (p[60] || p[61] || p[62] || p[63] != 2) {
+					ERROR_WINDOW("SD card image \"%s\" is an unsupported VHD file (not fixed, maybe dynamic?)", sdimg_path);
+					return 1;
+				}
+				is_vhd = 1;
+			} else
+				is_vhd = 0;
+		}
+	}
+	if (is_vhd < 0) {
+		ERROR_WINDOW("SD card image \"%s\" I/O error while detecting type: %s.\nSD access has been disabled!", sdimg_path, ERRSTR());
+		return 1;
+	}
+	if (is_vhd) {
+		DEBUG("SDEXT: VHD file detected as card image." NL);
+		sd_card_size -= 512;
+	} else
+		DEBUG("SDEXT: VHD file is not detected." NL);
+	if (sd_card_size > MAX_CARD_SIZE) {	// do this check here, as VHD footer could overflow on 2G boundary at the beginning what we have support for in Xep128
+		ERROR_WINDOW(
+			"SD card image file \"%s\" is too large, maximal allowed size is " PRINTF_LLD " Mbytes, but this one is " PRINTF_LLD " bytes long (about " PRINTF_LLD " Mbytes). "
+			"SD access has been disabled!",
+			sdimg_path, (long long)(MAX_CARD_SIZE >> 20), (long long)sd_card_size, (long long)(sd_card_size >> 20)
+		);
+		return 1;
+	}
+	if ((sd_card_size & 511)) {	// do this check here, as buggy MS tool can create 511 "tail" as footer
+		ERROR_WINDOW("SD card image file \"%s\" size is not multiple of 512 bytes! SD access has been disabled!", sdimg_path);
+		return 1;
+	}
+	/* probing size, optionally extending on request */
+	new_size = sd_card_size;
+	while (_size_calc(new_size))
+		new_size += 512;
+	if (new_size == sd_card_size)
+		return 0;
+	if (is_vhd)
+		WARNING_WINDOW("SD-card image \"%s\" is promoted for extension but it seems to be a VHD file.\nIf you allow extension it WON'T BE USED AS VHD ANY MORE BY OTHER SOFTWARE!", sdimg_path);
+	INFO_WINDOW("SD-card image file \"%s\" is about to be extended with %d bytes (the next valid SD-card size), new size is: " PRINTF_LLD, sdimg_path, (int)(new_size - sd_card_size), (long long)new_size);
+	if (!QUESTION_WINDOW("Not allowed|Allowed (DANGEROUS)", "Do you allow this extension? NOTE: it's a test feature, do not allow it, if you are unsure!")) {
+		INFO_WINDOW("You didn't allow the extension. You can continue, but some EP128 software may fail (ie: fdisk)!");
+		return 0;
+	}
+	if (lseek(sdfd, new_size - 1, SEEK_SET) != new_size - 1) {
+		ERROR_WINDOW("SD card image file \"%s\" cannot be extended (seek error: %s).\nYou can continue but some EP128 software may fail (ie: fdisk)!", sdimg_path, ERRSTR());
+		return 0;
+	}
+	if (write(sdfd, sd_rom_ext, 1) != 1) {	// sd_rom_ext is just used to write some *RANDOM* byte, the content is not so important here :-P It will create a file "with hole" btw.
+		ERROR_WINDOW("SD card image file \"%s\" cannot be extended (write error: %s).\nYou can continue but some EP128 software may fail (ie: fdisk)!", sdimg_path, ERRSTR());
+		return 0;
+	}
+	sd_card_size = new_size;
+	INFO_WINDOW("Great, image file is successfully extended to valid SD-card size! :-)\nNext time you can enjoy the lack of these info message, as you have valid file size now :-)");
+	return 0;
+}
+
+
+
 /* SDEXT emulation currently excepts the cartridge area (segments 4-7) to be filled
  * with the FLASH ROM content. Even segment 7, which will be copied to the second 64K "hidden"
  * and pagable flash area of the SD cartridge. Currently, there is no support for the full
@@ -234,17 +367,12 @@ try_to_open_image:
 	} else {
 		sdfd = fileno(sdf);
 		sd_card_size = lseek(sdfd, 0, SEEK_END);
-		SD_DEBUG("SDEXT: SD card size is: %ld bytes" NL, sd_card_size);
-		if (sd_card_size > MAX_CARD_SIZE || sd_card_size < MIN_CARD_SIZE) {
+		if (sdext_check_and_set_size()) {
 			fclose(sdf);
 			sdf = NULL;
-			ERROR_WINDOW("SD card image file \"%s\" is too small or large, valid range is %d - %d Mbytes, but this one is %lld bytes long (about %d Mbytes). SD access has been disabled!",
-				sdimg_path, (int)(MIN_CARD_SIZE >> 20), (int)(MAX_CARD_SIZE >> 20),
-				(long long)sd_card_size, (int)(sd_card_size >> 20)
-
-			);
 			*sdimg_path = 0;
-		}
+		} else
+			DEBUG("SDEXT: SD card size is: " PRINTF_LLD " bytes" NL, (long long)sd_card_size);
 	}
 	memset(sd_rom_ext, 0xFF, 0x10000);
 	/* Copy ROM image of 16K to the second 64K of the cartridge flash. Currently only 8K is used.
@@ -598,8 +726,7 @@ static void flash_wr_bus_op ( int sector, Uint16 addr, Uint8 data )
 			flash_command = 0;
 			return;
 		default:
-			ERROR_WINDOW("Invalid SDEXT FLASH bus cycle #%d on WR", flash_bus_cycle);
-			exit(1);
+			FATAL("Invalid SDEXT FLASH bus cycle #%d on WR", flash_bus_cycle);
 			break;
 	}
 }
@@ -656,11 +783,10 @@ Uint8 sdext_read_cart ( Uint16 addr )
 				return 0xFF;
 				return is_hs_read;
 			default:
-				ERROR_WINDOW("SDEXT: FATAL, unhandled (RD) case");
-				exit(1);
+				FATAL("SDEXT: FATAL, unhandled (RD) case");
+				break;
 		}
-	ERROR_WINDOW("SDEXT: FATAL, control should not get here");
-	exit(1);
+	FATAL("SDEXT: FATAL, control should not get here");
 	return 0; // make GCC happy :)
 }
 
@@ -707,8 +833,8 @@ void sdext_write_cart ( Uint16 addr, Uint8 data )
 			SD_DEBUG("SDEXT: REGIO: W: HS read mode is %s" NL, is_hs_read ? "set" : "reset");
 			break;
 		default:
-			ERROR_WINDOW("SDEXT: FATAL, unhandled (WR) case");
-			exit(1);
+			FATAL("SDEXT: FATAL, unhandled (WR) case");
+			break;
 	}
 }
 
