@@ -29,9 +29,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "screen.h"
 #include "fileio.h"
 
+#if defined(_WIN32) || defined (XEP128_GTK)
+#define XEP128_GUI_C
+#endif
 
 
-
+#ifdef XEP128_GUI_C
 static void store_dir_from_file_selection ( char *store_dir, const char *filename, int dialog_mode )
 {
 	if (store_dir && (dialog_mode & XEPGUI_FSEL_FLAG_STORE_DIR)) {
@@ -46,6 +49,8 @@ static void store_dir_from_file_selection ( char *store_dir, const char *filenam
 		}
 	}
 }
+#endif
+
 
 
 #ifdef _WIN32
@@ -85,9 +90,9 @@ int xepgui_file_selector ( int dialog_mode, const char *dialog_title, char *defa
 	if (res) {
 		int err = CommDlgExtendedError();
 		*selected = '\0';
-		DEBUG("GUI: file selector (Windows) error code: %04Xh for HWND owner %d" NL, err, (int)ofn.hwndOwner);
+		DEBUG("GUI: file selector (Windows) error code: %04Xh for HWND owner %p" NL, err, ofn.hwndOwner);
 		if (err)
-			ERROR_WINDOW("Windows CommDlgExtendedError: %04Xh for HWND owner %d", err, (int)ofn.hwndOwner);
+			ERROR_WINDOW("Windows CommDlgExtendedError: %04Xh for HWND owner %p", err, ofn.hwndOwner);
 	} else
 		store_dir_from_file_selection(default_dir, selected, dialog_mode);
 	xepgui_iteration();
