@@ -252,7 +252,17 @@ int set_cpu_clock_with_osd ( int hz )
 
 
 // called by nick.c
+static int emu_one_frame_rasters = -1;
+static int emu_one_frame_frameskip = 0;
+
 void emu_one_frame(int rasters, int frameskip)
+{
+	emu_one_frame_rasters = rasters;
+	emu_one_frame_frameskip = frameskip;
+}
+
+
+static void __emu_one_frame(int rasters, int frameskip)
 {
 	SDL_Event e;
 	while (SDL_PollEvent(&e) != 0)
@@ -336,8 +346,66 @@ void emu_one_frame(int rasters, int frameskip)
 	xepgui_iteration();
 	monitor_process_queued();
 	rtc_update_trigger = 1; // triggers RTC update on the next RTC register read. Woooo!
+#ifndef __EMSCRIPTEN__
 	emu_timekeeping_delay(1000000.0 * rasters * 57.0 / (double)NICK_SLOTS_PER_SEC);
+#endif
 }
+
+
+
+
+static void xep128_emulation ( void )
+{
+	for (;;) {
+		int t;
+		// This needs somewhat optimazed solution, only a single, simple "if" to test, and all more complex stuff inside!
+		// So the creative usage of goto and continue can be seen here as well :)
+		// This is because in case of not-paused mode the "price" should be minimal at every opcodes, maybe just three machine code ops on x86 ...
+		// TODO this stuff should be called "request" mode not only for pause, but single stepping, well-defined snapshot save place (no-in opcode stuff), etc ...
+		if (unlikely(paused && !z80ex.prefix)) {
+			/* Paused is non-zero for special cases, like pausing emulator :) or single-step execution mode */
+			emu_one_frame(312, 0); // keep UI stuffs (and some timing) intact ... with a faked about 312 scanline (normal frame) timing needed ...
+			continue; // but do not emulate EP related stuff ...
+		}
+		if (unlikely(nmi_pending)) {
+			t = z80ex_nmi();
+			DEBUG("NMI: %d" NL, t);
+			if (t)
+				nmi_pending = 0;
+		} else
+			t = 0;
+		if ((t == 0) && (dave_int_read & 0xAA)) {
+			t = z80ex_int();
+			if (t)
+				DEBUG("CPU: int and accepted = %d" NL, t);
+		} else
+			t = 0;
+		if (!t)
+			t = z80ex_step();
+		cpu_cycles_for_dave_sync += t;
+		//DEBUG("DAVE: SYNC: CPU cycles = %d, Dave sync val = %d, limit = %d" NL, t, cpu_cycles_for_dave_sync, cpu_cycles_per_dave_tick);
+		while (cpu_cycles_for_dave_sync >= cpu_cycles_per_dave_tick) {
+			dave_tick();
+			cpu_cycles_for_dave_sync -= cpu_cycles_per_dave_tick;
+		}
+		balancer += t * SCALER;
+		//DEBUG("%s [balance=%f t=%d]" NL, buffer, balancer, t);
+		while (balancer >= 0.5) {
+			nick_render_slot();
+			balancer -= 1.0;
+			if (unlikely(emu_one_frame_rasters != -1)) {
+				__emu_one_frame(
+					emu_one_frame_rasters,
+					emu_one_frame_frameskip
+				);
+				emu_one_frame_rasters = -1;
+				return;
+			}
+		}
+		//DEBUG("[balance=%f t=%d]" NL, balancer, t);
+	}
+}
+
 
 
 
@@ -414,49 +482,12 @@ int main (int argc, char *argv[])
 	if (snapshot)
 		ep128snap_set_cpu_and_io();
 	console_monitor_ready();	// OK to run monitor on console now!
-	/* Main loop of the emulator, an infinite one :) Use exit() to exit, as atexit() is
-	used to register proper "cleaner" function, including calling SDL_Quit() as well
-	This is also an optimization that it's an unconditional, infinite loop and no test is needed eg for 'exit' ... */
-	for (;;) {
-		int t;
-		// This needs somewhat optimazed solution, only a single, simple "if" to test, and all more complex stuff inside!
-		// So the creative usage of goto and continue can be seen here as well :)
-		// This is because in case of not-paused mode the "price" should be minimal at every opcodes, maybe just three machine code ops on x86 ...
-		// TODO this stuff should be called "request" mode not only for pause, but single stepping, well-defined snapshot save place (no-in opcode stuff), etc ...
-		if (unlikely(paused && !z80ex.prefix)) {
-			/* Paused is non-zero for special cases, like pausing emulator :) or single-step execution mode */
-			emu_one_frame(312, 0); // keep UI stuffs (and some timing) intact ... with a faked about 312 scanline (normal frame) timing needed ...
-			continue; // but do not emulate EP related stuff ...
-		}
-		if (unlikely(nmi_pending)) {
-			t = z80ex_nmi();
-			DEBUG("NMI: %d" NL, t);
-			if (t)
-				nmi_pending = 0;
-		} else
-			t = 0;
-		if ((t == 0) && (dave_int_read & 0xAA)) {
-			t = z80ex_int();
-			if (t)
-				DEBUG("CPU: int and accepted = %d" NL, t);
-		} else
-			t = 0;
-		if (!t)
-			t = z80ex_step();
-		cpu_cycles_for_dave_sync += t;
-		//DEBUG("DAVE: SYNC: CPU cycles = %d, Dave sync val = %d, limit = %d" NL, t, cpu_cycles_for_dave_sync, cpu_cycles_per_dave_tick);
-		while (cpu_cycles_for_dave_sync >= cpu_cycles_per_dave_tick) {
-			dave_tick();
-			cpu_cycles_for_dave_sync -= cpu_cycles_per_dave_tick;
-		}
-		balancer += t * SCALER;
-		//DEBUG("%s [balance=%f t=%d]" NL, buffer, balancer, t);
-		while (balancer >= 0.5) {
-			nick_render_slot();
-			balancer -= 1.0;
-		}
-		//DEBUG("[balance=%f t=%d]" NL, balancer, t);
-	}
+#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop(xep128_emulation, 50, 1);
+#else
+	for (;;)
+		xep128_emulation();
+#endif
+	printf("EXITING FROM main()?!" NL);
 	return 0;
 }
-
