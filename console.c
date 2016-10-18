@@ -23,6 +23,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <SDL.h>
 
+#ifdef NO_CONSOLE
+int console_is_open = 0;
+void console_close_window ( void ) {
+}
+void console_close_window_on_exit ( void ) {
+}
+void console_open_window ( void ) {
+}
+void console_monitor_ready ( void ) {
+}
+#else
+
+
 #ifdef _WIN32
 #include <windows.h>
 #include <stdio.h>
@@ -205,3 +218,4 @@ void console_monitor_ready ( void )
 	ok_for_monitor = 1;
 	monitor_start();
 }
+#endif

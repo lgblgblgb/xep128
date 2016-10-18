@@ -27,6 +27,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #define DESCRIPTION		"Enterprise-128 Emulator"
 #define WINDOW_TITLE		"Xep128"
 #define VERSION			"0.3"

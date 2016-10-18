@@ -15,3 +15,7 @@
 /.git-commit-info*
 /todo
 /*.deb
+/xep128.data
+/xep128.html
+/xep128.html.mem
+/xep128.js

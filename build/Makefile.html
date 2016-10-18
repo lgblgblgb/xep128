@@ -1,0 +1,18 @@
+# Xep128: Minimalistic Enterprise-128 emulator with focus on "exotic" hardware
+# Copyright (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>
+# http://xep128.lgb.hu/
+
+ARCH_DESC	= "JS/HTML"
+PREFIX		=
+BINDIR		=
+DATADIR		= /
+CC		= emcc
+STRIP		=
+EMCC_FLAGS	= -s USE_SDL=2
+GENOPTS		= -O3 -fno-common -ffast-math
+CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(EMCC_FLAGS) -include arch/arch-html.h
+LDFLAGS_ARCH	= $(GENOPTS) $(EMCC_FLAGS) --preload-file combined.rom
+LIBS_ARCH	=
+SRCS_ARCH	=
+PRG		= xep128.html
+ZIP_FILES_ARCH	=

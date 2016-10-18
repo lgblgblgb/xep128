@@ -353,10 +353,12 @@ int screen_init ( void )
 		return 1;
 	}
 	SDL_VERSION(&sdl_wminfo.version);
+#ifndef __EMSCRIPTEN__
 	if (!SDL_GetWindowWMInfo(sdl_win, &sdl_wminfo)) {
 		ERROR_WINDOW("Cannot issue WMInfo call: %s", SDL_GetError());
 		return 1;
 	}
+#endif
 	SDL_SetWindowMinimumSize(sdl_win, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
 	//screen_window_resized();
 	set_app_icon(sdl_win, _icon_pixels);
@@ -448,6 +450,10 @@ int _sdl_emu_secured_modal_box_ ( const char *items_in, const char *msg )
 		char *p = strchr(items, '|');
 		switch (*items) {
 			case '!':
+#ifdef __EMSCRIPTEN__
+				DEBUGPRINT("Emscripten: faking chooser box answer %d for \"%s\"" NL, messageboxdata.numbuttons, msg);
+				return messageboxdata.numbuttons;
+#endif
 				buttons[messageboxdata.numbuttons].flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
 				items++;
 				break;

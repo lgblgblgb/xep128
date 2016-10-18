@@ -480,11 +480,15 @@ static int get_path_info ( void )
 	char buffer[PATH_MAX + 1];
 	app_pref_path = NULL;	// to signal that it's not got yet
 	/* Get base path (where executable is */
+#ifdef __EMSCRIPTEN__
+	app_base_path = strdup("/");
+#else
 	app_base_path = SDL_GetBasePath();
 	if (!app_base_path) {
 		ERROR_WINDOW("Cannot query base directory: %s", ERRSTR());
 		return 1;
 	}
+#endif
 	/* Check for pref dir override file in the same directory where executable is (base path) */
 	snprintf(buffer, sizeof buffer, "%s%cxep128.dir", app_base_path, DIRSEP[0]);
 	f = fopen(buffer, "r");
@@ -508,11 +512,15 @@ static int get_path_info ( void )
 	if (app_pref_path) {
 		printf("CONFIG: Overriding pref path to: %s" NL, app_pref_path);
 	} else {
+#ifdef __EMSCRIPTEN__
+		app_pref_path = strdup("/");
+#else
 		app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
 		if (!app_pref_path) {
 			ERROR_WINDOW("Cannot query preferences directory: %s", ERRSTR());
 			return 1;
 		}
+#endif
 	}
 	/* Get current directory */
 	if (getcwd(current_directory, sizeof current_directory) == NULL) {

@@ -72,9 +72,13 @@ time_t unix_time;
 void *alloc_xep_aligned_mem ( size_t size )
 {
 	// it seems _mm_malloc() is quite standard at least on gcc, mingw, clang ... so let's try to use it
+#ifdef __EMSCRIPTEN__
+	return SDL_malloc(size);
+#else
 	void *p = _mm_malloc(size, __BIGGEST_ALIGNMENT__);
 	DEBUG("ALIGNED-ALLOC: base_pointer=%p size=%d alignment=%d" NL, p, (int)size, __BIGGEST_ALIGNMENT__);
 	return p;
+#endif
 }
 
 
@@ -342,7 +346,14 @@ int main (int argc, char *argv[])
 {
 	const char *snapshot;
 	atexit(shutdown_sdl);
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+	if (SDL_Init(
+#ifdef __EMSCRIPTEN__
+		// It seems there is an issue with emscripten SDL2: SDL_Init does not work if TIMER and/or HAPTIC is tried to be intialized or just "EVERYTHING" is used!!
+		SDL_INIT_EVERYTHING & ~(SDL_INIT_TIMER | SDL_INIT_HAPTIC)
+#else
+		SDL_INIT_EVERYTHING
+#endif
+	) != 0) {
 		ERROR_WINDOW("Fatal SDL initialization problem: %s", SDL_GetError());
 		return 1;
 	}
@@ -412,15 +423,12 @@ int main (int argc, char *argv[])
 		// So the creative usage of goto and continue can be seen here as well :)
 		// This is because in case of not-paused mode the "price" should be minimal at every opcodes, maybe just three machine code ops on x86 ...
 		// TODO this stuff should be called "request" mode not only for pause, but single stepping, well-defined snapshot save place (no-in opcode stuff), etc ...
-		if (paused) {
-			if (z80ex.prefix)
-				goto processing;	// do not allow in-opcode pause for the emulator! I *always* wanted to use GOTO, I am so happy now :D
+		if (unlikely(paused && !z80ex.prefix)) {
 			/* Paused is non-zero for special cases, like pausing emulator :) or single-step execution mode */
 			emu_one_frame(312, 0); // keep UI stuffs (and some timing) intact ... with a faked about 312 scanline (normal frame) timing needed ...
 			continue; // but do not emulate EP related stuff ...
 		}
-	processing:
-		if (nmi_pending) {
+		if (unlikely(nmi_pending)) {
 			t = z80ex_nmi();
 			DEBUG("NMI: %d" NL, t);
 			if (t)
