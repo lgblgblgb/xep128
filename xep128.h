@@ -101,6 +101,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #endif
 
 extern FILE *debug_file;
+#ifdef DISABLE_DEBUG
+#define DEBUG(...)
+#define DEBUGPRINT(...) printf(__VA_ARGS__)
+#else
 #define DEBUG(...) do {	\
         if (debug_file)	\
                 fprintf(debug_file, __VA_ARGS__);	\
@@ -109,6 +113,7 @@ extern FILE *debug_file;
         printf(__VA_ARGS__);	\
         DEBUG(__VA_ARGS__);	\
 } while(0)
+#endif
 
 extern void osd_notification ( const char *s );
 #define OSD(...) do { \

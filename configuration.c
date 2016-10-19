@@ -556,6 +556,9 @@ int config_init ( int argc, char **argv )
 	if (get_path_info())
 		return 1;
 	/* ugly hack: pre-parse comand line to find debug statement (to be worse, it does not handle single argument options too well ... */
+#ifdef DISABLE_DEBUG
+	printf("DEBUG: disabled at compilation time." NL);
+#else
 	while (testparsing < argc) {
 		if (!strcmp(argv[testparsing], "-" DEBUGFILE_OPT) && testparsing != argc - 1 && strcmp(argv[testparsing + 1], "none")) {
 			debug_file = fopen(argv[testparsing + 1], "w");
@@ -566,9 +569,10 @@ int config_init ( int argc, char **argv )
 		}
 		testparsing++;
 	}
+	testparsing = 0;
+#endif
 	/* end of ugly hack */
 	/* let's continue with the info block ... */
-	testparsing = 0;
 	DEBUGPRINT("%s %s v%s %s %s" NL
 		"GIT %s compiled by (%s) at (%s) with (%s)-(%s)" NL
 		"Platform: (%s) (%d-bit), video: (%s), audio: (%s), "

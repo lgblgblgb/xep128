@@ -57,7 +57,7 @@ static unsigned int ticks;
 int paused = 0;
 static int cpu_cycles_for_dave_sync = 0;
 static int td_balancer;
-static Uint64 et_old;
+static Uint64 et_start, et_end;
 static int td_em_ALL = 0, td_pc_ALL = 0, td_count_ALL = 0;
 static double balancer;
 static double SCALER;
@@ -112,7 +112,7 @@ static void shutdown_sdl(void)
 static int get_elapsed_time ( Uint64 t_old, Uint64 *t_new, time_t *store_unix_time )
 {
 #ifdef XEP128_OLD_TIMING
-#define __TIMING_METHOD_DESC "gettimeofday()"
+#define __TIMING_METHOD_DESC "gettimeofday"
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	if (store_unix_time)
@@ -134,7 +134,14 @@ static inline void emu_sleep ( int td )
 {
 	if (td <= 0)
 		return;
-#ifdef XEP128_SLEEP_IS_SDL_DELAY
+#ifdef __EMSCRIPTEN__
+#define __SLEEP_METHOD_DESC "emscripten_set_main_loop_timing"
+	// If too short period of sleep (not enough for 1ms), give some time for browser to run
+	// to avoid the "stop the script" warning or so ...
+	// For Js, it's not really a sleep what name would mean for function (emu_sleep) but
+	// rather then a setTimeout value for the handler
+	emscripten_set_main_loop_timing(EM_TIMING_SETTIMEOUT, td > 999 ? td / 1000 : 1);
+#elif defined(XEP128_SLEEP_IS_SDL_DELAY)
 #define __SLEEP_METHOD_DESC "SDL_Delay"
 	SDL_Delay(td / 1000);
 #elif defined(XEP128_SLEEP_IS_USLEEP)
@@ -163,6 +170,20 @@ static inline void emu_sleep ( int td )
 
 
 
+static void emu_timekeeping_check ( void )
+{
+	// check how much time we slept, initiated by last call of emu_timekeeping_delay()
+	// we also store current UT in "unix_time" to be used by emulator (ie, RTC emulation)
+	int td = get_elapsed_time(et_end, &et_start, &unix_time);
+	if (td >= 0)			// td should be greater than zero or sleep was about for _minus_ time? eh, give me that time machine, dude! :)
+		td_balancer -= td;	// time-difference balancer, decrease with time slept
+	else
+		DEBUG("TIMING: negative amount of time spent for sleeping?!" NL);
+	rtc_update_trigger = 1;
+}
+
+
+
 
 /* This is the emulation timing stuff
  * Should be called at the END of the emulation loop.
@@ -170,12 +191,12 @@ static inline void emu_sleep ( int td )
  * This function also does the sleep itself */
 static void emu_timekeeping_delay ( int td_em )
 {
-	int td, td_pc;
-	Uint64 et_new;
-	td_pc = get_elapsed_time(et_old, &et_new, NULL);	// get realtime since last call in microseconds
-	if (td_pc < 0) return; // time goes backwards? maybe time was modified on the host computer. Skip this delay cycle
-	//td_ep = 1000000 * rasters * 57 / NICK_SLOTS_PER_SEC; // microseconds would need for an EP128 to do this
-	td = td_em - td_pc; // the time difference (+X = PC is faster - real time EP emulation, -X = EP is faster - real time EP emulation is not possible)
+	int td, td_pc = get_elapsed_time(et_start, &et_end, NULL);	// the time was needed for our emulation loop
+	if (td_pc < 0) {
+		DEBUG("TIMING: negative amount of time spent for an emulation loop?!" NL);
+		td = 0;
+	} else
+		td = td_em - td_pc; // the time difference (+X = PC is faster - real time EP emulation, -X = EP is faster - real time EP emulation is not possible)
 	DEBUG("DELAY: pc=%d em=%d sleep=%d" NL, td_pc, td_em, td);
 	/* for reporting only: BEGIN */
 	td_em_ALL += td_em;
@@ -185,7 +206,7 @@ static void emu_timekeeping_delay ( int td_em )
 		//DEBUG("STAT: count = %d, EM = %d, PC = %d, usage = %f%" NL, td_count_ALL, td_em_ALL, td_pc_ALL, 100.0 * (double)td_pc_ALL / (double)td_em_ALL);
 		snprintf(buf, sizeof buf, "%s [%.2fMHz ~ %d%%]%s", WINDOW_TITLE " v" VERSION " ",
 			CPU_CLOCK / 1000000.0,
-			td_pc_ALL * 100 / td_em_ALL,
+			td_em_ALL ? (td_pc_ALL * 100 / td_em_ALL) : -1,
 			paused ? " PAUSED" : ""
 		);
 		SDL_SetWindowTitle(sdl_win, buf);
@@ -195,25 +216,13 @@ static void emu_timekeeping_delay ( int td_em )
 	} else
 		td_count_ALL++;
 	/* for reporting only: END */
-	if (td > 0) {
-		td_balancer += td;
-		emu_sleep(td_balancer);
-	}
-	/* Purpose:
-	 * get the real time spent sleeping (sleep is not an exact science on a multitask OS)
-	 * also this will get the starter time for the next frame
-	 */
-	// calculate real time slept
-	td = get_elapsed_time(et_new, &et_old, &unix_time);
-	DEBUG("Really slept = %d" NL, td);
-	if (td < 0) return; // invalid, sleep was about for _minus_ time? eh, give me that time machine, dude! :)
-	td_balancer -= td;
-	if (td_balancer >  1000000)
-		td_balancer = 0;
-	else if (td_balancer < -1000000)
+	td_balancer += td;
+	/* insane time-diff balancer values ... */
+	if (td_balancer >  1000000 || td_balancer < -1000000)
 		td_balancer = 0;
 	DEBUG("Balancer = %d" NL, td_balancer);
-	//unix_time = tv_old.tv_sec; // publish current time
+	// Should be the last, as with Emscripten, it's not a real sleep, but the settimeout JS stuff ...
+	emu_sleep(td_balancer);
 }
 
 
@@ -223,8 +232,10 @@ static void emu_timekeeping_delay ( int td_em )
  * You DO NOT need this during the active emulation loop! */
 void emu_timekeeping_start ( void )
 {
-	(void)get_elapsed_time(0, &et_old, &unix_time);
+	(void)get_elapsed_time(0, &et_start, &unix_time);
+	et_end = et_start;
 	td_balancer = 0;
+	rtc_update_trigger = 1;
 }
 
 
@@ -345,10 +356,7 @@ static void __emu_one_frame(int rasters, int frameskip)
 		screen_present_frame(ep_pixels);	// this should be after the event handler, as eg screenshot function needs locked texture state if this feature is used at all
 	xepgui_iteration();
 	monitor_process_queued();
-	rtc_update_trigger = 1; // triggers RTC update on the next RTC register read. Woooo!
-#ifndef __EMSCRIPTEN__
-	emu_timekeeping_delay(1000000.0 * rasters * 57.0 / (double)NICK_SLOTS_PER_SEC);
-#endif
+	emu_timekeeping_delay((1000000.0 * rasters * 57.0) / (double)NICK_SLOTS_PER_SEC);
 }
 
 
@@ -356,16 +364,14 @@ static void __emu_one_frame(int rasters, int frameskip)
 
 static void xep128_emulation ( void )
 {
+	emu_timekeeping_check();
 	for (;;) {
 		int t;
-		// This needs somewhat optimazed solution, only a single, simple "if" to test, and all more complex stuff inside!
-		// So the creative usage of goto and continue can be seen here as well :)
-		// This is because in case of not-paused mode the "price" should be minimal at every opcodes, maybe just three machine code ops on x86 ...
-		// TODO this stuff should be called "request" mode not only for pause, but single stepping, well-defined snapshot save place (no-in opcode stuff), etc ...
 		if (unlikely(paused && !z80ex.prefix)) {
-			/* Paused is non-zero for special cases, like pausing emulator :) or single-step execution mode */
-			emu_one_frame(312, 0); // keep UI stuffs (and some timing) intact ... with a faked about 312 scanline (normal frame) timing needed ...
-			continue; // but do not emulate EP related stuff ...
+			/* Paused is non-zero for special cases, like pausing emulator :) or single-step execution mode
+                           We only do this if z80ex.prefix is non-zero, ie not in the "middle" of a prefixed Z80 opcode or so ... */
+			__emu_one_frame(312, 0); // keep UI stuffs (and some timing) intact ... with a faked about 312 scanline (normal frame) timing needed ...
+			return;
 		}
 		if (unlikely(nmi_pending)) {
 			t = z80ex_nmi();
@@ -374,13 +380,14 @@ static void xep128_emulation ( void )
 				nmi_pending = 0;
 		} else
 			t = 0;
-		if ((t == 0) && (dave_int_read & 0xAA)) {
+		//if (unlikely((dave_int_read & 0xAA) && t == 0)) {
+		if ((dave_int_read & 0xAA) && t == 0) {
 			t = z80ex_int();
 			if (t)
 				DEBUG("CPU: int and accepted = %d" NL, t);
 		} else
 			t = 0;
-		if (!t)
+		if (likely(!t))
 			t = z80ex_step();
 		cpu_cycles_for_dave_sync += t;
 		//DEBUG("DAVE: SYNC: CPU cycles = %d, Dave sync val = %d, limit = %d" NL, t, cpu_cycles_for_dave_sync, cpu_cycles_per_dave_tick);
