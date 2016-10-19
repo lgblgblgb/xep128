@@ -8,10 +8,10 @@ BINDIR		=
 DATADIR		= /
 CC		= emcc
 STRIP		=
-EMCC_FLAGS	= -s USE_SDL=2
+EMCC_FLAGS	= -s USE_SDL=2 -s NO_EXIT_RUNTIME=1
 GENOPTS		= -O3 -fno-common -ffast-math
 CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(EMCC_FLAGS) -include arch/arch-html.h
-LDFLAGS_ARCH	= $(GENOPTS) $(EMCC_FLAGS) --preload-file combined.rom
+LDFLAGS_ARCH	= $(GENOPTS) $(EMCC_FLAGS) --preload-file combined.rom --memory-init-file 1
 LIBS_ARCH	=
 SRCS_ARCH	=
 PRG		= xep128.html

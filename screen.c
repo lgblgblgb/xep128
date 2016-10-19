@@ -23,12 +23,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "configuration.h"
 #include "main.h"
 #include "input.h"
+#ifndef NO_SCREENSHOT
 #ifdef CONFIG_USE_LODEPNG
 #	include "lodepng.h"
 #else
 #	include "png.h"
 #endif
+#endif
+#ifndef __EMSCRIPTEN__
 #include "data/app_icon.c"
+#endif
 #include <SDL.h>
 
 
@@ -47,6 +51,7 @@ static int win_xsize, win_ysize, resize_counter = 0, win_size_changed = 0;
 static int screenshot_index = 0;
 static Uint32 *osd_pixels = NULL;
 static int osd_on = 0, osd_fade = 0;
+static Uint32 osd_fg_colour, osd_bg_colour;
 
 
 
@@ -77,6 +82,13 @@ void osd_update ( void )
 }
 
 
+void osd_set_colour ( int fg_r, int fg_g, int fg_b, int fg_a, int bg_r, int bg_g, int bg_b, int bg_a )
+{
+	osd_fg_colour = SDL_MapRGBA(sdl_pixel_format, fg_r, fg_g, fg_b, fg_a);
+	osd_bg_colour = SDL_MapRGBA(sdl_pixel_format, bg_r, bg_g, bg_b, bg_a);
+}
+
+
 void osd_write_char ( int x, int y, char ch )
 {
 	int row;
@@ -85,7 +97,7 @@ void osd_write_char ( int x, int y, char ch )
 	for (row = 0; row < 16; row++) {
 		Uint16 mask = 0x8000;
 		do {
-			*(d++) = *s & mask ? 0xFFFFFFFFU : 0xFF0000FFU;
+			*(d++) = *s & mask ? osd_fg_colour : osd_bg_colour;
 			mask >>= 1;
 		} while (mask);
 		s++;
@@ -250,6 +262,9 @@ void screen_present_frame (Uint32 *ep_pixels)
 // TODO: use libpng in Linux, smaller binary (on windows I wouldn't introduce another DLL dependency though ...)
 int screen_shot ( Uint32 *ep_pixels, const char *directory, const char *filename )
 {
+#ifdef NO_SCREENSHOT
+	return 1;
+#else
 	char fn[PATH_MAX + 1], *p;
 	Uint8 *pix = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 2 * 3);
 	int a;
@@ -285,10 +300,12 @@ int screen_shot ( Uint32 *ep_pixels, const char *directory, const char *filename
 		OSD("Screenshot:\n%s", fn + strlen(directory));
 		return 0;
 	}
+#endif
 }
 
 
 
+#ifndef __EMSCRIPTEN__
 static void set_app_icon ( SDL_Window *win, const void *app_icon )
 {
 	SDL_Surface *surf = SDL_CreateRGBSurfaceFrom((void*)app_icon,96,96,32,96*4,0x000000ff,0x0000ff00,0x00ff0000,0xff000000);
@@ -299,7 +316,7 @@ static void set_app_icon ( SDL_Window *win, const void *app_icon )
 		SDL_FreeSurface(surf);
 	}
 }
-
+#endif
 
 
 static SDL_bool XEP128_SDL_SetHint ( const char *sdl_hint_name, const char *cfg_sub_key, const char *defval )
@@ -342,6 +359,7 @@ int screen_init ( void )
 	win_xsize = SCREEN_WIDTH;
 	win_ysize = SCREEN_HEIGHT * 2;
 	XEP128_SDL_SetHint(SDL_HINT_RENDER_DRIVER, "driver", NULL);
+	sdl_pixel_format = SDL_AllocFormat(SCREEN_FORMAT);
 	sdl_win = SDL_CreateWindow(
                 WINDOW_TITLE " v" VERSION,
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -361,8 +379,17 @@ int screen_init ( void )
 #endif
 	SDL_SetWindowMinimumSize(sdl_win, SCREEN_WIDTH, SCREEN_HEIGHT * 2);
 	//screen_window_resized();
+#ifndef __EMSCRIPTEN__
 	set_app_icon(sdl_win, _icon_pixels);
-	sdl_ren = SDL_CreateRenderer(sdl_win, -1, 0);
+#endif
+	sdl_ren = SDL_CreateRenderer(sdl_win, -1,
+#ifdef __EMSCRIPTEN__
+		// It seems, Emscripten uses WebGL context rather than browser-canvas 2D context, however that seems to be slower!!!
+		0 /* SDL_RENDERER_SOFTWARE */
+#else
+		0
+#endif
+	);
 	if (sdl_ren == NULL) {
 		ERROR_WINDOW("Cannot create SDL renderer: %s", SDL_GetError());
 		return 1;
@@ -389,13 +416,13 @@ int screen_init ( void )
 			free(osd_pixels);
 			osd_pixels = NULL;
 		} else {
+			osd_set_colour(0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF);
 			if (SDL_SetTextureBlendMode(sdl_osdtex, SDL_BLENDMODE_BLEND))
 				ERROR_WINDOW("Warning, SDL BLEND mode cannot be used for OSD, there can be fade out problems.\n%s", SDL_GetError());
 		}
 	} else
 		ERROR_WINDOW("Not enough memory for OSD pixel buffer. OSD won't work");
         sdl_winid = SDL_GetWindowID(sdl_win);
-	sdl_pixel_format = SDL_AllocFormat(SCREEN_FORMAT);
 	DEBUG("SDL: everything seems to be OK ..." NL);
 	return 0;
 }
