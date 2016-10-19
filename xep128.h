@@ -29,8 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
-extern void shutdown_sdl(void);
-#define XEPEXIT(n)	do { emscripten_cancel_main_loop(); shutdown_sdl(); exit(n); } while (0)
+#define XEPEXIT(n)	do { emscripten_cancel_main_loop(); emscripten_force_exit(n); exit(n); } while (0)
 #else
 #define XEPEXIT(n)	exit(n)
 #endif

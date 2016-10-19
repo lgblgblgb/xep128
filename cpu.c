@@ -86,8 +86,8 @@ void set_ep_cpu ( int type )
 			z180_port_start = 0;
 			break;
 		default:
-			ERROR_WINDOW("Unknown CPU type was requested: %d", type);
-			exit(1);
+			FATAL("FATAL: Unknown CPU type was requested: %d", type);
+			break;
 	}
 	DEBUG("CPU: set to %s %s" NL,
 		z80ex.z180 ? "Z180" : "Z80",
@@ -281,10 +281,8 @@ void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 	Uint8 port;
 	if (z80ex.z180 && (port16 & 0xFFC0) == z180_port_start) {
-		if (z180_port_start == 0x80) {
-			ERROR_WINDOW("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
-			exit(1);
-		}
+		if (z180_port_start == 0x80)
+			FATAL("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
 		return z180_port_read(port16 & 0x3F);
 	}
 	port = port16 & 0xFF;
@@ -363,10 +361,8 @@ void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 	//Z80EX_BYTE old_value;
 	Uint8 port;
 	if (z80ex.z180 && (port16 & 0xFFC0) == z180_port_start) {
-		if (z180_port_start == 0x80) {
-			ERROR_WINDOW("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
-			exit(1);
-		}
+		if (z180_port_start == 0x80)
+			FATAL("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
 		z180_port_write(port16 & 0x3F, value);
 		return;
 	}

@@ -197,10 +197,8 @@ int config_set ( const char *name, int subopt, const char *value )
 
 static void config_set_internal ( const char *name, int subopt, const char *value )
 {
-	if (config_set(name, subopt, value)) {
-		ERROR_WINDOW("Internal built-in configuration error: config_set_internal(\"%s\",%d,\"%s\")", name, subopt, value);
-		exit(1);
-	}
+	if (config_set(name, subopt, value))
+		FATAL("Internal built-in configuration error: config_set_internal(\"%s\",%d,\"%s\")", name, subopt, value);
 }
 
 
@@ -237,15 +235,13 @@ void *config_getopt ( const char *name, const int subopt, void *value )
 	if (!opt) {
 		if (!value)
 			return NULL;
-		ERROR_WINDOW("config_getopt(\"%s\",%d) failed, no optname found", name, subopt);
-		exit(1);
+		FATAL("config_getopt(\"%s\",%d) failed, no optname found", name, subopt);
 	}
 	st = search_setting(opt, subopt);
 	if (!st) {
 		if (!value)
 			return NULL;
-		ERROR_WINDOW("config_getopt(\"%s\",%d) failed, no setting found", name, subopt);
-		exit(1);
+		FATAL("config_getopt(\"%s\",%d) failed, no setting found", name, subopt);
 	}
 	if (value)
 		config_getopt_pointed(st, value);
@@ -268,8 +264,8 @@ void config_getopt_pointed ( void *st_in, void *value )
 			*(char**)value = st->value;
 			break;
 		default:
-			ERROR_WINDOW("config_getopt(\"%s\",%d) failed, unknown config item type %d", st->opt->name, st->subopt, st->opt->type);
-			exit(1);
+			FATAL("config_getopt(\"%s\",%d) failed, unknown config item type %d", st->opt->name, st->subopt, st->opt->type);
+			break;
 	}
 }
 
@@ -608,7 +604,7 @@ int config_init ( int argc, char **argv )
 		if (!console_is_open)
 			ERROR_WINDOW("Could not dump help, since console couldn't be allocated.");
 #endif
-		exit(0);
+		XEPEXIT(0);
 	}
 	DEBUGPRINT("%s" NL NL, disclaimer);
 	if (argc && !strcasecmp(argv[0], "-testparsing")) {
@@ -674,7 +670,7 @@ int config_init ( int argc, char **argv )
 		printf(NL "--- TEST DUMP OF *PARSED* CONFIGURATION (requested)" NL NL);
 		dump_config(stdout);
 		printf(NL "--- END OF TEST PARSING MODE (requested)" NL);
-		exit(0);
+		XEPEXIT(0);
 	}
 	DEBUG("CONFIG: End of configuration step." NL NL);
 	/* Close console, unless user requested it with the -console option */

@@ -336,7 +336,7 @@ try_to_open_image:
 	if (!sdf && !strcmp(config_getopt_str("sdimg"), SDCARD_IMG_FN)) {
 		int r = QUESTION_WINDOW("?Exit|!Continue without SD card|Create empty image", "Cannot open default SD card image file.");
 		if (r == 0)
-			exit(0);
+			XEPEXIT(0);
 		else if (r == 2) {	// create an empty image
 			char pathbuffer[PATH_MAX + 1];
 			snprintf(sdimg_path, PATH_MAX, "%s%s.tmp", app_pref_path, SDCARD_IMG_FN[0] == '@' ? SDCARD_IMG_FN + 1 : SDCARD_IMG_FN);

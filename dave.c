@@ -305,8 +305,8 @@ void dave_tick ( void )
 					);
 					break;
 				default:
-					ERROR_WINDOW("Audio source renderer %d is not known!", audio_source);
-					exit(1);
+					FATAL("Audio source renderer %d is not known!", audio_source);
+					break;
 			}
 			dave_ticks_per_sample_counter = dave_ticks_per_sample - 1;
 		}

@@ -95,8 +95,13 @@ void shutdown_sdl(void)
 			sram_save_all_segments();
 		DEBUGPRINT("Shutdown callback, return." NL);
 	}
-	if (sdl_win)
+	if (sdl_win) {
+#ifdef __EMSCRIPTEN__
+		// This is used, because window title would remain as Emu would run after exit, which is not the case ...
+		SDL_SetWindowTitle(sdl_win, WINDOW_TITLE " v" VERSION " - EXITED");
+#endif
 		SDL_DestroyWindow(sdl_win);
+	}
 	console_close_window_on_exit();
 	/* last stuff! */
 	if (debug_file) {
@@ -289,7 +294,7 @@ static void __emu_one_frame(int rasters, int frameskip)
 				break;
 			case SDL_QUIT:
 				if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1)
-					exit(0);
+					XEPEXIT(0);
 				return;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
@@ -304,7 +309,7 @@ static void __emu_one_frame(int rasters, int frameskip)
 								break;
 							case 0xFE:	// EXIT, default key F9
 								if (QUESTION_WINDOW("?No|!Yes", "Are you sure to exit?") == 1)
-									exit(0);
+									XEPEXIT(0);
 								break;
 							case 0xFD:	// SCREENSHOT, default key F10
 								screen_shot(ep_pixels, current_directory, "screenshot-*.png");

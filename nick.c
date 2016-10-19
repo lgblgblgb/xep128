@@ -606,14 +606,9 @@ void nick_render_slot ( void )
 			if (pixels >= pixels_limit_vsync_long_force)
 				_update();
 			visible = (pixels >= pixels_limit_up && pixels < pixels_limit_bottom && (!frameskip));
-			if (unlikely((vm | ((a >> 2) & 0x18)) >= 8*4 )) {
-				ERROR_WINDOW("FATAL ERROR: NICK: render funcarray bound check failure!");
-				exit(1);
-			}
-		
+			if (unlikely((vm | ((a >> 2) & 0x18)) >= 8*4))
+				FATAL("FATAL ERROR: NICK: render funcarray bound check failure!");
 			_render = render_modes[vm | ((a >> 2) & 0x18)];
-			
-			
 			break;
 		case 1:
 			a = NICK_READ(lpt_a++);
@@ -686,8 +681,7 @@ void nick_render_slot ( void )
 				_render();
 			break;
 		default:
-			ERROR_WINDOW("NICK: FATAL ERROR: invalid slot number for rendering: %d", slot);
-			exit(1);
+			FATAL("NICK: FATAL ERROR: invalid slot number for rendering: %d", slot);
 			break;
 	}
 	slot++;
