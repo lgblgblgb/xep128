@@ -185,10 +185,8 @@ static void xep_exos_command_trap ( void )
 	if (size)
 		DEBUG("XEP: ANSWER: [%d bytes] = \"%s\"" NL, size, COBUF);
 	// just a sanity check, monitor_execute() would not allow - in theory ... - to store more data than specified (by MPRINTF)
-	if (size > xepsym_cobuf_size - 1) {
-		ERROR_WINDOW("FATAL: XEP ROM answer is too large, %d bytes.", size);
-		exit(1);
-	}
+	if (size > xepsym_cobuf_size - 1)
+		FATAL("FATAL: XEP ROM answer is too large, %d bytes.", size);
 	SET_XEPSYM_WORD(xepsym_print_size, size);	// set print-out size (0 = no print)
 }
 
@@ -198,10 +196,8 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 {
 	xep_rom_write_support(0);	// to be safe, let's switch writable XEP ROM off (maybe it was enabled by previous trap?)
 	DEBUG("XEP: ROM trap at PC=%04Xh OPC=%02Xh" NL, pc, opcode);
-	if (opcode != xepsym_ed_trap_opcode) {
-		ERROR_WINDOW("FATAL: Unknown ED-trap opcode in XEP ROM: PC=%04Xh ED_OP=%02Xh", pc, opcode);
-		exit(1);
-	}
+	if (opcode != xepsym_ed_trap_opcode)
+		FATAL("FATAL: Unknown ED-trap opcode in XEP ROM: PC=%04Xh ED_OP=%02Xh", pc, opcode);
 	switch (pc) {
 		case xepsym_trap_enable_rom_write:
 			DEBUG("XEP: write access to XEP ROM was requested" NL);
@@ -219,8 +215,7 @@ void xep_rom_trap ( Uint16 pc, Uint8 opcode )
 			}
 			break;
 		default:
-			ERROR_WINDOW("FATAL: Unknown ED-trap location in XEP ROM: PC=%04Xh (ED_OP=%02Xh)", pc, opcode);
-			exit(1);
+			FATAL("FATAL: Unknown ED-trap location in XEP ROM: PC=%04Xh (ED_OP=%02Xh)", pc, opcode);
 			break;
 		//
 		/* ---- FILEIO RELATED TRAPS ---- */

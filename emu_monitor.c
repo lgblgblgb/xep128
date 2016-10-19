@@ -416,7 +416,7 @@ static void cmd_emu ( void )
 static void cmd_exit ( void )
 {
 	INFO_WINDOW("XEP ROM/monitor command directs shutting down.");
-	exit(0);
+	XEPEXIT(0);
 }
 
 

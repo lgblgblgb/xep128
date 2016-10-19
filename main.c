@@ -83,7 +83,7 @@ void *alloc_xep_aligned_mem ( size_t size )
 
 
 
-static void shutdown_sdl(void)
+void shutdown_sdl(void)
 {
 	if (guarded_exit) {
 		audio_close();

@@ -29,6 +29,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+extern void shutdown_sdl(void);
+#define XEPEXIT(n)	do { emscripten_cancel_main_loop(); shutdown_sdl(); exit(n); } while (0)
+#else
+#define XEPEXIT(n)	exit(n)
 #endif
 
 #define DESCRIPTION		"Enterprise-128 Emulator"
@@ -133,7 +137,7 @@ extern int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg );
 #define INFO_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_INFORMATION, "INFO", __VA_ARGS__)
 #define WARNING_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_WARNING, "WARNING", __VA_ARGS__)
 #define ERROR_WINDOW(...)	_REPORT_WINDOW_(SDL_MESSAGEBOX_ERROR, "ERROR", __VA_ARGS__)
-#define FATAL(...)		do { ERROR_WINDOW(__VA_ARGS__); exit (1); } while(0)
+#define FATAL(...)		do { ERROR_WINDOW(__VA_ARGS__); XEPEXIT(1); } while(0)
 
 #define CHECK_MALLOC(p)		do {	\
 	if (!p) FATAL("Memory allocation error. Not enough memory?");	\
