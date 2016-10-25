@@ -304,6 +304,7 @@ static void __emu_one_frame(int rasters, int frameskip)
 						osd_replay(e.key.state == SDL_PRESSED ? 0 : OSD_FADE_START);
 					else if (code && e.key.state == SDL_PRESSED)
 						switch(code) {
+#ifndef __EMSCRIPTEN__
 							case 0xFF:	// FULLSCREEN toogle, default key F11
 								screen_set_fullscreen(!is_fullscreen);
 								break;
@@ -314,6 +315,7 @@ static void __emu_one_frame(int rasters, int frameskip)
 							case 0xFD:	// SCREENSHOT, default key F10
 								screen_shot(ep_pixels, current_directory, "screenshot-*.png");
 								break;
+#endif
 							case 0xFC:	// RESET, default key PAUSE
 								if (e.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT)) {
 									zxemu_on = 0;
@@ -437,13 +439,23 @@ int main (int argc, char *argv[])
 		ERROR_WINDOW("Fatal SDL initialization problem: %s", SDL_GetError());
 		return 1;
 	}
-	if (config_init(argc, argv))
+	if (config_init(argc, argv)) {
+#ifdef __EMSCRIPTEN__
+		ERROR_WINDOW("Error with config parsing. Please check the (javascript) console of your browser to learn about the error.");
+#endif
 		return 1;
+	}
 	guarded_exit = 1;	// turn on guarded exit, with custom de-init stuffs
 	DEBUGPRINT("EMU: sleeping = \"%s\", timing = \"%s\"" NL,
 		__SLEEP_METHOD_DESC, __TIMING_METHOD_DESC
 	);
-	fileio_init(app_pref_path, "files");
+	fileio_init(
+#ifdef __EMSCRIPTEN__
+		"/",
+#else
+		app_pref_path,
+#endif
+	"files");
 	if (screen_init())
 		return 1;
 	if (xepgui_init())

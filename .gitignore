@@ -11,6 +11,7 @@
 /screenshot*.png
 .*.swp
 /wiki
+/gh-pages
 /*.img
 /.git-commit-info*
 /todo
@@ -19,3 +20,4 @@
 /xep128.html
 /xep128.html.mem
 /xep128.js
+/xep128-custom.html

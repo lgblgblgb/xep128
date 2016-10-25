@@ -24,6 +24,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <SDL.h>
 #include <unistd.h>
+#ifdef __EMSCRIPTEN__
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
 
 
 enum configItemEnum_t {
@@ -90,17 +94,31 @@ static const char *disclaimer =
 
 
 
+void forget_emu_file ( const char *path )
+{
+#ifdef __EMSCRIPTEN__
+	DEBUGPRINT("FILE: trying to delete file \"%s\" as used only once, return code: %d" NL,
+		path,
+		unlink(path)
+	);
+#endif
+}
+
 
 FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 {
 	const char *name_used = name;
 	const char *policy = "guessing";
 	const char *prefixes[] = {
+#ifdef __EMSCRIPTEN__
+		"/files/",
+#else
 		current_directory,	// try in the current directory first
 		app_pref_path,		// try at pref path (user writable area)
 		app_base_path,		// try at base path (where executable is)
 #ifndef _WIN32
 		DATADIR "/",		// try in the DATADIR, it makes sense on UNIX like sys
+#endif
 #endif
 		NULL
 	};
@@ -117,7 +135,11 @@ FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer )
 		prefixes[1] = NULL;
 		policy = "absolute";
 	} else if (name[0] == '@') {		// @ means user preference directory related path names
+#ifdef __EMSCRIPTEN__
+		prefixes[0] = "/files/";
+#else
 		prefixes[0] = app_pref_path;
+#endif
 		prefixes[1] = NULL;
 		name_used = name + 1;
 		policy = "pref-dir";
@@ -427,11 +449,14 @@ static void dump_config ( FILE *fp )
 
 static void save_sample_config ( const char *name )
 {
+#ifdef __EMSCRIPTEN__
+	DEBUGPRINT("CONFIG: no configuration is saved in case of emscripten." NL);
+#else
 	char path[PATH_MAX + 1];
 	FILE *f = open_emu_file(name, "r", path);
 	if (f) {
 		fclose(f);
-		DEBUGPRINT("CONFIG: sample configuration %s (%s) already existis, skipping to create." NL, name, path);
+		DEBUGPRINT("CONFIG: sample configuration %s (%s) already exists, skipping to create." NL, name, path);
 		return;
 	}
 	f = open_emu_file(name, "w", path);
@@ -441,6 +466,7 @@ static void save_sample_config ( const char *name )
 		INFO_WINDOW("Note: created sample config file %s", path);
 	} else
 		INFO_WINDOW("Note: cannot create sample config file %s", path);
+#endif
 }
 
 
@@ -477,7 +503,7 @@ static int get_path_info ( void )
 	app_pref_path = NULL;	// to signal that it's not got yet
 	/* Get base path (where executable is */
 #ifdef __EMSCRIPTEN__
-	app_base_path = strdup("/");
+	app_base_path = strdup("/files/");
 #else
 	app_base_path = SDL_GetBasePath();
 	if (!app_base_path) {
@@ -509,7 +535,7 @@ static int get_path_info ( void )
 		printf("CONFIG: Overriding pref path to: %s" NL, app_pref_path);
 	} else {
 #ifdef __EMSCRIPTEN__
-		app_pref_path = strdup("/");
+		app_pref_path = strdup("/files/");
 #else
 		app_pref_path = SDL_GetPrefPath("nemesys.lgb", "xep128");
 		if (!app_pref_path) {
@@ -519,6 +545,10 @@ static int get_path_info ( void )
 #endif
 	}
 	/* Get current directory */
+#ifdef __EMSCRIPTEN__
+	mkdir("/files", 0777);
+	chdir("/files");
+#endif
 	if (getcwd(current_directory, sizeof current_directory) == NULL) {
 		ERROR_WINDOW("Cannot query current directory: %s", ERRSTR());
 		return 1;
@@ -539,6 +569,9 @@ int config_init ( int argc, char **argv )
 	int default_config = 1;
 	int testparsing = 0;
 	argc--; argv++;
+#ifdef __EMSCRIPTEN__
+	exe = strdup("/files/emscripten-virtual-executable");
+#endif
 #ifdef _WIN32
 	console_open_window();
 #endif

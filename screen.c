@@ -449,6 +449,13 @@ int _sdl_emu_secured_message_box_ ( Uint32 sdlflag, const char *msg )
         int mg = mouse_grab, r;
 	audio_stop();
 	if (mg == SDL_TRUE) screen_grab(SDL_FALSE);
+#ifdef __EMSCRIPTEN__
+	if (1 || sdlflag == SDL_MESSAGEBOX_ERROR) {
+		EM_ASM_INT({
+			window.alert(Pointer_stringify($0));
+		}, msg);
+	}
+#endif
 	r = SDL_ShowSimpleMessageBox(sdlflag, WINDOW_TITLE, msg, sdl_win);
 	if (mg == SDL_TRUE) screen_grab(mg);
 	audio_start();

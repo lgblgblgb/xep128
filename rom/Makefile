@@ -8,10 +8,8 @@ ROM_FILES	= EXOS24UK-NOILLOPS.rom EXDOS14ISDOS10UK-1770.rom filler-16k.rom SDEXT
 all: $(ROM)
 
 %.rom:
-	rm -f $@.gz*
-	wget -O $@.gz $(URL_TEMPLATE)$@.gz || { rm -f $@.gz ; false; }
-	rm -f $@
-	gunzip $@.gz
+	rm -f $@ $@.*
+	wget -O $@ $(URL_TEMPLATE)$@ || { rm -f $@ ; false; }
 
 $(ROM_LIST_LOCAL):
 	rm -f $(ROM_LIST_LOCAL)

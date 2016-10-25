@@ -138,6 +138,7 @@ int roms_load ( void )
 				// Note: lseg overflow is not needed to be tested, as VRAM marks will stop reading of ROM image in the worst case ...
 				if (memory_segment_map[lseg] != UNUSED_SEGMENT) {
 					fclose(f);
+					forget_emu_file(path);
 					ERROR_WINDOW("While reading ROM image \"%s\" into segment %02Xh: already used segment (\"%s\")!", path, lseg, memory_segment_map[lseg]);
 					return -1;
 				}
@@ -147,16 +148,19 @@ int roms_load ( void )
 				if (ret < 0) {
 					ERROR_WINDOW("Cannot read ROM image \"%s\" (to be used in segment %02Xh): %s", path, lseg, ERRSTR());
 					fclose(f);
+					forget_emu_file(path);
 					return -1;
 				} else if (ret == 0) {
 					if (lseg == seg) {
 						fclose(f);
+						forget_emu_file(path);
 						ERROR_WINDOW("Null-sized ROM image \"%s\" (to be used in segment %02Xh).", path, lseg);
 						return -1;
 					}
 					break;
 				} else if (ret != 0x4000) {
 					fclose(f);
+					forget_emu_file(path);
 					ERROR_WINDOW("Bad ROM image \"%s\": not multiple of 16K bytes!", path);
 					return -1;
 				}
@@ -173,6 +177,7 @@ int roms_load ( void )
 				lseg++;
 			}
 			fclose(f);
+			forget_emu_file(path);
 		} else if (!seg) {
 			ERROR_WINDOW("Fatal ROM image error: No ROM defined for segment 00h, no EXOS is requested!");
 			return -1;

@@ -45,7 +45,6 @@ $(WRCOBJ): $(WRCSRC)
 endif
 
 do-all:
-	@if [ x$(ARCH_EXTRA_PRE_BUILD_TARGET) != x ]; then echo "*** This ARCH ($(ARCH)) needs extra steps, doing ..." ; $(MAKE) $(ARCH_EXTRA_PRE_BUILD_TARGET) ; fi
 	@echo "Compiler:     $(CC) $(CFLAGS)"
 	@echo "Linker:       $(CC) $(LDFLAGS) $(LIBS)"
 	@echo "Architecture: $(ARCH) [$(ARCH_DESC)]"

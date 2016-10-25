@@ -407,8 +407,17 @@ static void cmd_emu ( void )
 		sdlver_compiled.major, sdlver_compiled.minor, sdlver_compiled.patch,
 		sdlver_linked.major, sdlver_linked.minor, sdlver_linked.patch,
 		app_base_path, app_pref_path, current_directory,
+#ifdef CONFIG_SDEXT_SUPPORT
 		sdimg_path, (int)(sd_card_size >> 20)
+#else
+		"<not-supported>", 0
+#endif
 	);
+#ifdef __EMSCRIPTEN__
+	// This assumes, that the "JS booter" sets these ENV variables ...
+	MPRINTF("Browser: %s\n", getenv("BROWSER"));
+	MPRINTF("Origin: %s\n", getenv("LOCATION"));
+#endif
 }
 
 

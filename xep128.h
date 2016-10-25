@@ -52,7 +52,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #endif
 
 #define CONFIG_USE_LODEPNG
-#define CONFIG_SDEXT_SUPPORT
 #define CONFIG_W5300_SUPPORT
 #define DEFAULT_CPU_CLOCK	4000000
 

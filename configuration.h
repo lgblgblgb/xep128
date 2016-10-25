@@ -30,6 +30,7 @@ extern int  config_init ( int argc, char **argv );
 extern void *config_getopt ( const char *name, const int subopt, void *value );
 extern void config_getopt_pointed ( void *st_in, void *value );
 extern FILE *open_emu_file ( const char *name, const char *mode, char *pathbuffer );
+extern void forget_emu_file ( const char *path );
 
 static inline int config_getopt_int ( const char *name ) {
 	int n;

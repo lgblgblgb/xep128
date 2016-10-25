@@ -31,8 +31,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <unistd.h>
 
-
-#ifdef CONFIG_SDEXT_SUPPORT
+#ifndef CONFIG_SDEXT_SUPPORT
+#warning "SDEXT support is disabled by configuration."
+#else
 //#define DEBUG_SDEXT
 #define CONFIG_SDEXT_FLASH
 
