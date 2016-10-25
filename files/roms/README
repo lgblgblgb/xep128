@@ -1,88 +1,88 @@
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 asmon15.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 basic20.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 basic21.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 brd.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 cpc464.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 cpc6128.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 cpc664.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 cpc_amsdos.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 cyrus.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 edcw.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 epd17l12.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 epd17z12.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 epd19hft.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EPDOS-1.9-beta.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EPDOS-Z.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 epfileio.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 ep-plus.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 esp.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 exdos10.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 exdos13.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14ISDOS10UK-1770.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14ISDOS10UK-1772.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14ISDOS10UK-BRD-1770.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14ISDOS10UK-BRD-1772.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 exdos14isdos10uk-brd.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14ISDOS10UK-ESP-1770.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 exdos14isdos10uk-esp.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14ISDOS10UK-HFONT-1770.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14ISDOS10UK-HFONT-1772.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 exdos14isdos10uk-hfont.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 exdos14isdos10uk.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14UK-1770.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14UK-1772.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14UK-BRD-1770.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14UK-BRD-1772.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14UK-ESP-1770.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14UK-ESP-1772.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14UK-HFONT-1770.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 EXDOS14UK-HFONT-1772.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 exos20.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 exos21.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 exos22.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 exos232esp.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 exos232hun.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 exos232uk.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 exos23.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 exos24brd.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 exos24es.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 exos24hu.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 EXOS24UK-NOILLOPS.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 exos24uk.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 fenas12.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 filler-16k.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 filler-32k.rom
--rw-rw-r-- 1 lgb lgb 49152 Oct 25 18:06 filler-48k.rom
--rw-rw-r-- 1 lgb lgb  8192 Oct 25 18:06 filler-8k.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 forth.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 genmon.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 heass10hfont.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 heass10uk.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 heassekn.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 hun.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 ide12.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 iview.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 lisp.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 pascal11.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 paszians.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 primo-a64.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 primo-b64-cdos.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 primo-b64.rom
--rw-rw-r-- 1 lgb lgb 65536 Oct 25 18:06 sd-cart-0.1-64k.rom
--rw-rw-r-- 1 lgb lgb 57344 Oct 25 18:06 sd-cart-0.3-FB-57k.rom
--rw-rw-r-- 1 lgb lgb 57344 Oct 25 18:06 sd-cart-0.3-FE-57k.rom
--rw-rw-r-- 1 lgb lgb 57344 Oct 25 18:06 sd-cart-0.3-FT-57k.rom
--rw-rw-r-- 1 lgb lgb 57344 Oct 25 18:06 sd-cart-0.3-FTU-57k.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 SDEXT05-16k.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 tpt.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 zt18ekn.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 zt18hfnt.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 zt18hun.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 ZT18UK-emuhoz.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 zt18uk.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 zx128.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 zx41.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 zx41uk.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 zx48gw03.rom
--rw-rw-r-- 1 lgb lgb 16384 Oct 25 18:06 zx48.rom
--rw-rw-r-- 1 lgb lgb 32768 Oct 25 18:06 zx-emu-40.rom
+32768	7195253ba397b2a23eb07db8978c6415  EPDOS-1.9-beta.rom
+32768	002c9d2ed5e22d4d28100154aae7e837  EPDOS-Z.rom
+32768	f91c4a507cc6895bdd9c43df4f021df3  EXDOS14ISDOS10UK-1770.rom
+32768	ace8e6b0093d7f515d72f2e6ee22adbd  EXDOS14ISDOS10UK-1772.rom
+32768	374b7a91a05bb2d412b4ff33b08eb480  EXDOS14ISDOS10UK-BRD-1770.rom
+32768	e9822f0676ba39363287c6ddcc3c0df8  EXDOS14ISDOS10UK-BRD-1772.rom
+32768	97d5d85f2cdf8bc910cfc4f9a35c9ad8  EXDOS14ISDOS10UK-ESP-1770.rom
+32768	f2c29075fb03bc84d5cc56f931c779b5  EXDOS14ISDOS10UK-HFONT-1770.rom
+32768	6fda6f77e2242b20e3e95c9f54ee9d2e  EXDOS14ISDOS10UK-HFONT-1772.rom
+32768	e8728ddf3f19bf24c46795e40e9bd36a  EXDOS14UK-1770.rom
+32768	d940e217cb9f2626a2435b2c1a1d0d2d  EXDOS14UK-1772.rom
+32768	509c7e2da854681b0b06352b4bce65ed  EXDOS14UK-BRD-1770.rom
+32768	dbb1e8ec9d9cd64eab3a40834bec9d94  EXDOS14UK-BRD-1772.rom
+32768	501524369e8ad631b9ff9faa24496a53  EXDOS14UK-ESP-1770.rom
+32768	076548082c0a313c6a6e5875388f79fa  EXDOS14UK-ESP-1772.rom
+32768	5ad5e7c52597e47dbbc536fc3bc61e4e  EXDOS14UK-HFONT-1770.rom
+32768	1780d12be9a2f9ba6f002cf654729a91  EXDOS14UK-HFONT-1772.rom
+65536	5e36c6b55bdd6e30a423ae8252d9c5a0  EXOS24UK-NOILLOPS.rom
+16384	e1678cc36565c136415a7b75e4457b3b  SDEXT05-16k.rom
+32768	878246ceda87b8b55ec400be3005c607  ZT18UK-emuhoz.rom
+32768	61a46866b17ff1e9fb84a04f87315530  asmon15.rom
+16384	8e18edce4a7acb2c33cc0ab18f988482  basic20.rom
+16384	e972fe42b398c9ff1d93ff014786aec6  basic21.rom
+16384	6af0402906944fd134004b85097c8524  brd.rom
+32768	a993f85b88ac4350cf4d41554e87fe4f  cpc464.rom
+32768	b96280dc6c95a48857b4b8eb931533ae  cpc6128.rom
+32768	5a384a2310f472c7857888371c00ed66  cpc664.rom
+16384	25629dfe870d097469c217b95fdc1c95  cpc_amsdos.rom
+16384	e6c54064d6e55f58207eeee17129ff48  cyrus.rom
+16384	93fdc9fbca1331ba027d80a4c509f8b0  edcw.rom
+16384	7731557cd68d26b77c22dd1dcfde47d6  ep-plus.rom
+32768	c9c7514929154b5e00eb5704995f77b0  epd17l12.rom
+32768	afb4f0fb0b2e44b1da917bc302f8ab63  epd17z12.rom
+32768	12cfc9c7e48c8a16c2e09edbd926d467  epd19hft.rom
+16384	a68ebcbc73a4d2178d755b7755bf18fe  epfileio.rom
+16384	00b6644c001777cda0c29991e01e75dd  esp.rom
+16384	fde2761fb2a65e2926bf22ac144e9f92  exdos10.rom
+32768	ddff70c014d1958dc75378b6c9aab6f8  exdos13.rom
+32768	29e75961708f6f45c22a2e2fda62f1de  exdos14isdos10uk-brd.rom
+32768	65b809a32bca30cc96e76bde6606715c  exdos14isdos10uk-esp.rom
+32768	eb9da0dc19a3014d148a90d3b44965ca  exdos14isdos10uk-hfont.rom
+32768	8dca0120af7e98167beab3bb0deb01f9  exdos14isdos10uk.rom
+32768	a2231a4873eedfda09d98c4f2ff50df3  exos20.rom
+32768	fda5486148ef845bfd3238dff03f35f8  exos21.rom
+65536	2af535f6c8ccc9a743eb1d638a4afa90  exos22.rom
+65536	80115adf36136f30b23c10ea2dd83bef  exos23.rom
+65536	2f697838aa0b50358b95f96a9ca73f26  exos232esp.rom
+65536	1a7cd0c28deaa437b2cf87374781effc  exos232hun.rom
+65536	a48a3d371fec98e29b50cb927f5fe6d0  exos232uk.rom
+65536	8519af178c473de352f088a7103b45fc  exos24brd.rom
+65536	3478ba563b6b293c5679071db972477c  exos24es.rom
+65536	f989541d810db9668485c8d5b670d6a6  exos24hu.rom
+65536	55af78f877a21ca45eb2df68a74fcc60  exos24uk.rom
+32768	8727d4fa689e0eca11c4221da023c0bb  fenas12.rom
+16384	ce338fe6899778aacfc28414f2d9498b  filler-16k.rom
+32768	bb7df04e1b0a2570657527a7e108ae23  filler-32k.rom
+49152	f4f35d60b3cc18aaa6d8d92f0cd3708a  filler-48k.rom
+8192	0829f71740aab1ab98b33eae21dee122  filler-8k.rom
+16384	6b8e518b20aa0b0e9f1535e06ff974ad  forth.rom
+32768	cfe26b57016c19a15f75812bd060fd3e  genmon.rom
+32768	314d158be16d34c9e0380a58d9c463f4  heass10hfont.rom
+32768	891f40bb7c7f5b0a95a212a57b66f338  heass10uk.rom
+32768	fcb2e47a1059b9b9ef7374d75f8fcdb4  heassekn.rom
+16384	22167938f142c222f40992839aa21a06  hun.rom
+16384	ba8854e55fa32e932645d57003e4632b  ide12.rom
+32768	9db4de9b678f21878da08c3ecc6e0725  iview.rom
+16384	d7ef2b25b0ca17dcb619d0c6cdaa0267  lisp.rom
+32768	0dcde3445c3891064ca3aea787560fc3  pascal11.rom
+32768	c21caa72b10ead86362e1ddb2abed038  paszians.rom
+16384	b85e55f907342dd2fe9e12bbd6da682b  primo-a64.rom
+16384	3e307f66dc9f68c12e7d8b8d0b563c4d  primo-b64-cdos.rom
+16384	e712b14e0d02ec6fb172bc602baafa49  primo-b64.rom
+65536	334f078652fee72ae352ca9644384a3a  sd-cart-0.1-64k.rom
+57344	e27671d7625d8adccd79ed81f473b23e  sd-cart-0.3-FB-57k.rom
+57344	af45ea5496e517be4b1fcb0182bc099d  sd-cart-0.3-FE-57k.rom
+57344	95710392405ca70266f4213da099e381  sd-cart-0.3-FT-57k.rom
+57344	10fc911d3a85d321f7fc6ad423ad4daf  sd-cart-0.3-FTU-57k.rom
+16384	f03074505db40c15915dc2502ae9be0b  tpt.rom
+32768	c5b03492d9d642af5585da4091fd9e32  zt18ekn.rom
+32768	a4db65c60dc3d03ad1988499b82fad9e  zt18hfnt.rom
+32768	e485ded007c0809e1abef4fe878e57da  zt18hun.rom
+32768	bc6aad19270843b3b0b0d8fb1889a36b  zt18uk.rom
+32768	b780922e1753c6d8c0c8197596ed3f92  zx-emu-40.rom
+32768	85fede415f4294cc777517d7eada482e  zx128.rom
+32768	5f3e3bc1f9f3721e8ae3a35d470dd562  zx41.rom
+32768	5bfdc1121b79d4117aae90f3d6b05c3c  zx41uk.rom
+16384	4c42a2f075212361c3117015b107ff68  zx48.rom
+16384	eca3f2de329706e92b7fa230fe74cf50  zx48gw03.rom
