@@ -7,7 +7,7 @@
 Xep128 is an Enterprise-128 (a Z80 based, 8 bit computer) emulator (uses SDL2
 and modified z80ex for Z80 emulation) with the main focus on emulating somewhat
 "exotic" hardware additions. Currently it runs on Linux/UNIX (including the
-Raspberry-Pi), Windows, OSX and also inside your web browser (witch the help
+Raspberry-Pi), Windows, OSX and also inside your web browser (with the help
 of Emscripten compiler).
 
 Written by (C)2015,2016 LGB (Gábor Lénárt) <lgblgblgb@gmail.com>

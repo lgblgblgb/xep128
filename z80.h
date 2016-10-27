@@ -20,7 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define __XEP128_Z80_H_INCLUDED
 
 /* Modified Z80ex features requested */
+#ifdef CONFIG_Z180
 #define Z80EX_Z180_SUPPORT
+#endif
 #define Z80EX_ED_TRAPPING_SUPPORT
 #define Z80EX_CALLBACK_PROTOTYPE extern
 

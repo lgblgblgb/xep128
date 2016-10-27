@@ -351,12 +351,15 @@ static void cmd_cpu ( void ) {
 			set_ep_cpu(CPU_Z80);
 		else if (!strcasecmp(arg, "z80c"))
 			set_ep_cpu(CPU_Z80C);
+#ifdef CONFIG_Z180
 		else if (!strcasecmp(arg, "z180")) {
 			set_ep_cpu(CPU_Z180);
 			// Zozo's EXOS would set this up, but our on-the-fly change is something can't happen for real, thus we fake it here:
 			z180_port_write(0x32, 0x00);
 			z180_port_write(0x3F, 0x40);
-		} else {
+		}
+#endif
+		else {
 			int clk = atof(arg) * 1000000;
 			if (clk < 1000000 || clk > 12000000)
 				MPRINTF("*** Unknown CPU type to set or it's not a clock value either (1-12 is OK in MHz): %s\n", arg);
@@ -368,7 +371,11 @@ static void cmd_cpu ( void ) {
 		}
 	}
 	MPRINTF("CPU : %s %s @ %.2fMHz\n",
+#ifdef CONFIG_Z180
 		z80ex.z180 ? "Z180" : "Z80",
+#else
+		"Z80",
+#endif
 		z80ex.nmos ? "NMOS" : "CMOS",
 		CPU_CLOCK / 1000000.0
 	);
@@ -415,8 +422,8 @@ static void cmd_emu ( void )
 	);
 #ifdef __EMSCRIPTEN__
 	// This assumes, that the "JS booter" sets these ENV variables ...
-	MPRINTF("Browser: %s\n", getenv("BROWSER"));
-	MPRINTF("Origin: %s\n", getenv("LOCATION"));
+	MPRINTF("Browser: %s\n", getenv("XEMU_EN_BROWSER"));
+	MPRINTF("Origin: %s\n", getenv("XEMU_EN_ORIGIN"));
 #endif
 }
 

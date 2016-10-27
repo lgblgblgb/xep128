@@ -155,7 +155,14 @@ valgrind:
 	valgrind --read-var-info=yes --leak-check=full --track-origins=yes ./$(PRG) -debug /tmp/xep128.debug > /tmp/xep128-valgrind.stdout 2> /tmp/xep128-valgrind.stderr
 	ls -l /tmp/xep128.debug /tmp/xep128-valgrind.stdout /tmp/xep128-valgrind.stderr
 
-.PHONY: all clean distclean strip publish data install dep depend valgrind zip deb do-all
+subrepos:
+	mkdir -p gh-pages wiki
+	test -d wiki/.git || git clone --depth=1 git@github.com:lgblgblgb/xep128.wiki.git wiki
+	test -d gh-pages/.git || git clone --branch=gh-pages --depth=1 git@github.com:lgblgblgb/xep128.git gh-pages
+	cd gh-pages && git pull
+	cd wiki && git pull
+
+.PHONY: all clean distclean strip publish data install dep depend valgrind zip deb do-all subrepos
 
 ifneq ($(wildcard $(DEPFILE)),)
 include $(DEPFILE)

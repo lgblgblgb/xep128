@@ -21,10 +21,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "z80.h"
 
+#ifdef CONFIG_Z180
+
 extern void  z180_internal_reset ( void );
 extern void  z180_port_write ( Uint8 port, Uint8 value );
 extern Uint8 z180_port_read ( Uint8 port );
 
 extern int   z180_port_start;
+
+#endif
 
 #endif

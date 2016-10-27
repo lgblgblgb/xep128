@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "z180.h"
 #include "cpu.h"
 
+#ifdef CONFIG_Z180
+
 int z180_port_start;
 static Uint8 z180_ports[0x40];
 static int z180_incompatibility_reported = 0;
@@ -93,4 +95,4 @@ Uint8 z180_port_read ( Uint8 port )
 	return z180_ports[port];
 }
 
-
+#endif

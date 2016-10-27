@@ -70,27 +70,39 @@ void xep_rom_write_support ( int towrite )
 
 void set_ep_cpu ( int type )
 {
+#ifdef CONFIG_Z180
 	z80ex.internal_int_disable = 0;
+#endif
 	switch (type) {
 		case CPU_Z80:
 			z80ex.nmos = 1;
+#ifdef CONFIG_Z180
 			z80ex.z180 = 0;
+#endif
 			break;
 		case CPU_Z80C:
 			z80ex.nmos = 0;
+#ifdef CONFIG_Z180
 			z80ex.z180 = 0;
+#endif
 			break;
+#ifdef CONFIG_Z180
 		case CPU_Z180:
 			z80ex.nmos = 0;
 			z80ex.z180 = 1;
 			z180_port_start = 0;
 			break;
+#endif
 		default:
 			FATAL("FATAL: Unknown CPU type was requested: %d", type);
 			break;
 	}
 	DEBUG("CPU: set to %s %s" NL,
+#ifdef CONFIG_Z180
 		z80ex.z180 ? "Z180" : "Z80",
+#else
+		"Z80",
+#endif
 		z80ex.nmos ? "NMOS" : "CMOS"
 	);
 }
@@ -280,11 +292,13 @@ void z80ex_mwrite_cb(Z80EX_WORD addr, Z80EX_BYTE value) {
 
 Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 	Uint8 port;
+#ifdef CONFIG_Z180
 	if (z80ex.z180 && (port16 & 0xFFC0) == z180_port_start) {
 		if (z180_port_start == 0x80)
 			FATAL("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
 		return z180_port_read(port16 & 0x3F);
 	}
+#endif
 	port = port16 & 0xFF;
 	if (port < primo_on)
 		return primo_read_io(port);
@@ -360,12 +374,14 @@ Z80EX_BYTE z80ex_pread_cb(Z80EX_WORD port16) {
 void z80ex_pwrite_cb(Z80EX_WORD port16, Z80EX_BYTE value) {
 	//Z80EX_BYTE old_value;
 	Uint8 port;
+#ifdef CONFIG_Z180
 	if (z80ex.z180 && (port16 & 0xFFC0) == z180_port_start) {
 		if (z180_port_start == 0x80)
 			FATAL("FATAL: Z180 internal ports configured from 0x80. This conflicts with Dave/Nick, so EP is surely unusable.");
 		z180_port_write(port16 & 0x3F, value);
 		return;
 	}
+#endif
 	port = port16 & 0xFF;
 	if (port < primo_on)
 		return primo_write_io(port, value);
@@ -548,7 +564,9 @@ void z80_reset ( void )
 	ports[0xB5] = 0; // for printer strobe signal not to trigger output a character on reset or so?
 	//set_ep_cpu(CPU_Z80);
 	z80ex_reset();
+#ifdef CONFIG_Z180
 	z180_internal_reset();
+#endif
 	srand((unsigned int)time(NULL));
 	Z80_AF	= rand() & 0xFFFF;
 	Z80_BC	= rand() & 0xFFFF;
