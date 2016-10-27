@@ -39,6 +39,8 @@ OPTIONS:
 	Disables (1) Enterprise logo on start-up via XEP ROM [default: 0]
 -snapshot
 	Load and use ep128emu snapshot [default: none]
+-wdimg
+	EXDOS WD disk image file name/path [default: none]
 -xeprom
 	Enables XEP internal ROM (non-zero value), otherwise disable [default: 1]
 -epkey

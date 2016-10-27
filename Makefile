@@ -133,7 +133,7 @@ clean:
 distclean:
 	$(MAKE) clean
 	$(MAKE) -C rom distclean
-	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) xep128-*.zip xep128_*.deb
+	rm -f $(SDIMG) $(DLL) $(ROM) $(PRG) xep128-*.zip xep128_*.deb xep128*.js xep128*.js.gz xep128*.mem xep128*.mem.gz xep128*.html
 	rm -f build/objs/*
 
 help:

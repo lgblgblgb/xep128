@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include "nick.h"
 #include "configuration.h"
 #include "sdext.h"
+#include "exdos_wd.h"
 #include "roms.h"
 #include "screen.h"
 #include "input.h"
@@ -90,6 +91,9 @@ void shutdown_sdl(void)
 		printer_close();
 #ifdef CONFIG_W5300_SUPPORT
 		w5300_shutdown();
+#endif
+#ifdef CONFIG_EXDOS_SUPPORT
+		wd_detach_disk_image();
 #endif
 		if (sram_ready)
 			sram_save_all_segments();
@@ -485,6 +489,10 @@ int main (int argc, char *argv[])
 #ifdef CONFIG_SDEXT_SUPPORT
 	if (!snapshot)
 		sdext_init();
+#endif
+#ifdef CONFIG_EXDOS_SUPPORT
+	wd_exdos_reset();
+	wd_attach_disk_image(config_getopt_str("wdimg"));
 #endif
 #ifdef CONFIG_W5300_SUPPORT
 	w5300_init(NULL);
