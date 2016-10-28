@@ -26,6 +26,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <unistd.h>
 #include <sys/types.h>
 
+// Set the value to DEBUGPRINT to always print to the stdout as well,
+// and DEBUG to use only the debug file (if it's requested at all).
+// For production release, DEBUG is the normal behaviour.
+#define DEBUGEXDOS DEBUG
 
 static FILE *disk_fp = NULL;
 static int   disk_fd = -1;
@@ -175,19 +179,32 @@ void wd_exdos_reset ( void )
 static int read_sector ( void )
 {
 	off_t ofs;
-	if (!driveSel)
+	int ret;
+	buffer_pos = 0;
+	buffer_size = 512;
+	if (!driveSel) {
+		// ugly hack! to avoid delay on boot trying to read B:, we provide here an empty sector ... :-/
+		DEBUGEXDOS("WD: read sector refused: driveSel=0" NL);
+		memset(disk_buffer, 0, 512); // fake empty
+		return 0;
+	}
+	if (wd_sector < 1 || wd_sector > wd_max_sectors) {
+		DEBUGEXDOS("WD: read sector refused: invalid sector number %d (valid = %d...%d)" NL, wd_sector, 1, wd_max_sectors);
 		return 1;
-	if (wd_sector < 1 || wd_sector > wd_max_sectors)
+	}
+	if (wd_track < 0 || wd_track >= wd_max_tracks) {
+		DEBUGEXDOS("WD: read sector refused: invalid track number %d (valid = %d...%d)" NL, wd_track, 0, wd_max_tracks - 1);
 		return 1;
-	if (wd_track < 0 || wd_track >= wd_max_tracks)
-		return 1;
+	}
 	ofs = (wd_track * wd_max_sectors * 2 + wd_sector - 1 + wd_max_sectors * diskSide) << 9;
-	DEBUGPRINT("WD: Seeking to: offset %d (track=%d, sector=%d, side=%d)" NL, (int)ofs, wd_track, wd_sector, diskSide);
+	DEBUGEXDOS("WD: Seeking to: offset %d (track=%d, sector=%d, side=%d)" NL, (int)ofs, wd_track, wd_sector, diskSide);
 	if (lseek(disk_fd, ofs, SEEK_SET) != ofs) {
 		ERROR_WINDOW("WD/EXDOS disk image seek error: %s", ERRSTR());
 		return 1;
 	}
-	switch (read(disk_fd, disk_buffer, 512)) {
+	ret = read(disk_fd, disk_buffer, 512);
+	DEBUGEXDOS("WD: read() for 512 bytes data to read, retval=%d" NL, ret);
+	switch (ret) {
 		case   0:
 			ERROR_WINDOW("WD/EXDOS disk image read error: NO DATA READ");
 			return 1;
@@ -197,8 +214,6 @@ static int read_sector ( void )
 			ERROR_WINDOW("WD/EXDOS disk image read error: %s", ERRSTR());
 			return 1;
 	}
-	buffer_pos = 0;
-	buffer_size = 512;
 	return 0;
 }
 
@@ -216,7 +231,7 @@ Uint8 wd_read_data ( void )
 {
 	if (wd_DRQ) {
 		wd_data = disk_buffer[buffer_pos++];
-		if ((--buffer_size) == 0)
+		if (buffer_pos >= buffer_size)
 			wd_DRQ = 0; // end of data, switch DRQ off!
 	}
 	return wd_data;
@@ -236,7 +251,7 @@ void wd_send_command ( Uint8 value )
 	wd_command = value;
 	wd_DRQ = 0;	// reset DRQ
 	wd_interrupt = WDINT_OFF;	// reset INTERRUPT
-	DEBUGPRINT("WD: command received: 0x%02X" NL, value);
+	DEBUGEXDOS("WD: command received: 0x%02X driveSel=%d distInserted=%d hasImage=%d" NL, value, driveSel, diskInserted, disk_fp != NULL);
 	switch (value >> 4) {
 		case  0: // restore (type I), seeks to track zero
 			if (driveSel) {
@@ -288,7 +303,7 @@ void wd_send_command ( Uint8 value )
 			wd_status = (wd_track == 0) ? 4 : 0;
                         break;
 		default:
-			DEBUGPRINT("WD: unknown command: 0x%02X" NL, value);
+			DEBUGEXDOS("WD: unknown command: 0x%02X" NL, value);
 			wd_status = 4 | 8 | 16 | 64; // unimplemented command results in large set of problems reported :)
 			wd_interrupt = WDINT_ON;
 			break;
