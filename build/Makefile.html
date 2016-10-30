@@ -11,7 +11,7 @@ STRIP		=
 EMCC_FLAGS	= -s USE_SDL=2 -s NO_EXIT_RUNTIME=1
 GENOPTS		= -O3 -fno-common -ffast-math
 CFLAGS_ARCH	= $(GENOPTS) -Wall -pipe -I. $(EMCC_FLAGS) -include arch/arch-html.h
-LDFLAGS_ARCH	= $(GENOPTS) $(EMCC_FLAGS) --memory-init-file 1 -s ERROR_ON_UNDEFINED_SYMBOLS=1
+LDFLAGS_ARCH	= $(GENOPTS) $(EMCC_FLAGS) --memory-init-file 1 -s ERROR_ON_UNDEFINED_SYMBOLS=1 -s EXPORTED_FUNCTIONS='["_main", "_monitor_queue_command"]'
 LIBS_ARCH	=
 SRCS_ARCH	=
 PRG		= xep128.html

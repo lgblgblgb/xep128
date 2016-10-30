@@ -769,7 +769,13 @@ void monitor_process_queued ( void )
 	if (is_queued_command) {
 		char buffer[8192];
 		monitor_execute(queued_command, 2, buffer, sizeof buffer, NL);
+#ifdef __EMSCRIPTEN__
+		EM_ASM_INT({
+			Module.Xemu.getFromMonitor(Pointer_stringify($0));
+		}, buffer);
+#else
 		printf("%s", buffer);	// TODO, maybe we should ask for sync on stdout?
+#endif
 		is_queued_command = 0;
 	}
 }
@@ -785,10 +791,10 @@ int monitor_queue_used ( void )
 /* for use by the console input thread */
 int monitor_queue_command ( char *buffer )
 {
-	if (is_queued_command)
+	if (unlikely(is_queued_command))
 		return 1;
-	strcpy(queued_command, buffer);
 	is_queued_command = 1;
+	strcpy(queued_command, buffer);
 	return 0;
 }
 
